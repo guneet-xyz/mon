@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  ChartConfig,
+  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
@@ -25,8 +25,6 @@ import {
 
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
-
-export const description = "An interactive area chart"
 
 const chartData = [
   { date: "2024-04-01", desktop: 222, mobile: 150 },
@@ -221,7 +219,7 @@ export function ChartAreaInteractive() {
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={(value) => {
+              tickFormatter={(value: Date) => {
                 const date = new Date(value)
                 return date.toLocaleDateString("en-US", {
                   month: "short",
@@ -233,7 +231,7 @@ export function ChartAreaInteractive() {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  labelFormatter={(value) => {
+                  labelFormatter={(value: Date) => {
                     return new Date(value).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
