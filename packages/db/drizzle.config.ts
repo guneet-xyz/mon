@@ -1,6 +1,5 @@
-import { type Config } from "drizzle-kit";
-
-import { env } from "@mon/env";
+import { env } from "@mon/env"
+import { type Config } from "drizzle-kit"
 
 export default {
   schema: "./src/schema.ts",
@@ -9,4 +8,4 @@ export default {
     url: env.DATABASE_URL,
   },
   tablesFilter: ["wall_*"],
-} satisfies Config;
+} satisfies Config

@@ -10,6 +10,6 @@ const config = {
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
   tailwindStylesheet: "./apps/website/src/styles/globals.css",
-};
+}
 
-export default config;
+export default config
