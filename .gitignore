@@ -3,5 +3,7 @@ tsconfig.tsbuildinfo
 
 # Writing these explicitly so I know they exist
 apps/daemon/.env
+apps/daemon/dist
+
 apps/wall/.env
 packages/db/.env
