@@ -1,0 +1,27 @@
+{
+  "name": "@mon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/wall",
+    "packages/db",
+    "packages/env"
+  ],
+  "scripts": {
+    "format:check": "npx prettier --check .",
+    "format:write": "npx prettier --write .",
+    "lint": "npm run lint:tsc && npm run lint:next",
+    "lint:next": "cd apps/wall && next lint",
+    "lint:tsc": "npx tsc --noEmit"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@types/node": "22.13.14",
+    "@typescript-eslint/typescript-estree": "^8.25.0",
+    "prettier": "^3.5.3",
+    "prettier-plugin-packagejson": "^2.5.10",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "tsx": "^4.19.3"
+  }
+}

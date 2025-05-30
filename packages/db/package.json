@@ -1,0 +1,14 @@
+{
+  "name": "@mon/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.ts",
+  "dependencies": {
+    "@auth/drizzle-adapter": "^1.7.4",
+    "postgres": "^3.4.4",
+    "drizzle-orm": "^0.39.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.30.4"
+  }
+}
