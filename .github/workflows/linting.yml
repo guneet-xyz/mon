@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  prettier:
+  linting:
     runs-on: ubuntu-latest
     environment: linting
     steps:
