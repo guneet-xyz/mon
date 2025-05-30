@@ -6,7 +6,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"), // TODO: do we need this?
-    APP: z.enum(["mon", "daemon", "script"]),
+    APP: z.enum(["wall", "daemon", "script"]),
     DATABASE_URL: z.string().url(),
     CONFIG_PATH: z.string().default("/tmp/mon/config.toml"),
   },
