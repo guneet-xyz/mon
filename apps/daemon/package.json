@@ -1,0 +1,14 @@
+{
+  "name": "@mon/daemon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npx esbuild src/index.ts --bundle --platform=node --outfile=dist/daemon.cjs",
+    "start": "node dist/daemon.cjs"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

@@ -5,7 +5,9 @@
   "type": "module",
   "workspaces": [
     "apps/wall",
+    "apps/daemon",
     "packages/db",
+    "packages/config",
     "packages/env"
   ],
   "scripts": {

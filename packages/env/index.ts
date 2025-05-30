@@ -8,11 +8,11 @@ export const env = createEnv({
       .default("development"), // TODO: do we need this?
     APP: z.enum(["mon", "daemon"]),
     DATABASE_URL: z.string().url(),
+    CONFIG_PATH: z.string().default("/tmp/mon/config.toml"),
   },
 
   clientPrefix: "NEXT_PUBLIC_",
-  client: {
-  },
+  client: {},
 
   runtimeEnv: process.env,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
