@@ -1,4 +1,5 @@
 import { ConfigSchema } from "./schema"
+import { testConfigForErrors } from "./test"
 
 import { env } from "@mon/env"
 import { existsSync } from "fs"
@@ -13,5 +14,9 @@ export async function getConfig() {
   const text = await readFile(env.CONFIG_PATH, "utf-8")
   const parsed = parse(text)
   const zodParsed = ConfigSchema.parse(parsed)
+  const error = await testConfigForErrors(zodParsed)
+  if (error) {
+    throw error
+  }
   return zodParsed
 }

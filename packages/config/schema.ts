@@ -1,12 +1,15 @@
 import { z } from "zod"
 
-export const ConfigSchema = z.object({
-  hosts: z
-    .array(
-      z.object({
-        name: z.string(),
-        address: z.string(),
-      }),
-    )
-    .default([]),
+const HostSchema = z.object({
+  key: z.string(),
+  name: z.string().optional(),
+  address: z.string(),
 })
+
+export type Host = z.infer<typeof HostSchema>
+
+export const ConfigSchema = z.object({
+  hosts: z.array(HostSchema).default([]),
+})
+
+export type Config = z.infer<typeof ConfigSchema>

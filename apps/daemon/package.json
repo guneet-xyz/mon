@@ -7,6 +7,8 @@
     "build": "npx esbuild src/index.ts --bundle --platform=node --outfile=dist/daemon.cjs",
     "start": "node dist/daemon.cjs"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "execa": "^9.6.0",
+    "toad-scheduler": "^3.1.0"
+  }
 }
