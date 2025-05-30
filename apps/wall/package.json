@@ -13,6 +13,7 @@
     "@mon/config": "0.1.0",
     "@mon/db": "0.1.0",
     "@mon/env": "0.1.0",
+    "@radix-ui/react-select": "^2.2.5",
     "@t3-oss/env-nextjs": "^0.12.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -21,6 +22,7 @@
     "next": "14.2.29",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "recharts": "^2.15.3",
     "tailwind-merge": "^3.3.0",
     "zod": "^3.24.2"
   },
