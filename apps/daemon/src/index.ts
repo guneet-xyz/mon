@@ -1,4 +1,4 @@
-import { getConfig } from "packages/config/src"
+import { getConfig } from "@mon/config"
 
 async function main() {
   console.log("main")

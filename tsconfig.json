@@ -25,7 +25,7 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./apps/website/src/*"]
+      "@/*": ["./apps/wall/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.js"]
