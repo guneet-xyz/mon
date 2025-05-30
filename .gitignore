@@ -1,2 +1,7 @@
 **/node_modules
 tsconfig.tsbuildinfo
+
+# Writing these explicitly so I know they exist
+apps/daemon/.env
+apps/wall/.env
+packages/db/.env
