@@ -1,4 +1,4 @@
-import { pingHost, pingWebsite } from "./utils"
+import { pingContainer, pingHost, pingWebsite } from "./utils"
 
 import { getConfig } from "@mon/config"
 import { db } from "@mon/db"
@@ -58,6 +58,35 @@ async function main() {
           key: website.key,
           timestamp: timestamp,
           latency: resp.latency,
+        })
+      }
+    })
+    const job = new SimpleIntervalJob(
+      { seconds: 60, runImmediately: true },
+      task,
+    )
+    scheduler.addSimpleIntervalJob(job)
+  }
+
+  for (const container of config.containers) {
+    const task = new Task(`container-${container.key}`, async () => {
+      console.log(
+        `Pinging container: ${container.key} (${container.container_name})`,
+      )
+      const timestamp = new Date()
+      const resp = await pingContainer(container.container_name)
+      if (!resp.success) {
+        console.error(`Error pinging container ${container.key}:`, resp.error)
+        await db.insert(hostPings).values({
+          key: container.key,
+          timestamp: timestamp,
+          error: resp.error,
+        })
+      } else {
+        console.log(`Container ${container.key} pinged successfully`)
+        await db.insert(hostPings).values({
+          key: container.key,
+          timestamp: timestamp,
         })
       }
     })

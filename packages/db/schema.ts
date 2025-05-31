@@ -35,3 +35,16 @@ export const websitePings = createTable(
   },
   (t) => [index("websites_key_idx").on(t.key)],
 )
+
+export const containerPings = createTable(
+  "container_ping",
+  {
+    key: varchar("key", { length: 64 }).notNull(),
+    timestamp: timestamp("timestamp", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    error: varchar("error", { length: 256 }),
+  },
+  (t) => [index("containers_key_idx").on(t.key)],
+)

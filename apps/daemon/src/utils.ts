@@ -54,3 +54,25 @@ export async function pingWebsite(
     return { success: false, error: "curl command failed" }
   }
 }
+
+export async function pingContainer(
+  containerName: string,
+): Promise<{ success: true } | { success: false; error: string }> {
+  try {
+    const { exitCode } = await execa("docker", [
+      "inspect",
+      "--format",
+      "{{.State.Running}}",
+      containerName,
+    ])
+    if (exitCode !== 0) {
+      return {
+        success: false,
+        error: `docker inspect failed with exit code ${exitCode}`,
+      }
+    }
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: "docker command failed" }
+  }
+}

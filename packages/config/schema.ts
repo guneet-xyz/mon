@@ -54,10 +54,38 @@ export const WebsiteSchema = z
 
 export type Website = z.infer<typeof WebsiteSchema>
 
+export const ContainerSchema = z
+  .object({
+    key: z.string(),
+    name: z.string().optional(),
+    container_name: z.string(),
+  })
+  .pipe(
+    z.transform<
+      {
+        key: string
+        name?: string
+        container_name: string
+      },
+      {
+        key: string
+        name: string
+        container_name: string
+      }
+    >((data) => ({
+      key: data.key,
+      name: data.name ?? data.key,
+      container_name: data.container_name,
+    })),
+  )
+
+export type Container = z.infer<typeof ContainerSchema>
+
 export const ConfigSchema = z
   .object({
     hosts: z.array(HostSchema).default([]),
     websites: z.array(WebsiteSchema).default([]),
+    containers: z.array(ContainerSchema).default([]),
   })
   .refine(
     (config) =>
@@ -73,6 +101,14 @@ export const ConfigSchema = z
       new Set(config.websites.map((w) => w.key)).size,
     {
       error: "Duplicate keys for website",
+    },
+  )
+  .refine(
+    (config) =>
+      config.containers.map((c) => c.key).length ===
+      new Set(config.containers.map((c) => c.key)).size,
+    {
+      error: "Duplicate keys for container",
     },
   )
 
