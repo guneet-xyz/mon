@@ -13,11 +13,7 @@
     "noUncheckedIndexedAccess": true,
     "checkJs": true,
     /* Bundled projects */
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "ES2023"
-    ],
+    "lib": ["dom", "dom.iterable", "ES2023"],
     "noEmit": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -30,19 +26,9 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./apps/wall/src/*"
-      ]
+      "@/*": ["./apps/wall/src/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.cjs",
-    "**/*.js"
-  ],
-  "exclude": [
-    "apps/daemon/dist",
-    "apps/daemon/daemon.cjs"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.js"],
+  "exclude": ["apps/daemon/dist", "apps/daemon/daemon.cjs"]
 }
