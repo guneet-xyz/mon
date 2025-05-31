@@ -1,4 +1,4 @@
-import { pingHost } from "./utils"
+import { pingHost, pingWebsite } from "./utils"
 
 import { getConfig } from "@mon/config"
 import { db } from "@mon/db"
@@ -28,6 +28,34 @@ async function main() {
         console.log(`Host ${host.key} pinged successfully:`, resp.latency)
         await db.insert(hostPings).values({
           key: host.key,
+          timestamp: timestamp,
+          latency: resp.latency,
+        })
+      }
+    })
+    const job = new SimpleIntervalJob(
+      { seconds: 60, runImmediately: true },
+      task,
+    )
+    scheduler.addSimpleIntervalJob(job)
+  }
+
+  for (const website of config.websites) {
+    const task = new Task(`website-${website.key}`, async () => {
+      console.log(`Pinging website: ${website.key} (${website.url})`)
+      const timestamp = new Date()
+      const resp = await pingWebsite(website.url)
+      if (!resp.success) {
+        console.error(`Error pinging website ${website.key}:`, resp.error)
+        await db.insert(hostPings).values({
+          key: website.key,
+          timestamp: timestamp,
+          error: resp.error,
+        })
+      } else {
+        console.log(`Website ${website.key} pinged successfully:`, resp.latency)
+        await db.insert(hostPings).values({
+          key: website.key,
           timestamp: timestamp,
           latency: resp.latency,
         })
