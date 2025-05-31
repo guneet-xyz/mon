@@ -1,7 +1,7 @@
 import { Status } from "@/components/status"
 import { Card, CardContent } from "@/components/ui/card"
 
-import type { Host, Website } from "@mon/config/schema"
+import type { Website } from "@mon/config/schema"
 import { db } from "@mon/db"
 import { websitePings } from "@mon/db/schema"
 import dayjs from "dayjs"

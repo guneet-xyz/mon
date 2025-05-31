@@ -23,12 +23,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${clash.variable}`}>
-      <Providers>
-        <body className="">
+      <body>
+        <Providers>
           <Navbar />
           <div className="px-2">{children}</div>
-        </body>
-      </Providers>
+        </Providers>
+      </body>
     </html>
   )
 }

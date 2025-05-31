@@ -6,6 +6,7 @@ import { db } from "@mon/db"
 import { hostPings } from "@mon/db/schema"
 import dayjs from "dayjs"
 import { and, desc, eq, gte } from "drizzle-orm"
+import Link from "next/link"
 
 export async function HostCard({ host }: { host: Host }) {
   const lastPing = await db
@@ -32,16 +33,18 @@ export async function HostCard({ host }: { host: Host }) {
         : ("online" as const)
 
   return (
-    <Card className="w-[300px]">
-      <CardContent>
-        <div className="flex items-center justify-between">
-          <div className="font-display">{host.name}</div>
-          <Status status={onlineStatus} />
-        </div>
-        <div className="font-display text-sm text-neutral-500">
-          {host.address}
-        </div>
-      </CardContent>
-    </Card>
+    <Link href={`/host/${host.key}`}>
+      <Card className="w-[300px]">
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="font-display">{host.name}</div>
+            <Status status={onlineStatus} />
+          </div>
+          <div className="font-display text-sm text-neutral-500">
+            {host.address}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
