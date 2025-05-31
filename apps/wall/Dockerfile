@@ -11,7 +11,7 @@ COPY packages/db/package.json /src/packages/db/package.json
 RUN bun install --frozen-lockfile
 COPY . /src
 WORKDIR /src/apps/wall
-RUN bun run build
+RUN SKIP_ENV_VALIDATION=1 bun run build
 
 FROM oven/bun:1
 
