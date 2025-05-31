@@ -12,8 +12,6 @@ jobs:
     environment: linting
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.14.0
-      - run: npm ci
-      - run: npm run lint
+      - uses: actions/setup-bun@v4
+      - run: bun i --frozen-lockfile
+      - run: bun run lint

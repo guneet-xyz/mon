@@ -11,11 +11,11 @@
     "packages/env"
   ],
   "scripts": {
-    "format:check": "npx prettier --check .",
-    "format:write": "npx prettier --write .",
-    "lint": "npm run lint:tsc && npm run lint:next",
+    "format:check": "bunx prettier --check .",
+    "format:write": "bunx prettier --write .",
+    "lint": "bun run lint:tsc && bun run lint:next",
     "lint:next": "cd apps/wall && next lint",
-    "lint:tsc": "npx tsc --noEmit"
+    "lint:tsc": "bunx tsc --noEmit"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
@@ -23,7 +23,6 @@
     "@typescript-eslint/typescript-estree": "^8.25.0",
     "prettier": "^3.5.3",
     "prettier-plugin-packagejson": "^2.5.10",
-    "prettier-plugin-tailwindcss": "^0.6.11",
-    "tsx": "^4.19.3"
+    "prettier-plugin-tailwindcss": "^0.6.11"
   }
 }

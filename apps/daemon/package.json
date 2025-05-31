@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npx esbuild src/index.ts --bundle --platform=node --outfile=dist/daemon.cjs",
-    "start": "node dist/daemon.cjs"
+    "build": "bunx esbuild src/index.ts --bundle --platform=node --outfile=dist/daemon.cjs",
+    "dev": "bun src/index.ts",
+    "start": "bun dist/daemon.cjs"
   },
   "dependencies": {
     "execa": "^9.6.0",
