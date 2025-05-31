@@ -14,6 +14,7 @@
     "@mon/db": "0.1.0",
     "@mon/env": "0.1.0",
     "@radix-ui/react-select": "^2.2.5",
+    "@radix-ui/react-slot": "^1.2.3",
     "@t3-oss/env-nextjs": "^0.12.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -22,8 +23,10 @@
     "geist": "^1.4.2",
     "lucide-react": "^0.511.0",
     "next": "14.2.29",
+    "next-themes": "^0.4.6",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "react-icons": "^5.5.0",
     "recharts": "2.15.3",
     "tailwind-merge": "^3.3.0",
     "zod": "^3.24.2"

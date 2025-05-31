@@ -1,5 +1,7 @@
 import "@/styles/globals.css"
 
+import { Providers } from "./_components/providers"
+
 import { GeistSans } from "geist/font/sans"
 import { type Metadata } from "next"
 import localFont from "next/font/local"
@@ -20,7 +22,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${clash.variable}`}>
-      <body>{children}</body>
+      <Providers>
+        <body className="">{children}</body>
+      </Providers>
     </html>
   )
 }

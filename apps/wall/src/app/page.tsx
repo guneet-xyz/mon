@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card"
 
 import { Host } from "./_components/host"
+import { ThemeToggle } from "./_components/theme-toggle"
 
 import { getConfig } from "@mon/config"
 
@@ -11,6 +12,7 @@ export default async function HomePage() {
   return (
     <div>
       <div className="font-display text-4xl font-bold">MON</div>
+      <ThemeToggle />
 
       {empty ? (
         <Card className="mx-auto w-[400px]">
