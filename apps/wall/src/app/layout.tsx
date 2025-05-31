@@ -1,5 +1,6 @@
 import "@/styles/globals.css"
 
+import { Navbar } from "./_components/navbar"
 import { Providers } from "./_components/providers"
 
 import { GeistSans } from "geist/font/sans"
@@ -23,7 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable} ${clash.variable}`}>
       <Providers>
-        <body className="">{children}</body>
+        <body className="">
+          <Navbar />
+          <div className="px-2">{children}</div>
+        </body>
       </Providers>
     </html>
   )
