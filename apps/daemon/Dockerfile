@@ -8,6 +8,7 @@ COPY packages/config/package.json /src/packages/config/package.json
 COPY packages/env/package.json /src/packages/env/package.json
 COPY packages/db/package.json /src/packages/db/package.json
 
+WORKDIR /src
 RUN bun install --frozen-lockfile
 COPY . /src
 WORKDIR /src/app/daemon
