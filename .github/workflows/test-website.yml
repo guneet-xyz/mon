@@ -1,0 +1,19 @@
+name: test-website
+on:
+  pull_request:
+    paths:
+      - .github/workflows/test-website.yml
+      - apps/website/**
+      - packages/**
+  workflow_dispatch:
+
+jobs:
+  test-docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: build
+        run: docker build -t website -f apps/website/Dockerfile .
