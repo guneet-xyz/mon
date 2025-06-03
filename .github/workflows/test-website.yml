@@ -4,7 +4,7 @@ on:
     paths:
       - .github/workflows/test-website.yml
       - apps/website/**
-      - apps/packages/**
+      - packages/**
   workflow_dispatch:
 
 concurrency:

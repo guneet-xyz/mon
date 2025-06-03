@@ -6,7 +6,7 @@ on:
     paths:
       - .github/workflows/deploy-daemon.yml
       - apps/daemon/**
-      - apps/packages/**
+      - packages/**
   workflow_dispatch:
 
 concurrency:
