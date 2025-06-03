@@ -7,10 +7,6 @@ on:
       - packages/**
   workflow_dispatch:
 
-concurrency:
-  group: deploy-daemon
-  cancel-in-progress: false
-
 jobs:
   test-docker-build:
     runs-on: ubuntu-latest
