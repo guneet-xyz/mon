@@ -1,7 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card"
-
-import { HostCard } from "./_components/host/card"
-import { WebsiteCard } from "./_components/website/card"
+import { Tile } from "@/components/tiles"
+import { generateTiles } from "@/lib/server/tile-generation"
 
 import { getConfig } from "@mon/config"
 
@@ -10,36 +8,27 @@ export const dynamic = "force-dynamic"
 export default async function HomePage() {
   const config = await getConfig()
 
-  return (
-    <div className="">
-      <div className="space-y-4">
-        <div className="font-display text-2xl font-semibold">Hosts</div>
-        {config.hosts.length === 0 ? (
-          <Card className="mx-auto w-[400px]">
-            <CardContent>No monitors have been configured</CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {config.hosts.map((host) => (
-              <HostCard key={host.key} host={host} />
-            ))}
-          </div>
-        )}
-      </div>
+  const { rows, columns } = config.options.desktop
 
-      <div className="mt-8 space-y-4">
-        <div className="font-display text-2xl font-semibold">Websites</div>
-        {config.websites.length === 0 ? (
-          <Card className="mx-auto w-[400px]">
-            <CardContent>No websites have been configured</CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {config.websites.map((website) => (
-              <WebsiteCard key={website.key} website={website} />
-            ))}
-          </div>
-        )}
+  const data = generateTiles(config)
+  if (!data.success) {
+    return <div>Error: {data.error}</div>
+  }
+
+  const { tiles } = data
+
+  return (
+    <div className="flex h-screen w-full flex-col items-center justify-center p-4">
+      <div
+        className="grid h-fit w-fit"
+        style={{
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+        }}
+      >
+        {tiles.map((tile, index) => (
+          <Tile key={index} tile={tile} />
+        ))}
       </div>
     </div>
   )

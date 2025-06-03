@@ -25,8 +25,7 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} ${clash.variable}`}>
       <body>
         <Providers>
-          <Navbar />
-          <div className="px-2">{children}</div>
+          <div>{children}</div>
         </Providers>
       </body>
     </html>

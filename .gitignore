@@ -8,3 +8,5 @@ apps/daemon/daemon.cjs
 
 apps/website/.env
 packages/db/.env
+
+config.dev.toml

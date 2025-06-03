@@ -8,7 +8,7 @@ export const env = createEnv({
       .default("development"), // TODO: do we need this?
     APP: z.enum(["website", "daemon", "script"]),
     DATABASE_URL: z.string().url(),
-    CONFIG_PATH: z.string().default("/tmp/mon/config.toml"),
+    CONFIG_PATH: z.string().default("/etc/mon/config.toml"),
   },
 
   clientPrefix: "NEXT_PUBLIC_",
