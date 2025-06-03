@@ -11,7 +11,7 @@ COPY packages/db/package.json /src/packages/db/package.json
 WORKDIR /src
 RUN bun install --frozen-lockfile
 COPY . /src
-WORKDIR /src/app/daemon
+WORKDIR /src/apps/daemon
 RUN bun run build
 
 FROM oven/bun:1 AS base
