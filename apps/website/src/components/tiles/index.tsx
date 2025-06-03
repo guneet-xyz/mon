@@ -2,6 +2,7 @@ import type { Tile } from "@/lib/server/tile-generation"
 
 import { ContainerTile } from "./container"
 import { EmptyTile } from "./empty"
+import { HiddenTile } from "./hidden"
 import { HostTile } from "./host"
 import { WebsiteTile } from "./website"
 
@@ -9,7 +10,7 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
-        <ContainerTile key={tile.key} />
+        <ContainerTile dbKey={tile.key} />
       </Container>
     )
   }
@@ -17,7 +18,7 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "host") {
     return (
       <Container {...tile.location}>
-        <HostTile key={tile.key} />
+        <HostTile dbKey={tile.key} />
       </Container>
     )
   }
@@ -25,14 +26,22 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "website") {
     return (
       <Container {...tile.location}>
-        <WebsiteTile key={tile.key} />
+        <WebsiteTile dbKey={tile.key} />
+      </Container>
+    )
+  }
+
+  if (tile.type === "empty") {
+    return (
+      <Container {...tile.location}>
+        <EmptyTile />
       </Container>
     )
   }
 
   return (
     <Container {...tile.location}>
-      <EmptyTile />
+      <HiddenTile />
     </Container>
   )
 }

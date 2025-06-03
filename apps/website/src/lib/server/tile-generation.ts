@@ -1,6 +1,7 @@
 import type { Config } from "@mon/config/schema"
 
 export type Tile = (
+  | { type: "hidden" }
   | { type: "empty" }
   | {
       type: "host"
@@ -60,6 +61,8 @@ export function generateTiles(
   const r_max = config.options.desktop.rows - 1
   const c_max = config.options.desktop.columns - 1
 
+  console.log("r_max:", r_max, "c_max:", c_max)
+
   const tiles_available: Array<Array<boolean>> = Array.from(
     {
       length: config.options.desktop.rows,
@@ -67,14 +70,26 @@ export function generateTiles(
     () => Array.from({ length: config.options.desktop.columns }, () => true),
   )
 
-  for (const host of config.hosts) {
-    const r_start = host.row_start ?? 0
-    const r_span = host.row_span ?? 1
-    const r_end = host.row_start ? host.row_start + r_span : r_max
+  for (const [tile_index, tile] of config.tiles.entries()) {
+    const tile_data =
+      tile.type === "host" ||
+      tile.type === "container" ||
+      tile.type === "website"
+        ? {
+            type: tile.type,
+            key: tile.key,
+          }
+        : tile.type === "empty"
+          ? { type: "empty" as const }
+          : { type: "hidden" as const }
 
-    const c_start = host.col_start ?? 0
-    const c_span = host.col_span ?? 1
-    const c_end = host.col_start ? host.col_start + c_span : c_max
+    const r_start = tile.row_start ?? 0
+    const r_span = tile.row_span ?? 1
+    const r_end = tile.row_start ? tile.row_start + r_span : r_max
+
+    const c_start = tile.col_start ?? 0
+    const c_span = tile.col_span ?? 1
+    const c_end = tile.col_start ? tile.col_start + c_span : c_max
 
     let found = false
 
@@ -83,29 +98,28 @@ export function generateTiles(
         if (
           canTileFit({
             tiles_available,
-            r_start: r_start,
+            r_start: r,
             r_span: r_span,
             r_max: r_max,
-            c_start: c_start,
+            c_start: c,
             c_span: c_span,
             c_max: c_max,
           })
         ) {
           found = true
 
-          for (let rr = r_start; rr < r_start + r_span; rr++) {
-            for (let cc = c_start; cc < c_start + c_span; cc++) {
+          for (let rr = r; rr < r + r_span; rr++) {
+            for (let cc = c; cc < c + c_span; cc++) {
               tiles_available[rr]![cc] = false
             }
           }
 
           tiles.push({
-            type: "host",
-            key: host.key,
+            ...tile_data,
             location: {
-              row_start: r_start,
+              row_start: r,
               row_span: r_span,
-              col_start: c_start,
+              col_start: c,
               col_span: c_span,
             },
           })
@@ -113,12 +127,13 @@ export function generateTiles(
           break
         }
       }
+      if (found) break
     }
 
     if (!found) {
       return {
         success: false,
-        error: `Could not fit host tile for ${host.key} at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
+        error: `Could not fit tile at index ${tile_index} for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
       }
     }
   }
@@ -127,7 +142,7 @@ export function generateTiles(
     for (let c = 0; c <= c_max; c++) {
       if (tiles_available[r]![c]) {
         tiles.push({
-          type: "empty",
+          type: config.options.default_tile,
           location: {
             row_start: r,
             row_span: 1,
