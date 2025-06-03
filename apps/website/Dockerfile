@@ -19,4 +19,5 @@ FROM oven/bun:1
 COPY --from=build /src/apps/website/.next/standalone /app
 
 EXPOSE 3000
-ENTRYPOINT [ "bun", "run", "/app/apps/website/server.js" ]
+WORKDIR /app
+ENTRYPOINT [ "bun", "run", "apps/website/server.js" ]
