@@ -1,0 +1,23 @@
+name: test-daemon
+on:
+  pull_request:
+    paths:
+      - .github/workflows/test-daemon.yml
+      - apps/daemon/**
+      - apps/packages/**
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-daemon
+  cancel-in-progress: false
+
+jobs:
+  test-docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: build
+        run: docker build -t daemon -f apps/daemon/Dockerfile .
