@@ -6,5 +6,5 @@ apps/daemon/.env
 apps/daemon/dist
 apps/daemon/daemon.cjs
 
-apps/wall/.env
+apps/website/.env
 packages/db/.env

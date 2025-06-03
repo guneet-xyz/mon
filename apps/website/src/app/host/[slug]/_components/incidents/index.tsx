@@ -43,13 +43,13 @@ export async function HostIncidents({ hostKey }: { hostKey: string }) {
 
   return (
     <div className="p-4">
-      <div className="font-display mb-4 text-2xl font-bold">Incidents</div>
+      <div className="mb-4 font-display text-2xl font-bold">Incidents</div>
       {incidents.map((incident, index) => (
         <div
           key={index}
           className="mb-2 rounded-xl border border-red-700/50 bg-red-900/30 p-4"
         >
-          <div className="font-display flex justify-between text-sm text-neutral-500">
+          <div className="flex justify-between font-display text-sm text-neutral-500">
             <div>
               {`Started ${dayjs(incident.start).fromNow()} and lasted ${dayjs(incident.start).to(incident.end, true)}`}
             </div>

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "apps/wall",
+    "apps/website",
     "apps/daemon",
     "packages/db",
     "packages/config",
@@ -14,7 +14,7 @@
     "format:check": "bunx prettier --check .",
     "format:write": "bunx prettier --write .",
     "lint": "bun run lint:tsc && bun run lint:next",
-    "lint:next": "cd apps/wall && next lint",
+    "lint:next": "cd apps/website && next lint",
     "lint:tsc": "bunx tsc --noEmit"
   },
   "devDependencies": {

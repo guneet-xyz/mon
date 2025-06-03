@@ -3,7 +3,7 @@ FROM oven/bun:1 AS install
 COPY package.json /src/package.json
 COPY bun.lock /src/bun.lock
 COPY apps/daemon/package.json /src/apps/daemon/package.json
-COPY apps/wall/package.json /src/apps/wall/package.json
+COPY apps/website/package.json /src/apps/website/package.json
 COPY packages/config/package.json /src/packages/config/package.json
 COPY packages/env/package.json /src/packages/env/package.json
 COPY packages/db/package.json /src/packages/db/package.json
