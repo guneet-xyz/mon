@@ -13,7 +13,6 @@ export async function getConfig() {
   const text = await readFile(env.CONFIG_PATH, "utf-8")
   const parsed = parse(text)
   const zodParsed = ConfigSchema.parse(parsed)
-  console.log("Config loaded:", zodParsed)
   return zodParsed
 }
 

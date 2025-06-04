@@ -1,3 +1,4 @@
+import { DynamicIcon } from "@/components/dynamic-icon"
 import { StatusDot } from "@/components/status-dot"
 import { cn } from "@/lib/utils"
 
@@ -37,13 +38,17 @@ export async function ContainerTile({
   return (
     <div className="relative flex h-full w-full items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 dark:border-emerald-950/20 dark:bg-emerald-700/25">
       <StatusDot status={"online"} className="absolute top-2 right-2" />
-      <div
-        className={cn("font-display dark:text-emerald-100", {
-          "rotate-90": orientation === "vertical",
-        })}
-      >
-        {title}
-      </div>
+      {config.icon ? (
+        <DynamicIcon icon={config.icon} />
+      ) : (
+        <div
+          className={cn("font-display dark:text-emerald-100", {
+            "rotate-90": orientation === "vertical",
+          })}
+        >
+          {title}
+        </div>
+      )}
     </div>
   )
 }
