@@ -10,7 +10,11 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
-        <ContainerTile dbKey={tile.key} />
+        <ContainerTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
       </Container>
     )
   }
@@ -18,7 +22,11 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "host") {
     return (
       <Container {...tile.location}>
-        <HostTile dbKey={tile.key} />
+        <HostTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
       </Container>
     )
   }
@@ -26,7 +34,11 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "website") {
     return (
       <Container {...tile.location}>
-        <WebsiteTile dbKey={tile.key} />
+        <WebsiteTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
       </Container>
     )
   }
@@ -60,7 +72,7 @@ function Container({
 }) {
   return (
     <div
-      className="m-2 max-h-96 min-h-20 max-w-96 min-w-20"
+      className="m-1 max-h-96 min-h-20 max-w-96 min-w-20"
       style={{
         gridColumnStart: col_start + 1,
         gridColumnEnd: col_start + col_span + 1,

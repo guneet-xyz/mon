@@ -22,26 +22,25 @@ const TileSchema = z.object({
   col_span: z.number().optional(),
 })
 
+const MonitorSchema = TileSchema.extend({
+  key: z.string(),
+  name: z.string().optional(),
+})
+
 export const ConfigSchema = z.object({
   options: OptionsSchema,
   tiles: z.array(
     z.discriminatedUnion("type", [
-      TileSchema.extend({
+      MonitorSchema.extend({
         type: z.literal("host"),
-        key: z.string(),
-        name: z.string().optional(),
         address: z.string(),
       }),
-      TileSchema.extend({
+      MonitorSchema.extend({
         type: z.literal("website"),
-        key: z.string(),
-        name: z.string().optional(),
         url: z.string(),
       }),
-      TileSchema.extend({
+      MonitorSchema.extend({
         type: z.literal("container"),
-        key: z.string(),
-        name: z.string().optional(),
         container_name: z.string(),
       }),
       TileSchema.extend({
