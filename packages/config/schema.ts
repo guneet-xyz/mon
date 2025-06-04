@@ -42,6 +42,7 @@ export const ConfigSchema = z.object({
       MonitorSchema.extend({
         type: z.literal("container"),
         container_name: z.string(),
+        docker_socket: z.string().default("unix:///var/run/docker.sock"),
       }),
       TileSchema.extend({
         type: z.literal("empty"),

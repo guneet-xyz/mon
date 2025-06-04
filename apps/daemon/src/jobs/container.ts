@@ -10,7 +10,10 @@ export function scheduleContainerJob(container: Container) {
       `Pinging container: ${container.key} (${container.container_name})`,
     )
     const timestamp = new Date()
-    const resp = await pingContainer(container.container_name)
+    const resp = await pingContainer(
+      container.container_name,
+      container.docker_socket,
+    )
     if (!resp.success) {
       console.error(`Error pinging container ${container.key}:`, resp.error)
       await db.insert(websitePings).values({
@@ -30,13 +33,14 @@ export function scheduleContainerJob(container: Container) {
 
 async function pingContainer(
   containerName: string,
+  socket: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
+  const unixSocket = socket.startsWith("unix://") ? socket.slice(7) : null
   try {
-    const { exitCode } = await execa("docker", [
-      "inspect",
-      "--format",
-      "{{.State.Running}}",
-      containerName,
+    const { exitCode, stdout } = await execa("curl", [
+      "--silent",
+      ...(unixSocket ? ["--unix-socket", unixSocket] : []),
+      `${unixSocket ? "http://whatever" : socket}/v1.41/containers/${containerName}/json`,
     ])
     if (exitCode !== 0) {
       return {
@@ -44,8 +48,14 @@ async function pingContainer(
         error: `docker inspect failed with exit code ${exitCode}`,
       }
     }
-    return { success: true }
+    const output = JSON.parse(stdout)
+    const running = output.State?.Status === "running"
+    if (running) return { success: true }
+    return {
+      success: false,
+      error: `container is offline`,
+    }
   } catch (error) {
-    return { success: false, error: "docker command failed" }
+    return { success: false, error: (error as Error).message }
   }
 }
