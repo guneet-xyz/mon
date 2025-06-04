@@ -1,11 +1,11 @@
 import { db } from "@mon/db"
 import { execa } from "execa"
+import { scheduleJob } from "node-schedule"
 import { Host } from "packages/config/schema"
 import { hostPings } from "packages/db/schema"
-import { SimpleIntervalJob, Task } from "toad-scheduler"
 
-export async function constructHostJob(host: Host): Promise<SimpleIntervalJob> {
-  const task = new Task(`host-${host.key}`, async () => {
+export function scheduleHostJob(host: Host) {
+  scheduleJob(`host-${host.key}`, "0 * * * * *", async () => {
     console.log(`Pinging host: ${host.key} (${host.address})`)
     const timestamp = new Date()
     const resp = await pingHost(host.address)
@@ -25,8 +25,6 @@ export async function constructHostJob(host: Host): Promise<SimpleIntervalJob> {
       })
     }
   })
-  const job = new SimpleIntervalJob({ seconds: 60, runImmediately: true }, task)
-  return job
 }
 
 async function pingHost(

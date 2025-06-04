@@ -1,11 +1,8 @@
-import { constructContainerJob } from "./jobs/container"
-import { constructHostJob } from "./jobs/host"
-import { constructWebsiteJob } from "./jobs/website"
+import { scheduleContainerJob } from "./jobs/container"
+import { scheduleHostJob } from "./jobs/host"
+import { scheduleWebsiteJob } from "./jobs/website"
 
 import { getConfig } from "@mon/config"
-import { ToadScheduler } from "toad-scheduler"
-
-const scheduler = new ToadScheduler()
 
 async function main() {
   console.log("main")
@@ -14,27 +11,23 @@ async function main() {
 
   const hosts = config.tiles.filter((tile) => tile.type === "host")
   for (const host of hosts) {
-    const job = await constructHostJob(host)
-    scheduler.addSimpleIntervalJob(job)
+    scheduleHostJob(host)
   }
 
   const websites = config.tiles.filter((tile) => tile.type === "website")
   for (const website of websites) {
-    const job = await constructWebsiteJob(website)
-    scheduler.addSimpleIntervalJob(job)
+    scheduleWebsiteJob(website)
   }
 
   const containers = config.tiles.filter((tile) => tile.type === "container")
   for (const container of containers) {
-    const job = await constructContainerJob(container)
-    scheduler.addSimpleIntervalJob(job)
+    scheduleContainerJob(container)
   }
 }
 
 function gracefulExit(event: string) {
   console.log(`Received ${event}. Initiating graceful shutdown...`)
-  scheduler.stop()
-  console.log("Scheduler stopped.")
+  console.log("No cleanup needed.")
   console.log("Graceful shutdown complete.")
   process.exit(0)
 }

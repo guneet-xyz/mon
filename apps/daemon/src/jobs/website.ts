@@ -2,12 +2,10 @@ import { Website } from "@mon/config/schema"
 import { db } from "@mon/db"
 import { websitePings } from "@mon/db/schema"
 import { execa } from "execa"
-import { SimpleIntervalJob, Task } from "toad-scheduler"
+import { scheduleJob } from "node-schedule"
 
-export async function constructWebsiteJob(
-  website: Website,
-): Promise<SimpleIntervalJob> {
-  const task = new Task(`website-${website.key}`, async () => {
+export function scheduleWebsiteJob(website: Website) {
+  scheduleJob(`website-${website.key}`, "0 * * * * *", async () => {
     console.log(`Pinging website: ${website.key} (${website.url})`)
     const timestamp = new Date()
     const resp = await pingWebsite(website.url)
@@ -27,8 +25,6 @@ export async function constructWebsiteJob(
       })
     }
   })
-  const job = new SimpleIntervalJob({ seconds: 60, runImmediately: true }, task)
-  return job
 }
 
 async function pingWebsite(

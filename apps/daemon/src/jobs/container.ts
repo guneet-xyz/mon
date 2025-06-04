@@ -2,12 +2,10 @@ import { Container } from "@mon/config/schema"
 import { db } from "@mon/db"
 import { websitePings } from "@mon/db/schema"
 import { execa } from "execa"
-import { SimpleIntervalJob, Task } from "toad-scheduler"
+import { scheduleJob } from "node-schedule"
 
-export async function constructContainerJob(
-  container: Container,
-): Promise<SimpleIntervalJob> {
-  const task = new Task(`container-${container.key}`, async () => {
+export function scheduleContainerJob(container: Container) {
+  scheduleJob(`container-${container.key}`, "0 * * * * *", async () => {
     console.log(
       `Pinging container: ${container.key} (${container.container_name})`,
     )
@@ -28,8 +26,6 @@ export async function constructContainerJob(
       })
     }
   })
-  const job = new SimpleIntervalJob({ seconds: 60, runImmediately: true }, task)
-  return job
 }
 
 async function pingContainer(
