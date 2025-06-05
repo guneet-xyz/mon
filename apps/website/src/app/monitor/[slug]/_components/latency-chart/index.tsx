@@ -1,14 +1,11 @@
-import { HostLatencyChart } from "./host"
+import { getPings } from "@/lib/server/monitors"
+
+import { LatencyChartClientSide } from "./client"
 
 import type { Monitor } from "@mon/config/schema"
 
-export function LatencyChart({ monitor }: { monitor: Monitor }) {
-  if (monitor.type === "host") {
-    return (
-      <div>
-        <HostLatencyChart dbKey={monitor.key} />
-      </div>
-    )
-  }
-  return <div>not implemented</div>
+export async function LatencyChart({ monitor }: { monitor: Monitor }) {
+  const pings = await getPings(monitor.type, monitor.key)
+  if (!pings) return <div>This monitor does not support latency chart</div>
+  return <LatencyChartClientSide pings={pings} />
 }

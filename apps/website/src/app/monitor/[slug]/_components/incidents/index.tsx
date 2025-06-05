@@ -1,49 +1,29 @@
-import { db } from "@mon/db"
-import { hostPings } from "@mon/db/schema"
+import { getIncidents } from "@/lib/server/monitors"
+
+import type { Monitor } from "@mon/config/schema"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
-import { and, desc, eq, gte, isNotNull } from "drizzle-orm"
 
 dayjs.extend(relativeTime)
-export async function HostIncidents({ hostKey }: { hostKey: string }) {
-  const badPings = (await db
-    .select({
-      timestamp: hostPings.timestamp,
-      error: hostPings.error,
-    })
-    .from(hostPings)
-    .where(
-      and(
-        eq(hostPings.key, hostKey),
-        isNotNull(hostPings.error),
-        gte(hostPings.timestamp, dayjs().subtract(1, "week").toDate()),
-      ),
+export async function Incidents({
+  type,
+  dbKey,
+}: {
+  type: Monitor["type"]
+  dbKey: string
+}) {
+  const incidents = await getIncidents(type, dbKey)
+
+  if (incidents.length === 0) {
+    return (
+      <div className="p-4 font-display text-neutral-500">
+        No incidents in the last 24 hours.
+      </div>
     )
-    .orderBy(desc(hostPings.timestamp))) as Array<{
-    timestamp: Date
-    error: string
-  }>
-
-  const incidents: Array<{ start: Date; end: Date; message: string }> = []
-
-  let currentIncident: { start: Date; end: Date; message: string } | null = null
-  for (const ping of badPings) {
-    const message = ping.error === "timeout" ? "Timeout" : ping.error
-    if (!currentIncident || currentIncident.message !== message) {
-      currentIncident = {
-        start: ping.timestamp,
-        end: dayjs(ping.timestamp).add(1, "minute").toDate(),
-        message,
-      }
-      incidents.push(currentIncident)
-    } else {
-      currentIncident.end = dayjs(ping.timestamp).add(1, "minute").toDate()
-    }
   }
 
   return (
     <div className="p-4">
-      <div className="mb-4 font-display text-2xl font-bold">Incidents</div>
       {incidents.map((incident, index) => (
         <div
           key={index}
@@ -58,9 +38,7 @@ export async function HostIncidents({ hostKey }: { hostKey: string }) {
               {dayjs(incident.end).format("YYYY-MM-DD HH:mm:ss")}
             </div>
           </div>
-          <div className="font-display dark:text-red-300">
-            {incident.message}
-          </div>
+          <div className="font-display dark:text-red-300">{incident.error}</div>
         </div>
       ))}
     </div>

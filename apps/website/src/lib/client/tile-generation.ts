@@ -1,5 +1,7 @@
 import type { Config, Tile } from "@mon/config/schema"
 
+const MAX_RATIO = 1.25
+
 export type GeneratedTile = (
   | { type: "hidden" }
   | { type: "empty" }
@@ -283,10 +285,10 @@ export function generateTiles(
   while (rows < 20 && cols < 20) {
     rows++
     cols++
-    if (WHratio(rows, cols) > 1.5) {
+    if (WHratio(rows, cols) > MAX_RATIO) {
       cols++
     }
-    if (HWratio(rows, cols) > 1.5) {
+    if (HWratio(rows, cols) > MAX_RATIO) {
       rows++
     }
 
@@ -320,7 +322,10 @@ export function generateTiles(
   cols++
 
   while (true) {
-    if (WHratio(rows - 1, cols) <= 1.5 && HWratio(rows - 1, cols) <= 1.5) {
+    if (
+      WHratio(rows - 1, cols) <= MAX_RATIO &&
+      HWratio(rows - 1, cols) <= MAX_RATIO
+    ) {
       const attempt = attemptLayout({
         priority_list_of_tiles,
         rows: rows - 1,
@@ -333,7 +338,10 @@ export function generateTiles(
         continue
       }
     }
-    if (WHratio(rows, cols - 1) <= 1.5 && HWratio(rows, cols - 1) <= 1.5) {
+    if (
+      WHratio(rows, cols - 1) <= MAX_RATIO &&
+      HWratio(rows, cols - 1) <= MAX_RATIO
+    ) {
       const attempt = attemptLayout({
         priority_list_of_tiles,
         rows,

@@ -2,7 +2,7 @@
 
 import { DynamicIcon } from "@/components/dynamic-icon"
 import { StatusDot } from "@/components/status-dot"
-import { getMonitorConfig } from "@/lib/server/actions/get-monitor-config"
+import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 import { cn } from "@/lib/utils"
 
 import { useQuery } from "@tanstack/react-query"
@@ -16,20 +16,21 @@ export function ContainerTile({
   r_span: number
   c_span: number
 }) {
-  const { data: config, isFetched } = useQuery({
+  const { data, isFetched } = useQuery({
     queryKey: ["monitor-config", "container", dbKey],
-    queryFn: async () => await getMonitorConfig("container", dbKey),
+    queryFn: async () => await getMonitorTileInfo("container", dbKey),
   })
-  if (!isFetched) {
+  if (!isFetched || !data) {
     return <div>loading</div>
   }
+
+  const { config, status } = data
   if (!config) {
     throw new Error(
       `Container tile with key "${dbKey}" not found in configuration.`,
     )
   }
   let title: string
-  let description: string | undefined
   const name = config.name ?? config.key
 
   if (r_span === 1 && c_span === 1) {
@@ -45,8 +46,8 @@ export function ContainerTile({
   }
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 dark:border-emerald-950/20 dark:bg-emerald-700/25">
-      <StatusDot status={"online"} className="absolute top-2 right-2" />
+    <div className="relative flex h-full w-full items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50">
+      <StatusDot status={status} className="absolute top-2 right-2" />
       {config.icon ? (
         <DynamicIcon icon={config.icon} />
       ) : (

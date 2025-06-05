@@ -12,7 +12,7 @@ import {
 import dayjs from "dayjs"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
-export function HostLatencyChartClientSide({
+export function LatencyChartClientSide({
   pings,
 }: {
   pings: { timestamp: Date; latency: number }[]
