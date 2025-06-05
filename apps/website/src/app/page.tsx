@@ -8,8 +8,6 @@ export const dynamic = "force-dynamic"
 export default async function HomePage() {
   const config = await getConfig()
 
-  const { rows, columns } = config.options.desktop
-
   const data = generateTiles(config)
   if (!data.success) {
     return <div>Error: {data.error}</div>
@@ -22,8 +20,8 @@ export default async function HomePage() {
       <div
         className="grid h-fit w-fit"
         style={{
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+          gridTemplateColumns: `repeat(${data.layout.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${data.layout.rows}, minmax(0, 1fr))`,
         }}
       >
         {tiles.map((tile, index) => (

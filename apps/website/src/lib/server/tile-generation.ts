@@ -41,25 +41,33 @@ function canTileFit({
   c_span: number
   c_max: number
 }): boolean {
-  if (r_start < 0 || c_start < 0 || r_start > r_max || c_start > c_max)
+  // 1-index inputs
+
+  if (r_start < 1 || c_start < 1 || r_start > r_max || c_start > c_max)
     return false
   for (let r = r_start; r < r_start + r_span; r++) {
     if (r > r_max) return false
     for (let c = c_start; c < c_start + c_span; c++) {
       if (c > c_max) return false
-      if (tiles_available[r]![c] === false) return false
+      if (tiles_available[r - 1]![c - 1] === false) return false
     }
   }
   return true
 }
 
-export function generateTiles(
-  config: Config,
-): { success: true; tiles: Array<Tile> } | { success: false; error: string } {
+export function generateTiles(config: Config):
+  | {
+      success: true
+      tiles: Array<Tile>
+      layout: { rows: number; cols: number }
+    }
+  | { success: false; error: string } {
+  // 1-indexing throughout this function.
+
   const tiles: Array<Tile> = []
 
-  const r_max = config.options.desktop.rows - 1
-  const c_max = config.options.desktop.columns - 1
+  const r_max = config.options.desktop.rows
+  const c_max = config.options.desktop.columns
 
   console.log("r_max:", r_max, "c_max:", c_max)
 
@@ -83,11 +91,11 @@ export function generateTiles(
           ? { type: "empty" as const }
           : { type: "hidden" as const }
 
-    const r_start = tile.row_start ?? 0
+    const r_start = tile.row_start ?? 1
     const r_span = tile.row_span ?? 1
     const r_end = tile.row_start ? tile.row_start + r_span : r_max
 
-    const c_start = tile.col_start ?? 0
+    const c_start = tile.col_start ?? 1
     const c_span = tile.col_span ?? 1
     const c_end = tile.col_start ? tile.col_start + c_span : c_max
 
@@ -110,7 +118,7 @@ export function generateTiles(
 
           for (let rr = r; rr < r + r_span; rr++) {
             for (let cc = c; cc < c + c_span; cc++) {
-              tiles_available[rr]![cc] = false
+              tiles_available[rr - 1]![cc - 1] = false
             }
           }
 
@@ -133,14 +141,14 @@ export function generateTiles(
     if (!found) {
       return {
         success: false,
-        error: `Could not fit tile at index ${tile_index} for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
+        error: `Could not fit tile at index ${tile_index} ${tile_data.key ? `( ${tile_data.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
       }
     }
   }
 
-  for (let r = 0; r <= r_max; r++) {
-    for (let c = 0; c <= c_max; c++) {
-      if (tiles_available[r]![c]) {
+  for (let r = 1; r <= r_max; r++) {
+    for (let c = 1; c <= c_max; c++) {
+      if (tiles_available[r - 1]![c - 1]) {
         tiles.push({
           type: config.options.default_tile,
           location: {
@@ -150,10 +158,10 @@ export function generateTiles(
             col_span: 1,
           },
         })
-        tiles_available[r]![c] = false
+        tiles_available[r - 1]![c - 1] = false
       }
     }
   }
 
-  return { success: true, tiles }
+  return { success: true, tiles, layout: { rows: r_max + 1, cols: c_max + 1 } }
 }
