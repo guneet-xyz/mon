@@ -153,6 +153,67 @@ function placeTiles({
   return { success: true }
 }
 
+function attemptLayout({
+  priority_list_of_tiles,
+  rows,
+  cols,
+  default_tile = "empty",
+}: {
+  priority_list_of_tiles: Array<Array<IndexedTile>>
+  rows: number
+  cols: number
+  default_tile: "empty" | "hidden"
+}):
+  | {
+      success: true
+      tiles: Array<GeneratedTile>
+    }
+  | { success: false; error: string } {
+  console.log(`Attempting layout with ${rows} rows and ${cols} columns.`)
+  const r_max = rows
+  const c_max = cols
+
+  const placed_tiles: Array<GeneratedTile> = []
+
+  const tiles_available: Array<Array<boolean>> = Array.from(
+    {
+      length: rows,
+    },
+    () => Array.from({ length: cols }, () => true),
+  )
+
+  for (const tiles of priority_list_of_tiles) {
+    const output = placeTiles({
+      tiles_available,
+      placed_tiles,
+      tiles: tiles,
+    })
+
+    if (output.success === false) {
+      return { success: false, error: output.error }
+    }
+  }
+
+  for (let r = 1; r <= r_max; r++) {
+    for (let c = 1; c <= c_max; c++) {
+      if (tiles_available[r - 1]![c - 1]) {
+        placed_tiles.push({
+          type: default_tile,
+          location: {
+            row_start: r,
+            row_span: 1,
+            col_start: c,
+            col_span: 1,
+          },
+        })
+        tiles_available[r - 1]![c - 1] = false
+      }
+    }
+  }
+
+  return { success: true, tiles: placed_tiles }
+}
+
 export function generateTiles(config: Config):
   | {
       success: true
@@ -161,8 +222,6 @@ export function generateTiles(config: Config):
     }
   | { success: false; error: string } {
   // 1-indexing throughout this function.
-
-  const placed_tiles: Array<GeneratedTile> = []
 
   const tiles_input = config.tiles.map((tile, index) => ({
     index: index,
@@ -203,50 +262,72 @@ export function generateTiles(config: Config):
 
   addToPriorityList(tiles_input)
 
-  const r_max = config.options.desktop.rows
-  const c_max = config.options.desktop.columns
+  let rows = 1
+  let cols = 1
 
-  console.log("r_max:", r_max, "c_max:", c_max)
+  let placed_tiles: Array<GeneratedTile> | undefined = undefined
 
-  const tiles_available: Array<Array<boolean>> = Array.from(
-    {
-      length: config.options.desktop.rows,
-    },
-    () => Array.from({ length: config.options.desktop.columns }, () => true),
-  )
-
-  for (const tiles of priority_list_of_tiles) {
-    const output = placeTiles({
-      tiles_available,
-      placed_tiles,
-      tiles: tiles,
+  while (rows < 20 && cols < 20) {
+    const attempt = attemptLayout({
+      priority_list_of_tiles,
+      rows,
+      cols,
+      default_tile: config.options.default_tile,
     })
+    if (attempt.success) {
+      placed_tiles = attempt.tiles
+      break
+    }
+    rows++
+    cols++
+  }
 
-    if (output.success === false) {
-      return { success: false, error: output.error }
+  if (rows >= 100 || cols >= 100) {
+    return {
+      success: false,
+      error: `Could not fit tiles in a reasonable layout. Tried up to ${rows} rows and ${cols} columns.`,
     }
   }
 
-  for (let r = 1; r <= r_max; r++) {
-    for (let c = 1; c <= c_max; c++) {
-      if (tiles_available[r - 1]![c - 1]) {
-        placed_tiles.push({
-          type: config.options.default_tile,
-          location: {
-            row_start: r,
-            row_span: 1,
-            col_start: c,
-            col_span: 1,
-          },
-        })
-        tiles_available[r - 1]![c - 1] = false
-      }
+  if (!placed_tiles) {
+    return {
+      success: false,
+      error: "No tiles were placed, something went wrong.",
     }
+  }
+
+  while (true) {
+    let attempt = attemptLayout({
+      priority_list_of_tiles,
+      rows: rows - 1,
+      cols,
+      default_tile: config.options.default_tile,
+    })
+    if (attempt.success) {
+      rows--
+      placed_tiles = attempt.tiles
+      continue
+    }
+
+    attempt = attemptLayout({
+      priority_list_of_tiles,
+      rows,
+      cols: cols - 1,
+      default_tile: config.options.default_tile,
+    })
+
+    if (attempt.success) {
+      cols--
+      placed_tiles = attempt.tiles
+      continue
+    }
+
+    break
   }
 
   return {
     success: true,
     tiles: placed_tiles,
-    layout: { rows: r_max + 1, cols: c_max + 1 },
+    layout: { rows: rows, cols: cols },
   }
 }
