@@ -6,15 +6,19 @@ import { HiddenTile } from "./hidden"
 import { HostTile } from "./host"
 import { WebsiteTile } from "./website"
 
+import Link from "next/link"
+
 export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
-        <ContainerTile
-          dbKey={tile.key}
-          r_span={tile.location.row_span}
-          c_span={tile.location.col_span}
-        />
+        <Link href={`/monitor/${tile.key}`}>
+          <ContainerTile
+            dbKey={tile.key}
+            r_span={tile.location.row_span}
+            c_span={tile.location.col_span}
+          />
+        </Link>
       </Container>
     )
   }
@@ -22,11 +26,13 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "host") {
     return (
       <Container {...tile.location}>
-        <HostTile
-          dbKey={tile.key}
-          r_span={tile.location.row_span}
-          c_span={tile.location.col_span}
-        />
+        <Link href={`/monitor/${tile.key}`}>
+          <HostTile
+            dbKey={tile.key}
+            r_span={tile.location.row_span}
+            c_span={tile.location.col_span}
+          />
+        </Link>
       </Container>
     )
   }
@@ -34,11 +40,13 @@ export function Tile({ tile }: { tile: Tile }) {
   if (tile.type === "website") {
     return (
       <Container {...tile.location}>
-        <WebsiteTile
-          dbKey={tile.key}
-          r_span={tile.location.row_span}
-          c_span={tile.location.col_span}
-        />
+        <Link href={`/monitor/${tile.key}`}>
+          <WebsiteTile
+            dbKey={tile.key}
+            r_span={tile.location.row_span}
+            c_span={tile.location.col_span}
+          />
+        </Link>
       </Container>
     )
   }

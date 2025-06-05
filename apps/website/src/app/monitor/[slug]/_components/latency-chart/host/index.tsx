@@ -5,7 +5,7 @@ import { hostPings } from "@mon/db/schema"
 import dayjs from "dayjs"
 import { and, asc, eq, gte, isNotNull } from "drizzle-orm"
 
-export async function HostLatencyChart({ hostKey }: { hostKey: string }) {
+export async function HostLatencyChart({ dbKey }: { dbKey: string }) {
   const pings = (await db
     .select({
       timestamp: hostPings.timestamp,
@@ -14,7 +14,7 @@ export async function HostLatencyChart({ hostKey }: { hostKey: string }) {
     .from(hostPings)
     .where(
       and(
-        eq(hostPings.key, hostKey),
+        eq(hostPings.key, dbKey),
         isNotNull(hostPings.latency),
         gte(hostPings.timestamp, dayjs().subtract(1, "day").toDate()),
       ),

@@ -27,3 +27,10 @@ export async function getMonitorConfig<
     (tile) => tile.type === type && tile.key === key,
   ) as Config["tiles"][number] & { type: T }
 }
+
+export async function getMonitors() {
+  const config = await getConfig()
+  return config.tiles.filter(
+    (tile) => tile.type !== "empty" && tile.type !== "hidden",
+  ) as Exclude<Config["tiles"][number], { type: "empty" | "hidden" }>[]
+}
