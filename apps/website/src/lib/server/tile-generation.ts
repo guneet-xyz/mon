@@ -1,6 +1,6 @@
-import type { Config } from "@mon/config/schema"
+import type { Config, Tile } from "@mon/config/schema"
 
-export type Tile = (
+export type GeneratedTile = (
   | { type: "hidden" }
   | { type: "empty" }
   | {
@@ -55,16 +55,153 @@ function canTileFit({
   return true
 }
 
+type IndexedTile = {
+  index: number
+  tile: Tile
+}
+
+function placeTile({
+  tiles_available,
+  placed_tiles,
+  tile: { index: tile_index, tile },
+}: {
+  tiles_available: Array<Array<boolean>>
+  placed_tiles: Array<GeneratedTile>
+  tile: IndexedTile
+}): { success: true } | { success: false; error: string } {
+  const r_max = tiles_available.length
+  const c_max = tiles_available[0]!.length
+
+  const tile_data =
+    tile.type === "host" || tile.type === "container" || tile.type === "website"
+      ? {
+          type: tile.type,
+          key: tile.key,
+        }
+      : tile.type === "empty"
+        ? { type: "empty" as const }
+        : { type: "hidden" as const }
+
+  const r_start = tile.row_start ?? 1
+  const r_span = tile.row_span ?? 1
+  const r_end = tile.row_start ? tile.row_start + r_span : r_max
+
+  const c_start = tile.col_start ?? 1
+  const c_span = tile.col_span ?? 1
+  const c_end = tile.col_start ? tile.col_start + c_span : c_max
+
+  for (let r = r_start; r <= r_end; r++) {
+    for (let c = c_start; c <= c_end; c++) {
+      if (
+        canTileFit({
+          tiles_available,
+          r_start: r,
+          r_span: r_span,
+          r_max: r_max,
+          c_start: c,
+          c_span: c_span,
+          c_max: c_max,
+        })
+      ) {
+        for (let rr = r; rr < r + r_span; rr++) {
+          for (let cc = c; cc < c + c_span; cc++) {
+            tiles_available[rr - 1]![cc - 1] = false
+          }
+        }
+
+        placed_tiles.push({
+          ...tile_data,
+          location: {
+            row_start: r,
+            row_span: r_span,
+            col_start: c,
+            col_span: c_span,
+          },
+        })
+
+        return { success: true }
+      }
+    }
+  }
+
+  return {
+    success: false,
+    error: `Could not fit tile at index ${tile_index} ${tile_data.key ? `( ${tile_data.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
+  }
+}
+
+function placeTiles({
+  tiles_available,
+  placed_tiles,
+  tiles,
+}: {
+  tiles_available: Array<Array<boolean>>
+  placed_tiles: Array<GeneratedTile>
+  tiles: Array<IndexedTile>
+}): { success: true } | { success: false; error: string } {
+  for (const { index: tile_index, tile } of tiles) {
+    const output = placeTile({
+      tiles_available,
+      placed_tiles,
+      tile: { index: tile_index, tile },
+    })
+
+    if (output.success === false) {
+      return { success: false, error: output.error }
+    }
+  }
+  return { success: true }
+}
+
 export function generateTiles(config: Config):
   | {
       success: true
-      tiles: Array<Tile>
+      tiles: Array<GeneratedTile>
       layout: { rows: number; cols: number }
     }
   | { success: false; error: string } {
   // 1-indexing throughout this function.
 
-  const tiles: Array<Tile> = []
+  const placed_tiles: Array<GeneratedTile> = []
+
+  const tiles_input = config.tiles.map((tile, index) => ({
+    index: index,
+    tile: tile,
+  }))
+
+  const tiles_added_to_priority_list = new Set<number>()
+
+  const priority_list_of_tiles: Array<typeof tiles_input> = []
+  function addToPriorityList(tiles: typeof tiles_input) {
+    const tiles_to_add: typeof tiles = []
+    for (const tile of tiles) {
+      if (tiles_added_to_priority_list.has(tile.index)) continue
+      tiles_added_to_priority_list.add(tile.index)
+      tiles_to_add.push(tile)
+    }
+    priority_list_of_tiles.push(tiles_to_add)
+  }
+
+  addToPriorityList(
+    tiles_input.filter(
+      ({ tile }) => tile.type === "empty" || tile.type === "hidden",
+    ),
+  )
+
+  addToPriorityList(
+    tiles_input.filter(
+      ({ tile }) =>
+        tile.row_start !== undefined || tile.col_start !== undefined,
+    ),
+  )
+
+  addToPriorityList(
+    tiles_input.filter(
+      ({ tile }) => tile.row_span !== undefined || tile.col_span !== undefined,
+    ),
+  )
+
+  addToPriorityList(tiles_input)
 
   const r_max = config.options.desktop.rows
   const c_max = config.options.desktop.columns
@@ -78,78 +215,22 @@ export function generateTiles(config: Config):
     () => Array.from({ length: config.options.desktop.columns }, () => true),
   )
 
-  for (const [tile_index, tile] of config.tiles.entries()) {
-    const tile_data =
-      tile.type === "host" ||
-      tile.type === "container" ||
-      tile.type === "website"
-        ? {
-            type: tile.type,
-            key: tile.key,
-          }
-        : tile.type === "empty"
-          ? { type: "empty" as const }
-          : { type: "hidden" as const }
+  for (const tiles of priority_list_of_tiles) {
+    const output = placeTiles({
+      tiles_available,
+      placed_tiles,
+      tiles: tiles,
+    })
 
-    const r_start = tile.row_start ?? 1
-    const r_span = tile.row_span ?? 1
-    const r_end = tile.row_start ? tile.row_start + r_span : r_max
-
-    const c_start = tile.col_start ?? 1
-    const c_span = tile.col_span ?? 1
-    const c_end = tile.col_start ? tile.col_start + c_span : c_max
-
-    let found = false
-
-    for (let r = r_start; r <= r_end; r++) {
-      for (let c = c_start; c <= c_end; c++) {
-        if (
-          canTileFit({
-            tiles_available,
-            r_start: r,
-            r_span: r_span,
-            r_max: r_max,
-            c_start: c,
-            c_span: c_span,
-            c_max: c_max,
-          })
-        ) {
-          found = true
-
-          for (let rr = r; rr < r + r_span; rr++) {
-            for (let cc = c; cc < c + c_span; cc++) {
-              tiles_available[rr - 1]![cc - 1] = false
-            }
-          }
-
-          tiles.push({
-            ...tile_data,
-            location: {
-              row_start: r,
-              row_span: r_span,
-              col_start: c,
-              col_span: c_span,
-            },
-          })
-
-          break
-        }
-      }
-      if (found) break
-    }
-
-    if (!found) {
-      return {
-        success: false,
-        error: `Could not fit tile at index ${tile_index} ${tile_data.key ? `( ${tile_data.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
-      }
+    if (output.success === false) {
+      return { success: false, error: output.error }
     }
   }
 
   for (let r = 1; r <= r_max; r++) {
     for (let c = 1; c <= c_max; c++) {
       if (tiles_available[r - 1]![c - 1]) {
-        tiles.push({
+        placed_tiles.push({
           type: config.options.default_tile,
           location: {
             row_start: r,
@@ -163,5 +244,9 @@ export function generateTiles(config: Config):
     }
   }
 
-  return { success: true, tiles, layout: { rows: r_max + 1, cols: c_max + 1 } }
+  return {
+    success: true,
+    tiles: placed_tiles,
+    layout: { rows: r_max + 1, cols: c_max + 1 },
+  }
 }

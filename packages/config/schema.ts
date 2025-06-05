@@ -47,15 +47,24 @@ export const ConfigSchema = z.object({
       }),
       TileSchema.extend({
         type: z.literal("empty"),
+        row_start: z.number(),
+        row_span: z.number(),
+        col_start: z.number(),
+        col_span: z.number(),
       }),
       TileSchema.extend({
         type: z.literal("hidden"),
+        row_start: z.number(),
+        row_span: z.number(),
+        col_start: z.number(),
+        col_span: z.number(),
       }),
     ]),
   ),
 })
 
 export type Config = z.infer<typeof ConfigSchema>
+export type Tile = Config["tiles"][number]
 
 export type Monitor = Exclude<
   Config["tiles"][number],
