@@ -1,9 +1,12 @@
+"use client"
+
 import { StatusDot } from "@/components/status-dot"
+import { getMonitorConfig } from "@/lib/server/actions/get-monitor-config"
 import { cn } from "@/lib/utils"
 
-import { getMonitorConfig } from "@mon/config"
+import { useQuery } from "@tanstack/react-query"
 
-export async function WebsiteTile({
+export function WebsiteTile({
   dbKey,
   r_span,
   c_span,
@@ -12,7 +15,14 @@ export async function WebsiteTile({
   r_span: number
   c_span: number
 }) {
-  const config = await getMonitorConfig("website", dbKey)
+  const { data: config, isFetched } = useQuery({
+    queryKey: ["monitor-config", "website", dbKey],
+    queryFn: async () => await getMonitorConfig("website", dbKey),
+  })
+  if (!isFetched) {
+    return <div>loading</div>
+  }
+
   if (!config) {
     throw new Error(
       `Website tile with key "${dbKey}" not found in configuration.`,

@@ -1,4 +1,5 @@
-import type { Tile } from "@/lib/server/tile-generation"
+import { ServerOnly } from "@/components/server-only"
+import type { GeneratedTile } from "@/lib/client/tile-generation"
 
 import { ContainerTile } from "./container"
 import { EmptyTile } from "./empty"
@@ -8,16 +9,18 @@ import { WebsiteTile } from "./website"
 
 import Link from "next/link"
 
-export function Tile({ tile }: { tile: Tile }) {
+export function Tile({ tile }: { tile: GeneratedTile }) {
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
         <Link href={`/monitor/${tile.key}`}>
-          <ContainerTile
-            dbKey={tile.key}
-            r_span={tile.location.row_span}
-            c_span={tile.location.col_span}
-          />
+          <ServerOnly>
+            <ContainerTile
+              dbKey={tile.key}
+              r_span={tile.location.row_span}
+              c_span={tile.location.col_span}
+            />
+          </ServerOnly>
         </Link>
       </Container>
     )
@@ -27,11 +30,13 @@ export function Tile({ tile }: { tile: Tile }) {
     return (
       <Container {...tile.location}>
         <Link href={`/monitor/${tile.key}`}>
-          <HostTile
-            dbKey={tile.key}
-            r_span={tile.location.row_span}
-            c_span={tile.location.col_span}
-          />
+          <ServerOnly>
+            <HostTile
+              dbKey={tile.key}
+              r_span={tile.location.row_span}
+              c_span={tile.location.col_span}
+            />
+          </ServerOnly>
         </Link>
       </Container>
     )
@@ -41,11 +46,13 @@ export function Tile({ tile }: { tile: Tile }) {
     return (
       <Container {...tile.location}>
         <Link href={`/monitor/${tile.key}`}>
-          <WebsiteTile
-            dbKey={tile.key}
-            r_span={tile.location.row_span}
-            c_span={tile.location.col_span}
-          />
+          <ServerOnly>
+            <WebsiteTile
+              dbKey={tile.key}
+              r_span={tile.location.row_span}
+              c_span={tile.location.col_span}
+            />
+          </ServerOnly>
         </Link>
       </Container>
     )
@@ -65,7 +72,8 @@ export function Tile({ tile }: { tile: Tile }) {
     </Container>
   )
 }
-function Container({
+
+export function Container({
   children,
   row_start,
   row_span,
@@ -80,12 +88,12 @@ function Container({
 }) {
   return (
     <div
-      className="m-1 max-h-96 min-h-20 max-w-96 min-w-20"
+      className="m-1"
       style={{
-        gridColumnStart: col_start + 1,
-        gridColumnEnd: col_start + col_span + 1,
-        gridRowStart: row_start + 1,
-        gridRowEnd: row_start + row_span + 1,
+        gridColumnStart: col_start,
+        gridColumnEnd: col_start + col_span,
+        gridRowStart: row_start,
+        gridRowEnd: row_start + row_span,
       }}
     >
       {children}

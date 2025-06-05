@@ -1,10 +1,13 @@
+"use client"
+
 import { DynamicIcon } from "@/components/dynamic-icon"
 import { StatusDot } from "@/components/status-dot"
+import { getMonitorConfig } from "@/lib/server/actions/get-monitor-config"
 import { cn } from "@/lib/utils"
 
-import { getMonitorConfig } from "@mon/config"
+import { useQuery } from "@tanstack/react-query"
 
-export async function ContainerTile({
+export function ContainerTile({
   dbKey,
   r_span,
   c_span,
@@ -13,7 +16,13 @@ export async function ContainerTile({
   r_span: number
   c_span: number
 }) {
-  const config = await getMonitorConfig("container", dbKey)
+  const { data: config, isFetched } = useQuery({
+    queryKey: ["monitor-config", "container", dbKey],
+    queryFn: async () => await getMonitorConfig("container", dbKey),
+  })
+  if (!isFetched) {
+    return <div>loading</div>
+  }
   if (!config) {
     throw new Error(
       `Container tile with key "${dbKey}" not found in configuration.`,

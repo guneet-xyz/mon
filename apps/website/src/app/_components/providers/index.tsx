@@ -1,5 +1,6 @@
 "use client"
 
+import { QueryProvider } from "./query"
 import { ThemeProvider } from "./theme"
 
 import { type ReactNode, useEffect, useState } from "react"
@@ -14,5 +15,9 @@ export function Providers({ children }: { children: ReactNode }) {
   if (!mounted) {
     return <>{children}</>
   }
-  return <ThemeProvider>{children}</ThemeProvider>
+  return (
+    <ThemeProvider>
+      <QueryProvider>{children}</QueryProvider>
+    </ThemeProvider>
+  )
 }

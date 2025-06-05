@@ -214,7 +214,11 @@ function attemptLayout({
   return { success: true, tiles: placed_tiles }
 }
 
-export function generateTiles(config: Config):
+export function generateTiles(
+  config: Config,
+  clientWidth: number,
+  clientHeight: number,
+):
   | {
       success: true
       tiles: Array<GeneratedTile>
@@ -222,6 +226,15 @@ export function generateTiles(config: Config):
     }
   | { success: false; error: string } {
   // 1-indexing throughout this function.
+  console.log("clientWidth:", clientWidth)
+  console.log("clientHeight:", clientHeight)
+  function WHratio(rows: number, cols: number): number {
+    return clientWidth / cols / (clientHeight / rows)
+  }
+
+  function HWratio(rows: number, cols: number): number {
+    return clientHeight / rows / (clientWidth / cols)
+  }
 
   const tiles_input = config.tiles.map((tile, index) => ({
     index: index,
@@ -262,12 +275,21 @@ export function generateTiles(config: Config):
 
   addToPriorityList(tiles_input)
 
-  let rows = 1
-  let cols = 1
+  let rows = 0
+  let cols = 0
 
   let placed_tiles: Array<GeneratedTile> | undefined = undefined
 
   while (rows < 20 && cols < 20) {
+    rows++
+    cols++
+    if (WHratio(rows, cols) > 1.5) {
+      cols++
+    }
+    if (HWratio(rows, cols) > 1.5) {
+      rows++
+    }
+
     const attempt = attemptLayout({
       priority_list_of_tiles,
       rows,
@@ -278,8 +300,6 @@ export function generateTiles(config: Config):
       placed_tiles = attempt.tiles
       break
     }
-    rows++
-    cols++
   }
 
   if (rows >= 100 || cols >= 100) {
@@ -296,30 +316,36 @@ export function generateTiles(config: Config):
     }
   }
 
+  rows++
+  cols++
+
   while (true) {
-    let attempt = attemptLayout({
-      priority_list_of_tiles,
-      rows: rows - 1,
-      cols,
-      default_tile: config.options.default_tile,
-    })
-    if (attempt.success) {
-      rows--
-      placed_tiles = attempt.tiles
-      continue
+    if (WHratio(rows - 1, cols) <= 1.5 && HWratio(rows - 1, cols) <= 1.5) {
+      const attempt = attemptLayout({
+        priority_list_of_tiles,
+        rows: rows - 1,
+        cols,
+        default_tile: config.options.default_tile,
+      })
+      if (attempt.success) {
+        rows--
+        placed_tiles = attempt.tiles
+        continue
+      }
     }
+    if (WHratio(rows, cols - 1) <= 1.5 && HWratio(rows, cols - 1) <= 1.5) {
+      const attempt = attemptLayout({
+        priority_list_of_tiles,
+        rows,
+        cols: cols - 1,
+        default_tile: config.options.default_tile,
+      })
 
-    attempt = attemptLayout({
-      priority_list_of_tiles,
-      rows,
-      cols: cols - 1,
-      default_tile: config.options.default_tile,
-    })
-
-    if (attempt.success) {
-      cols--
-      placed_tiles = attempt.tiles
-      continue
+      if (attempt.success) {
+        cols--
+        placed_tiles = attempt.tiles
+        continue
+      }
     }
 
     break
