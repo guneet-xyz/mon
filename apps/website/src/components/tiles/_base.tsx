@@ -29,7 +29,10 @@ export function BaseTile({
   return (
     <div
       className={cn(
-        "relative flex h-full w-full flex-col items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50",
+        "relative flex h-full w-full flex-col items-center justify-center rounded-xl transition-colors hover:cursor-pointer",
+        "shadow-sm shadow-emerald-600 dark:shadow-emerald-700",
+        "bg-emerald-200/70 hover:bg-emerald-300 dark:bg-emerald-900/70 dark:hover:bg-emerald-950",
+        "border-2 border-emerald-700 dark:border-emerald-950/20",
         className,
       )}
       onClick={onClick}
@@ -39,12 +42,18 @@ export function BaseTile({
       ) : null}
 
       {icon && showIconOnly ? (
-        <DynamicIcon icon={icon} />
+        <DynamicIcon
+          icon={icon}
+          className="text-emerald-900 dark:text-emerald-100"
+        />
       ) : (
         <div
-          className={cn("font-display text-xl dark:text-emerald-100", {
-            "rotate-90": orientation === "vertical",
-          })}
+          className={cn(
+            "font-display text-xl text-emerald-900 dark:text-emerald-100",
+            {
+              "rotate-90": orientation === "vertical",
+            },
+          )}
         >
           {title}
         </div>
