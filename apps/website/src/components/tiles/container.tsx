@@ -1,9 +1,6 @@
 "use client"
 
-import { DynamicIcon } from "@/components/dynamic-icon"
-import { StatusDot } from "@/components/status-dot"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
-import { cn } from "@/lib/utils"
 
 import { BaseTile } from "./_base"
 
@@ -49,10 +46,13 @@ export function ContainerTile({
 
   return (
     <BaseTile
+      r_span={r_span}
+      c_span={c_span}
       status={status}
       title={title}
       orientation={orientation}
       icon={config.icon}
+      top_right_icon="mdi:docker"
     />
   )
 }

@@ -1,5 +1,13 @@
+import { cn } from "@/lib/utils"
+
 import { Icon } from "@iconify/react"
 
-export function DynamicIcon({ icon }: { icon: string }) {
-  return <Icon icon={icon} className="h-8 w-8 dark:text-emerald-100" />
+export function DynamicIcon({
+  icon,
+  className,
+}: {
+  icon: string
+  className?: string
+}) {
+  return <Icon icon={icon} className={cn("h-8 w-8", className)} />
 }

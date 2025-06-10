@@ -3,30 +3,44 @@ import { StatusDot } from "@/components/status-dot"
 import { cn } from "@/lib/utils"
 
 export function BaseTile({
+  r_span,
+  c_span,
   status,
   title,
   orientation,
   icon,
+  top_right_icon,
 }: {
+  r_span: number
+  c_span: number
   status: "online" | "offline" | "unknown"
   title: string
   orientation: "horizontal" | "vertical"
   icon?: string
+  top_right_icon?: string
 }) {
+  const showIconOnly = r_span === 1 && c_span === 1
   return (
     <div className="relative flex h-full w-full items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50">
       <StatusDot status={status} className="absolute top-2 right-2" />
-      {icon ? (
+      {icon && showIconOnly ? (
         <DynamicIcon icon={icon} />
       ) : (
         <div
-          className={cn("font-display text-[400%] dark:text-emerald-100", {
+          className={cn("font-display text-xl dark:text-emerald-100", {
             "rotate-90": orientation === "vertical",
           })}
         >
           {title}
         </div>
       )}
+
+      {top_right_icon ? (
+        <DynamicIcon
+          icon={top_right_icon}
+          className="absolute top-2 left-2 text-emerald-700"
+        />
+      ) : null}
     </div>
   )
 }
