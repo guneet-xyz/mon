@@ -10,19 +10,31 @@ export function BaseTile({
   orientation,
   icon,
   top_right_icon,
+  className,
+  children,
 }: {
   r_span: number
   c_span: number
-  status: "online" | "offline" | "unknown"
   title: string
-  orientation: "horizontal" | "vertical"
+  orientation?: "horizontal" | "vertical"
+  status?: "online" | "offline" | "unknown"
   icon?: string
   top_right_icon?: string
+  className?: string
+  children?: React.ReactNode
 }) {
   const showIconOnly = r_span === 1 && c_span === 1
   return (
-    <div className="relative flex h-full w-full items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50">
-      <StatusDot status={status} className="absolute top-2 right-2" />
+    <div
+      className={cn(
+        "relative flex h-full w-full flex-col items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50",
+        className,
+      )}
+    >
+      {status ? (
+        <StatusDot status={status} className="absolute top-2 right-2" />
+      ) : null}
+
       {icon && showIconOnly ? (
         <DynamicIcon icon={icon} />
       ) : (
@@ -41,6 +53,8 @@ export function BaseTile({
           className="absolute top-2 left-2 text-emerald-700"
         />
       ) : null}
+
+      {children}
     </div>
   )
 }

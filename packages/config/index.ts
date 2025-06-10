@@ -1,4 +1,4 @@
-import { type Config, ConfigSchema } from "./schema"
+import { type Config, ConfigSchema, Monitor } from "./schema"
 
 import { env } from "@mon/env"
 import { existsSync } from "fs"
@@ -13,12 +13,11 @@ export async function getConfig() {
   const text = await readFile(env.CONFIG_PATH, "utf-8")
   const parsed = parse(text)
   const zodParsed = ConfigSchema.parse(parsed)
+  console.log("Config loaded:", zodParsed)
   return zodParsed
 }
 
-export async function getMonitorConfig<
-  T extends Exclude<Config["tiles"][number]["type"], "empty" | "hidden">,
->(
+export async function getMonitorConfig<T extends Monitor["type"]>(
   type: T,
   key: string,
 ): Promise<(Config["tiles"][number] & { type: T }) | undefined> {
@@ -31,6 +30,7 @@ export async function getMonitorConfig<
 export async function getMonitors() {
   const config = await getConfig()
   return config.tiles.filter(
-    (tile) => tile.type !== "empty" && tile.type !== "hidden",
-  ) as Exclude<Config["tiles"][number], { type: "empty" | "hidden" }>[]
+    (tile) =>
+      tile.type !== "empty" && tile.type !== "hidden" && tile.type !== "logo",
+  ) as Monitor[]
 }

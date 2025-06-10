@@ -17,6 +17,9 @@ export type GeneratedTile = (
       type: "container"
       key: string
     }
+  | {
+      type: "logo"
+    }
 ) & {
   location: {
     row_start: number
@@ -74,16 +77,6 @@ function placeTile({
   const r_max = tiles_available.length
   const c_max = tiles_available[0]!.length
 
-  const tile_data =
-    tile.type === "host" || tile.type === "container" || tile.type === "website"
-      ? {
-          type: tile.type,
-          key: tile.key,
-        }
-      : tile.type === "empty"
-        ? { type: "empty" as const }
-        : { type: "hidden" as const }
-
   const r_start = tile.row_start ?? 1
   const r_span = tile.row_span ?? 1
   const r_end = tile.row_start ? tile.row_start + r_span : r_max
@@ -112,7 +105,7 @@ function placeTile({
         }
 
         placed_tiles.push({
-          ...tile_data,
+          ...tile,
           location: {
             row_start: r,
             row_span: r_span,
@@ -128,7 +121,7 @@ function placeTile({
 
   return {
     success: false,
-    error: `Could not fit tile at index ${tile_index} ${tile_data.key ? `( ${tile_data.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
+    error: `Could not fit tile at index ${tile_index} ${"key" in tile ? `( ${tile.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
   }
 }
 
