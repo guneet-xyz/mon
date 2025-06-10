@@ -12,6 +12,7 @@ export function BaseTile({
   top_right_icon,
   className,
   children,
+  onClick,
 }: {
   r_span: number
   c_span: number
@@ -22,6 +23,7 @@ export function BaseTile({
   top_right_icon?: string
   className?: string
   children?: React.ReactNode
+  onClick?: () => void
 }) {
   const showIconOnly = r_span === 1 && c_span === 1
   return (
@@ -30,6 +32,7 @@ export function BaseTile({
         "relative flex h-full w-full flex-col items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50",
         className,
       )}
+      onClick={onClick}
     >
       {status ? (
         <StatusDot status={status} className="absolute top-2 right-2" />

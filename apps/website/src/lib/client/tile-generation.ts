@@ -20,6 +20,9 @@ export type GeneratedTile = (
   | {
       type: "logo"
     }
+  | {
+      type: "theme"
+    }
 ) & {
   location: {
     row_start: number

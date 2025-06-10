@@ -6,6 +6,7 @@ import { EmptyTile } from "./empty"
 import { HiddenTile } from "./hidden"
 import { HostTile } from "./host"
 import { LogoTile } from "./logo"
+import { ThemeTile } from "./theme"
 import { WebsiteTile } from "./website"
 
 import Link from "next/link"
@@ -82,6 +83,14 @@ export function Tile({ tile }: { tile: GeneratedTile }) {
           r_span={tile.location.row_span}
           c_span={tile.location.col_span}
         />
+      </Container>
+    )
+  }
+
+  if (tile.type === "theme") {
+    return (
+      <Container {...tile.location}>
+        <ThemeTile />
       </Container>
     )
   }
