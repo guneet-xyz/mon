@@ -10,26 +10,50 @@ export function BaseTile({
   orientation,
   icon,
   top_right_icon,
+  className,
+  children,
+  onClick,
 }: {
   r_span: number
   c_span: number
-  status: "online" | "offline" | "unknown"
   title: string
-  orientation: "horizontal" | "vertical"
+  orientation?: "horizontal" | "vertical"
+  status?: "online" | "offline" | "unknown"
   icon?: string
   top_right_icon?: string
+  className?: string
+  children?: React.ReactNode
+  onClick?: () => void
 }) {
   const showIconOnly = r_span === 1 && c_span === 1
   return (
-    <div className="relative flex h-full w-full items-center justify-center rounded-xl border-2 inset-shadow-sm inset-shadow-emerald-500 transition-colors hover:cursor-pointer dark:border-emerald-950/20 dark:bg-emerald-700/25 dark:hover:bg-emerald-700/50">
-      <StatusDot status={status} className="absolute top-2 right-2" />
+    <div
+      className={cn(
+        "relative flex h-full w-full flex-col items-center justify-center rounded-xl transition-colors hover:cursor-pointer",
+        "shadow-sm shadow-emerald-600 dark:shadow-emerald-700",
+        "bg-emerald-200/70 hover:bg-emerald-300 dark:bg-emerald-900/70 dark:hover:bg-emerald-950",
+        "border-2 border-emerald-700 dark:border-emerald-950/20",
+        className,
+      )}
+      onClick={onClick}
+    >
+      {status ? (
+        <StatusDot status={status} className="absolute top-2 right-2" />
+      ) : null}
+
       {icon && showIconOnly ? (
-        <DynamicIcon icon={icon} />
+        <DynamicIcon
+          icon={icon}
+          className="text-emerald-900 dark:text-emerald-100"
+        />
       ) : (
         <div
-          className={cn("font-display text-xl dark:text-emerald-100", {
-            "rotate-90": orientation === "vertical",
-          })}
+          className={cn(
+            "font-display text-xl text-emerald-900 dark:text-emerald-100",
+            {
+              "rotate-90": orientation === "vertical",
+            },
+          )}
         >
           {title}
         </div>
@@ -41,6 +65,8 @@ export function BaseTile({
           className="absolute top-2 left-2 text-emerald-700"
         />
       ) : null}
+
+      {children}
     </div>
   )
 }

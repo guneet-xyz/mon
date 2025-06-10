@@ -59,6 +59,18 @@ export const ConfigSchema = z.object({
         col_start: z.number(),
         col_span: z.number(),
       }),
+      TileSchema.extend({
+        type: z.literal("logo"),
+        col_start: z.number().default(1),
+        row_start: z.number().default(1),
+      }),
+      TileSchema.extend({
+        type: z.literal("theme"),
+        col_start: z.number().default(-1),
+        row_start: z.number().default(1),
+        row_span: z.literal(1).default(1),
+        col_span: z.literal(1).default(1),
+      }),
     ]),
   ),
 })
@@ -68,7 +80,7 @@ export type Tile = Config["tiles"][number]
 
 export type Monitor = Exclude<
   Config["tiles"][number],
-  { type: "empty" | "hidden" }
+  { type: "empty" | "hidden" | "logo" | "theme" }
 >
 
 type ExtractTileType<T extends Config["tiles"][number]["type"]> = Omit<

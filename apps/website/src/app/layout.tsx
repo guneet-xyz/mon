@@ -24,7 +24,9 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} ${clash.variable}`}>
       <body>
         <Providers>
-          <div className="dark:bg-emerald-800/5">{children}</div>
+          <div className="bg-emerald-500 dark:bg-emerald-800/10">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>

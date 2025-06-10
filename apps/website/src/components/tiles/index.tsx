@@ -5,11 +5,14 @@ import { ContainerTile } from "./container"
 import { EmptyTile } from "./empty"
 import { HiddenTile } from "./hidden"
 import { HostTile } from "./host"
+import { LogoTile } from "./logo"
+import { ThemeTile } from "./theme"
 import { WebsiteTile } from "./website"
 
 import Link from "next/link"
 
 export function Tile({ tile }: { tile: GeneratedTile }) {
+  // TODO: Why tf is there ServerOnly? Also remove Link from this and put it in the respective tile
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
@@ -66,11 +69,33 @@ export function Tile({ tile }: { tile: GeneratedTile }) {
     )
   }
 
-  return (
-    <Container {...tile.location}>
-      <HiddenTile />
-    </Container>
-  )
+  if (tile.type === "hidden")
+    return (
+      <Container {...tile.location}>
+        <HiddenTile />
+      </Container>
+    )
+
+  if (tile.type === "logo") {
+    return (
+      <Container {...tile.location}>
+        <LogoTile
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
+      </Container>
+    )
+  }
+
+  if (tile.type === "theme") {
+    return (
+      <Container {...tile.location}>
+        <ThemeTile />
+      </Container>
+    )
+  }
+
+  throw new Error(`How did we get here?`)
 }
 
 export function Container({

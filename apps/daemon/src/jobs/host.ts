@@ -1,7 +1,7 @@
 import { db } from "@mon/db"
 import { execa } from "execa"
 import { scheduleJob } from "node-schedule"
-import { Host } from "packages/config/schema"
+import type { Host } from "packages/config/schema"
 import { hostPings } from "packages/db/schema"
 
 export function scheduleHostJob(host: Host) {

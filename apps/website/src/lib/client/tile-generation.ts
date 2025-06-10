@@ -17,6 +17,12 @@ export type GeneratedTile = (
       type: "container"
       key: string
     }
+  | {
+      type: "logo"
+    }
+  | {
+      type: "theme"
+    }
 ) & {
   location: {
     row_start: number
@@ -74,23 +80,24 @@ function placeTile({
   const r_max = tiles_available.length
   const c_max = tiles_available[0]!.length
 
-  const tile_data =
-    tile.type === "host" || tile.type === "container" || tile.type === "website"
-      ? {
-          type: tile.type,
-          key: tile.key,
-        }
-      : tile.type === "empty"
-        ? { type: "empty" as const }
-        : { type: "hidden" as const }
-
-  const r_start = tile.row_start ?? 1
+  const r_start =
+    tile.row_start === undefined
+      ? 1
+      : tile.row_start > 0
+        ? tile.row_start
+        : r_max + tile.row_start + 1
   const r_span = tile.row_span ?? 1
-  const r_end = tile.row_start ? tile.row_start + r_span : r_max
+  const r_end = tile.row_start ? r_start + r_span - 1 : r_max
 
-  const c_start = tile.col_start ?? 1
+  const c_start =
+    tile.col_start === undefined
+      ? 1
+      : tile.col_start > 0
+        ? tile.col_start
+        : c_max + tile.col_start + 1
+
   const c_span = tile.col_span ?? 1
-  const c_end = tile.col_start ? tile.col_start + c_span : c_max
+  const c_end = tile.col_start ? c_start + c_span - 1 : c_max
 
   for (let r = r_start; r <= r_end; r++) {
     for (let c = c_start; c <= c_end; c++) {
@@ -112,7 +119,7 @@ function placeTile({
         }
 
         placed_tiles.push({
-          ...tile_data,
+          ...tile,
           location: {
             row_start: r,
             row_span: r_span,
@@ -128,7 +135,7 @@ function placeTile({
 
   return {
     success: false,
-    error: `Could not fit tile at index ${tile_index} ${tile_data.key ? `( ${tile_data.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
+    error: `Could not fit tile at index ${tile_index} ${"key" in tile ? `( ${tile.key} ) ` : ""}for at row ${r_start}, column ${c_start} with span ${r_span}x${c_span}`,
   }
 }
 
