@@ -1,4 +1,4 @@
-import { type Config, ConfigSchema, Monitor } from "./schema"
+import { type Config, ConfigSchema, type Monitor } from "./schema"
 
 import { env } from "@mon/env"
 import { existsSync } from "fs"

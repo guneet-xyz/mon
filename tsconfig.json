@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2022",
