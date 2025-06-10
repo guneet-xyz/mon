@@ -1,4 +1,4 @@
-import { Container } from "@mon/config/schema"
+import type { Container } from "@mon/config/schema"
 import { db } from "@mon/db"
 import { websitePings } from "@mon/db/schema"
 import { execa } from "execa"
