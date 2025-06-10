@@ -77,13 +77,24 @@ function placeTile({
   const r_max = tiles_available.length
   const c_max = tiles_available[0]!.length
 
-  const r_start = tile.row_start ?? 1
+  const r_start =
+    tile.row_start === undefined
+      ? 1
+      : tile.row_start > 0
+        ? tile.row_start
+        : r_max + tile.row_start + 1
   const r_span = tile.row_span ?? 1
-  const r_end = tile.row_start ? tile.row_start + r_span : r_max
+  const r_end = tile.row_start ? r_start + r_span - 1 : r_max
 
-  const c_start = tile.col_start ?? 1
+  const c_start =
+    tile.col_start === undefined
+      ? 1
+      : tile.col_start > 0
+        ? tile.col_start
+        : c_max + tile.col_start + 1
+
   const c_span = tile.col_span ?? 1
-  const c_end = tile.col_start ? tile.col_start + c_span : c_max
+  const c_end = tile.col_start ? c_start + c_span - 1 : c_max
 
   for (let r = r_start; r <= r_end; r++) {
     for (let c = c_start; c <= c_end; c++) {
