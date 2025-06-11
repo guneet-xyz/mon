@@ -1,5 +1,6 @@
 "use client"
 
+import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
@@ -46,14 +47,16 @@ export function WebsiteTile({
   }
 
   return (
-    <BaseTile
-      r_span={r_span}
-      c_span={c_span}
-      title={title}
-      status={status}
-      orientation={orientation}
-      icon={config.icon}
-      top_right_icon="streamline-ultimate:coding-apps-website-network-globe-bold"
-    />
+    <MonitorDialog dbKey={dbKey} type="website">
+      <BaseTile
+        r_span={r_span}
+        c_span={c_span}
+        title={title}
+        status={status}
+        orientation={orientation}
+        icon={config.icon}
+        top_right_icon="streamline-ultimate:coding-apps-website-network-globe-bold"
+      />
+    </MonitorDialog>
   )
 }

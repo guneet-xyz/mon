@@ -2,9 +2,11 @@
 
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
+import { MonitorDialog } from "../dialogs/monitor-dialog"
 import { BaseTile } from "./_base"
 
 import { useQuery } from "@tanstack/react-query"
+import { Monitor } from "lucide-react"
 
 export function ContainerTile({
   dbKey,
@@ -45,14 +47,16 @@ export function ContainerTile({
   }
 
   return (
-    <BaseTile
-      r_span={r_span}
-      c_span={c_span}
-      status={status}
-      title={title}
-      orientation={orientation}
-      icon={config.icon}
-      top_right_icon="mdi:docker"
-    />
+    <MonitorDialog type="container" dbKey={dbKey}>
+      <BaseTile
+        r_span={r_span}
+        c_span={c_span}
+        status={status}
+        title={title}
+        orientation={orientation}
+        icon={config.icon}
+        top_right_icon="mdi:docker"
+      />
+    </MonitorDialog>
   )
 }
