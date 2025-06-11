@@ -49,7 +49,7 @@ export function BaseTile({
       ) : (
         <div
           className={cn(
-            "font-display text-xl text-emerald-900 dark:text-emerald-100",
+            "text-center font-display text-emerald-900 md:text-xl dark:text-emerald-100",
             {
               "rotate-90": orientation === "vertical",
             },
@@ -62,7 +62,7 @@ export function BaseTile({
       {top_right_icon ? (
         <DynamicIcon
           icon={top_right_icon}
-          className="absolute top-2 left-2 text-emerald-700"
+          className="absolute top-2 left-2 size-4 text-emerald-700 md:size-4"
         />
       ) : null}
 

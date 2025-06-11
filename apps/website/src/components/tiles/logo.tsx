@@ -15,7 +15,7 @@ export function LogoTile({
         r_span={r_span}
         c_span={c_span}
         title="MON"
-        className="relative overflow-hidden font-bold *:text-5xl dark:bg-emerald-950 *:dark:text-emerald-700 dark:hover:bg-emerald-950"
+        className="relative overflow-hidden font-bold *:text-3xl md:*:text-5xl dark:bg-emerald-950 *:dark:text-emerald-700 dark:hover:bg-emerald-950"
       />
     </Link>
   )
