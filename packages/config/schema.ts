@@ -78,10 +78,12 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>
 export type Tile = Config["tiles"][number]
 
-export type Monitor = Exclude<
+export type NonMonitorTile = Extract<
   Config["tiles"][number],
   { type: "empty" | "hidden" | "logo" | "theme" }
 >
+
+export type MonitorTile = Exclude<Config["tiles"][number], NonMonitorTile>
 
 type ExtractTileType<T extends Config["tiles"][number]["type"]> = Omit<
   Config["tiles"][number] & { type: T },

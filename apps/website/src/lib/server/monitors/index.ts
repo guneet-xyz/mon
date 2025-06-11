@@ -4,7 +4,7 @@ import { getHostPings } from "./host"
 import { getWebsiteIncidentPings, getWebsiteStatus } from "./website"
 import { getWebsitePings } from "./website"
 
-import type { Monitor } from "@mon/config/schema"
+import type { MonitorTile } from "@mon/config/schema"
 import dayjs from "dayjs"
 
 export type IncidentPing = {
@@ -19,7 +19,7 @@ export type Incident = {
 }
 
 export async function getIncidents(
-  type: Monitor["type"],
+  type: MonitorTile["type"],
   dbKey: string,
 ): Promise<Array<Incident>> {
   const pings = await getIncidentPings(type, dbKey)
@@ -50,7 +50,7 @@ export async function getIncidents(
 }
 
 function getIncidentPings(
-  type: Monitor["type"],
+  type: MonitorTile["type"],
   dbKey: string,
 ): Promise<Array<IncidentPing>> {
   if (type === "host") return getHostIncidentPings(dbKey)

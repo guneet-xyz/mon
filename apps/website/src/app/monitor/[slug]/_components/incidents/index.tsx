@@ -1,6 +1,6 @@
 import { getIncidents } from "@/lib/server/monitors"
 
-import type { Monitor } from "@mon/config/schema"
+import type { MonitorTile } from "@mon/config/schema"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 
@@ -9,7 +9,7 @@ export async function Incidents({
   type,
   dbKey,
 }: {
-  type: Monitor["type"]
+  type: MonitorTile["type"]
   dbKey: string
 }) {
   const incidents = await getIncidents(type, dbKey)

@@ -1,4 +1,4 @@
-import { type Config, ConfigSchema, type Monitor } from "./schema"
+import { type Config, ConfigSchema, type MonitorTile } from "./schema"
 
 import { env } from "@mon/env"
 import { existsSync } from "fs"
@@ -16,15 +16,15 @@ export async function getConfig() {
   return zodParsed
 }
 
-export async function getMonitorConfig<T extends Monitor["type"]>(
+export async function getMonitorConfig<T extends MonitorTile["type"]>(
   type: T,
   key: string,
-): Promise<Monitor | undefined> {
+): Promise<MonitorTile | undefined> {
   const config = await getMonitors()
   return config.find((tile) => tile.type === type && tile.key === key)
 }
 
-export async function getMonitors(): Promise<Monitor[]> {
+export async function getMonitors(): Promise<MonitorTile[]> {
   const config = await getConfig()
   return config.tiles.filter(
     (tile) =>
