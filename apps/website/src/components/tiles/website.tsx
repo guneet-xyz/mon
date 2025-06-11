@@ -54,7 +54,6 @@ export function WebsiteTile({
       orientation={orientation}
       icon={config.icon}
       top_right_icon="streamline-ultimate:coding-apps-website-network-globe-bold"
-      statusLine={[status]}
     />
   )
 }

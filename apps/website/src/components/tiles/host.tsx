@@ -52,7 +52,6 @@ export function HostTile({
       orientation={orientation}
       icon={config.icon}
       top_right_icon="clarity:host-line"
-      statusLine={[status]}
     />
   )
 }
