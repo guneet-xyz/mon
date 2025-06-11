@@ -53,6 +53,7 @@ export function ContainerTile({
       orientation={orientation}
       icon={config.icon}
       top_right_icon="mdi:docker"
+      statusLine={[status]}
     />
   )
 }
