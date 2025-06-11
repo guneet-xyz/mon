@@ -1,5 +1,6 @@
 "use client"
 
+import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
@@ -42,16 +43,17 @@ export function HostTile({
   if (c_span == 1 && r_span > 1) {
     orientation = "vertical"
   }
-
   return (
-    <BaseTile
-      r_span={r_span}
-      c_span={c_span}
-      title={title}
-      status={status}
-      orientation={orientation}
-      icon={config.icon}
-      top_right_icon="clarity:host-line"
-    />
+    <MonitorDialog dbKey={dbKey} type="host">
+      <BaseTile
+        r_span={r_span}
+        c_span={c_span}
+        title={title}
+        status={status}
+        orientation={orientation}
+        icon={config.icon}
+        top_right_icon="clarity:host-line"
+      />
+    </MonitorDialog>
   )
 }

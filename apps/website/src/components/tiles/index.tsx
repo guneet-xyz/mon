@@ -1,4 +1,3 @@
-import { ServerOnly } from "@/components/server-only"
 import type { GeneratedTile } from "@/lib/client/tile-generation"
 
 import { ContainerTile } from "./container"
@@ -9,22 +8,15 @@ import { LogoTile } from "./logo"
 import { ThemeTile } from "./theme"
 import { WebsiteTile } from "./website"
 
-import Link from "next/link"
-
 export function Tile({ tile }: { tile: GeneratedTile }) {
-  // TODO: Why tf is there ServerOnly? Also remove Link from this and put it in the respective tile
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
-        <Link href={`/monitor/${tile.key}`}>
-          <ServerOnly>
-            <ContainerTile
-              dbKey={tile.key}
-              r_span={tile.location.row_span}
-              c_span={tile.location.col_span}
-            />
-          </ServerOnly>
-        </Link>
+        <ContainerTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
       </Container>
     )
   }
@@ -32,15 +24,11 @@ export function Tile({ tile }: { tile: GeneratedTile }) {
   if (tile.type === "host") {
     return (
       <Container {...tile.location}>
-        <Link href={`/monitor/${tile.key}`}>
-          <ServerOnly>
-            <HostTile
-              dbKey={tile.key}
-              r_span={tile.location.row_span}
-              c_span={tile.location.col_span}
-            />
-          </ServerOnly>
-        </Link>
+        <HostTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
       </Container>
     )
   }
@@ -48,15 +36,11 @@ export function Tile({ tile }: { tile: GeneratedTile }) {
   if (tile.type === "website") {
     return (
       <Container {...tile.location}>
-        <Link href={`/monitor/${tile.key}`}>
-          <ServerOnly>
-            <WebsiteTile
-              dbKey={tile.key}
-              r_span={tile.location.row_span}
-              c_span={tile.location.col_span}
-            />
-          </ServerOnly>
-        </Link>
+        <WebsiteTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
       </Container>
     )
   }

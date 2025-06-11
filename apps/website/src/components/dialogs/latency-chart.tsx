@@ -8,9 +8,35 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { getPings } from "@/lib/server/actions/get-pings"
 
+import type { MonitorTile } from "@mon/config/schema"
+import { useQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
+
+export function LatencyChart({
+  type,
+  dbKey,
+}: {
+  type: MonitorTile["type"]
+  dbKey: string
+}) {
+  const { data, isFetched } = useQuery({
+    queryKey: ["pings", type, dbKey],
+    queryFn: async () => await getPings(type, dbKey),
+  })
+
+  if (!isFetched) {
+    return <div className="p-4 font-display text-neutral-500">Loading...</div>
+  }
+
+  if (!data) return <div>This monitor does not support latency chart</div>
+
+  const pings = data
+
+  return <LatencyChartClientSide pings={pings} />
+}
 
 export function LatencyChartClientSide({
   pings,

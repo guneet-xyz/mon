@@ -1,22 +1,38 @@
-import { getIncidents } from "@/lib/server/monitors"
+"use client"
+
+import { getIncidents } from "@/lib/server/actions/get-incidents"
 
 import type { MonitorTile } from "@mon/config/schema"
+import { useQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 
 dayjs.extend(relativeTime)
-export async function Incidents({
+export function Incidents({
   type,
   dbKey,
 }: {
   type: MonitorTile["type"]
   dbKey: string
 }) {
-  const incidents = await getIncidents(type, dbKey)
+  const { data, isFetched } = useQuery({
+    queryKey: ["incidents", type, dbKey],
+    queryFn: async () => await getIncidents(type, dbKey),
+  })
+
+  if (!isFetched || !data) {
+    return (
+      <div className="p-4 font-display text-neutral-500">
+        Loading incidents...
+      </div>
+    )
+  }
+
+  const incidents = data
 
   if (incidents.length === 0) {
     return (
-      <div className="p-4 font-display text-neutral-500">
+      <div className="font-display text-neutral-500">
         No incidents in the last 24 hours.
       </div>
     )
