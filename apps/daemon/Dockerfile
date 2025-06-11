@@ -15,6 +15,6 @@ WORKDIR /src/apps/daemon
 RUN bun run build
 
 FROM oven/bun:1-alpine AS base
-RUN apk add ping curl docker
+RUN apk add curl docker iputils-ping
 COPY --from=install /src/apps/daemon/dist/daemon.cjs /app/daemon.cjs
 ENTRYPOINT [ "bun", "/app/daemon.cjs" ]
