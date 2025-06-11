@@ -24,13 +24,17 @@ export function MonitorDialog({
   dbKey: string
   children: React.ReactNode
 }) {
-  const { data } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["monitorConfig", type, dbKey],
     queryFn: async () => await getMonitorTileInfo(type, dbKey),
   })
 
-  if (!data) {
+  if (isLoading) {
     return <div>Loading</div>
+  }
+
+  if (isError || !data) {
+    throw new Error("Failed to load monitor tile info")
   }
 
   const config = data.config

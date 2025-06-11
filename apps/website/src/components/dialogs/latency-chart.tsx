@@ -22,13 +22,17 @@ export function LatencyChart({
   type: MonitorTile["type"]
   dbKey: string
 }) {
-  const { data, isFetched } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["pings", type, dbKey],
     queryFn: async () => await getPings(type, dbKey),
   })
 
-  if (!isFetched) {
+  if (isLoading) {
     return <div className="p-4 font-display text-neutral-500">Loading...</div>
+  }
+
+  if (isError) {
+    throw new Error("Failed to load pings data")
   }
 
   if (!data) return <div>This monitor does not support latency chart</div>

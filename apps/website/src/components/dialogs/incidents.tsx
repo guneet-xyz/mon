@@ -15,17 +15,21 @@ export function Incidents({
   type: MonitorTile["type"]
   dbKey: string
 }) {
-  const { data, isFetched } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["incidents", type, dbKey],
     queryFn: async () => await getIncidents(type, dbKey),
   })
 
-  if (!isFetched || !data) {
+  if (isLoading) {
     return (
       <div className="p-4 font-display text-neutral-500">
         Loading incidents...
       </div>
     )
+  }
+
+  if (isError || !data) {
+    throw new Error("Failed to load incidents data")
   }
 
   const incidents = data
