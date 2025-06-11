@@ -1,27 +1,16 @@
-import type { Config, Tile } from "@mon/config/schema"
+import type {
+  Config,
+  MonitorTile,
+  NonMonitorTile,
+  Tile,
+} from "@mon/config/schema"
 
 const MAX_RATIO = 1.25
 
 export type GeneratedTile = (
-  | { type: "hidden" }
-  | { type: "empty" }
+  | { type: MonitorTile["type"]; key: string }
   | {
-      type: "host"
-      key: string
-    }
-  | {
-      type: "website"
-      key: string
-    }
-  | {
-      type: "container"
-      key: string
-    }
-  | {
-      type: "logo"
-    }
-  | {
-      type: "theme"
+      type: NonMonitorTile["type"]
     }
 ) & {
   location: {
