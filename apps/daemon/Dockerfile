@@ -14,6 +14,7 @@ COPY . /src
 WORKDIR /src/apps/daemon
 RUN bun run build
 
-FROM oven/bun:1 AS base
+FROM oven/bun:1-alpine AS base
+RUN apk add ping curl docker
 COPY --from=install /src/apps/daemon/dist/daemon.cjs /app/daemon.cjs
 ENTRYPOINT [ "bun", "/app/daemon.cjs" ]
