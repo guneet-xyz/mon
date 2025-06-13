@@ -59,9 +59,12 @@ export function LatencyChartClientSide({
   return (
     <ChartContainer
       config={chartConfig}
-      className="aspect-auto h-[250px] w-full pr-8"
+      className="aspect-auto h-[250px] w-full"
     >
-      <AreaChart data={chartData}>
+      <AreaChart
+        data={chartData}
+        margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+      >
         <defs>
           <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="green" stopOpacity={0.8} />
@@ -110,6 +113,7 @@ export function LatencyChartClientSide({
           fill="url(#fill)"
           stroke="#4ade80"
           stackId="a"
+          label={false}
         />
         <ChartLegend content={<ChartLegendContent />} />
       </AreaChart>

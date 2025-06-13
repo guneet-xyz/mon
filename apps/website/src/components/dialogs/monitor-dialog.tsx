@@ -42,21 +42,21 @@ export function MonitorDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="w-full !max-w-none p-4 sm:w-auto sm:p-8">
         <DialogHeader>
           <DialogTitle>{config.name ?? config.key}</DialogTitle>
           <DialogDescription>{config.name ? config.key : ""}</DialogDescription>
-          <div>
-            <div className="mt-4 mb-2 font-medium">Latency</div>
-            <div className="rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500">
-              <LatencyChart type={type} dbKey={dbKey} />
-            </div>
-            <div className="mt-4 mb-2 font-medium">Incidents</div>
-            <div className="rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500">
-              <Incidents type={type} dbKey={dbKey} />
-            </div>
-          </div>
         </DialogHeader>
+        <div>
+          <div className="mt-4 mb-2 font-medium">Latency</div>
+          <div className="rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500">
+            <LatencyChart type={type} dbKey={dbKey} />
+          </div>
+          <div className="mt-4 mb-2 font-medium">Incidents</div>
+          <div className="rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 text-neutral-500 sm:p-4">
+            <Incidents type={type} dbKey={dbKey} />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
