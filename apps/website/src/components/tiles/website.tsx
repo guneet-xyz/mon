@@ -35,7 +35,9 @@ export function WebsiteTile({
   let title: string
   const name = config.name ?? config.key
 
-  if (r_span === 1 && c_span === 1) {
+  if (config.short_name) {
+    title = config.short_name
+  } else if (r_span === 1 && c_span === 1) {
     title = name.length > 3 ? name[0]!.toUpperCase() : name
   } else {
     title = config.name ?? config.key

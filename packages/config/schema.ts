@@ -26,6 +26,7 @@ const MonitorSchema = TileSchema.extend({
   key: z.string(),
   name: z.string().optional(),
   icon: z.string().optional(),
+  short_name: z.string().optional(),
 })
 
 export const ConfigSchema = z.object({
