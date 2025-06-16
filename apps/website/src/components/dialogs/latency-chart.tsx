@@ -59,10 +59,11 @@ export function LatencyChartClientSide({
   return (
     <ChartContainer
       config={chartConfig}
-      className="aspect-auto h-[250px] w-full"
+      className="aspect-auto h-[250px] w-full sm:min-w-96"
     >
       <AreaChart
         data={chartData}
+        className="h-full w-full"
         margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
       >
         <defs>
@@ -108,6 +109,7 @@ export function LatencyChartClientSide({
           }
         />
         <Area
+          isAnimationActive={false}
           dataKey="latency"
           type="natural"
           fill="url(#fill)"

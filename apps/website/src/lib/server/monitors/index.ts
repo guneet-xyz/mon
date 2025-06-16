@@ -46,6 +46,8 @@ export async function getIncidents(
     }
   }
 
+  incidents.sort((a, b) => b.start.getTime() - a.start.getTime())
+
   return incidents
 }
 

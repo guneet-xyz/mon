@@ -53,7 +53,7 @@ export function MonitorDialog({
             <LatencyChart type={type} dbKey={dbKey} />
           </div>
           <div className="mt-4 mb-2 font-medium">Incidents</div>
-          <div className="rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 text-neutral-500 sm:p-4">
+          <div className="max-h-64 overflow-y-scroll rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500">
             <Incidents type={type} dbKey={dbKey} />
           </div>
         </div>
