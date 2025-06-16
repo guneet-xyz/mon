@@ -24,28 +24,26 @@ export function MonitorDialog({
   dbKey: string
   children: React.ReactNode
 }) {
-  const { data, isLoading, isError } = useQuery({
+  const { data } = useQuery({
     queryKey: ["monitorConfig", type, dbKey],
     queryFn: async () => await getMonitorTileInfo(type, dbKey),
   })
 
-  if (isLoading) {
-    return <div>Loading</div>
-  }
-
-  if (isError || !data) {
-    throw new Error("Failed to load monitor tile info")
-  }
-
-  const config = data.config
+  const config = data?.config
 
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="w-full !max-w-none p-4 sm:w-auto sm:p-8">
         <DialogHeader>
-          <DialogTitle>{config.name ?? config.key}</DialogTitle>
-          <DialogDescription>{config.name ? config.key : ""}</DialogDescription>
+          {config ? (
+            <>
+              <DialogTitle>{config.name ?? config.key}</DialogTitle>
+              <DialogDescription>
+                {config.name ? config.key : ""}
+              </DialogDescription>
+            </>
+          ) : null}
         </DialogHeader>
         <div>
           <div className="mt-4 mb-2 font-medium">Latency</div>

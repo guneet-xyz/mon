@@ -4,6 +4,7 @@ import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
+import { LoadingTile } from "./loading"
 
 import { useQuery } from "@tanstack/react-query"
 
@@ -21,7 +22,7 @@ export function WebsiteTile({
     queryFn: async () => await getMonitorTileInfo("website", dbKey),
   })
   if (!isFetched || !data) {
-    return <div>loading</div>
+    return <LoadingTile r_span={r_span} c_span={c_span} />
   }
 
   const { config, status } = data

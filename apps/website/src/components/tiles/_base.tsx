@@ -17,7 +17,7 @@ export function BaseTile({
 }: {
   r_span: number
   c_span: number
-  title: string
+  title?: string
   orientation?: "horizontal" | "vertical"
   status?: "online" | "offline" | "unknown"
   icon?: string

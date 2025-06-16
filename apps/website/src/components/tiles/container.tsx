@@ -1,12 +1,12 @@
 "use client"
 
+import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
-import { MonitorDialog } from "../dialogs/monitor-dialog"
 import { BaseTile } from "./_base"
+import { LoadingTile } from "./loading"
 
 import { useQuery } from "@tanstack/react-query"
-import { Monitor } from "lucide-react"
 
 export function ContainerTile({
   dbKey,
@@ -22,7 +22,7 @@ export function ContainerTile({
     queryFn: async () => await getMonitorTileInfo("container", dbKey),
   })
   if (!isFetched || !data) {
-    return <div>loading</div>
+    return <LoadingTile r_span={r_span} c_span={c_span} />
   }
 
   const { config, status } = data
