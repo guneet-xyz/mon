@@ -1,6 +1,6 @@
 import type { Container } from "@mon/config/schema"
 import { db } from "@mon/db"
-import { websitePings } from "@mon/db/schema"
+import { containerPings, websitePings } from "@mon/db/schema"
 import { execa } from "execa"
 import { scheduleJob } from "node-schedule"
 
@@ -36,6 +36,7 @@ async function pingContainer(
   socket: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const unixSocket = socket.startsWith("unix://") ? socket.slice(7) : null
+  const timestamp = new Date()
   try {
     const { exitCode, stdout } = await execa("curl", [
       "--silent",
@@ -43,14 +44,29 @@ async function pingContainer(
       `${unixSocket ? "http://whatever" : socket}/v1.41/containers/${containerName}/json`,
     ])
     if (exitCode !== 0) {
+      await db.insert(containerPings).values({
+        key: containerName,
+        timestamp: timestamp,
+        error: `curl failed with exit code ${exitCode}`,
+      })
       return {
         success: false,
-        error: `docker inspect failed with exit code ${exitCode}`,
+        error: `curl failed with exit code ${exitCode}`,
       }
     }
     const output = JSON.parse(stdout)
     const running = output.State?.Status === "running"
-    if (running) return { success: true }
+    if (running) {
+      await db.insert(containerPings).values({
+        key: containerName,
+        timestamp: timestamp,
+      })
+      return { success: true }
+    }
+    await db.insert(containerPings).values({
+      key: containerName,
+      timestamp: timestamp,
+    })
     return {
       success: false,
       error: `container is offline`,

@@ -3,7 +3,7 @@ import type { IncidentPing } from "."
 import { db } from "@mon/db"
 import { websitePings } from "@mon/db/schema"
 import dayjs from "dayjs"
-import { and, asc, eq, gte, isNotNull } from "drizzle-orm"
+import { and, asc, desc, eq, gte, isNotNull } from "drizzle-orm"
 
 export async function getWebsiteIncidentPings(
   dbKey: string,
@@ -34,7 +34,7 @@ export async function getWebsiteStatus(dbKey: string) {
     .select()
     .from(websitePings)
     .where(and(eq(websitePings.key, dbKey)))
-    .orderBy(asc(websitePings.timestamp))
+    .orderBy(desc(websitePings.timestamp))
     .limit(1)
 
   const ping = pings[0]
