@@ -2,6 +2,7 @@
 
 import { Incidents } from "@/components/dialogs/incidents"
 import { LatencyChart } from "@/components/dialogs/latency-chart"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -39,8 +40,13 @@ export function MonitorDialog({
           {config ? (
             <>
               <DialogTitle>{config.name ?? config.key}</DialogTitle>
-              <DialogDescription>
-                {config.name ? config.key : ""}
+              <DialogDescription className="flex justify-between">
+                <div>{config.key ?? ""}</div>
+                <div>
+                  <Badge variant="default" className="uppercase">
+                    {type}
+                  </Badge>
+                </div>
               </DialogDescription>
             </>
           ) : null}
