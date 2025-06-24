@@ -1,10 +1,10 @@
 "use client"
 
+import type { Config } from "@mon/config/schema"
+
 import { Tile } from "@/components/tiles"
 import useWindowDimensions from "@/lib/client/hooks/dimensions"
 import { generateTiles } from "@/lib/client/tile-generation"
-
-import type { Config } from "@mon/config/schema"
 
 export function TileGrid({ config }: { config: Config }) {
   const { width, height } = useWindowDimensions()

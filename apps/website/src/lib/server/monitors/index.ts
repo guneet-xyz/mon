@@ -1,3 +1,5 @@
+import type { MonitorTile } from "@mon/config/schema"
+
 import { getContainerIncidentPings, getContainerStatus } from "./container"
 import { getGithubIncidentPings, getGithubStatus } from "./github"
 import { getHostIncidentPings, getHostStatus } from "./host"
@@ -5,7 +7,6 @@ import { getHostPings } from "./host"
 import { getWebsiteIncidentPings, getWebsiteStatus } from "./website"
 import { getWebsitePings } from "./website"
 
-import type { MonitorTile } from "@mon/config/schema"
 import dayjs from "dayjs"
 
 export type IncidentPing = {

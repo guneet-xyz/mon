@@ -6,7 +6,7 @@ const config = {
     "prettier-plugin-tailwindcss",
   ],
   semi: false,
-  importOrder: ["^@easyshell", "^@/(.*)$", "^[./]", ""],
+  importOrder: ["^@mon", "^@/(.*)$", "^[./]", ""],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
   tailwindStylesheet: "./apps/website/src/styles/globals.css",

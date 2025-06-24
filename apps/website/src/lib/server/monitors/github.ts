@@ -1,8 +1,9 @@
-import type { IncidentPing } from "."
-
 import { db } from "@mon/db"
 import { and, desc, eq, gte, isNotNull, isNull } from "@mon/db/drizzle"
 import { type DbSelectGithubPing, githubPings } from "@mon/db/schema"
+
+import type { IncidentPing } from "."
+
 import dayjs from "dayjs"
 
 export async function getGithubPings(

@@ -1,5 +1,7 @@
 "use client"
 
+import type { MonitorTile } from "@mon/config/schema"
+
 import {
   type ChartConfig,
   ChartContainer,
@@ -10,7 +12,6 @@ import {
 } from "@/components/ui/chart"
 import { getPings } from "@/lib/server/actions/get-pings"
 
-import type { MonitorTile } from "@mon/config/schema"
 import { useQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"

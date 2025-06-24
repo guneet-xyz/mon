@@ -1,5 +1,7 @@
 "use client"
 
+import type { MonitorTile } from "@mon/config/schema"
+
 import { Incidents } from "@/components/dialogs/incidents"
 import { LatencyChart } from "@/components/dialogs/latency-chart"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +15,6 @@ import {
 } from "@/components/ui/dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
-import type { MonitorTile } from "@mon/config/schema"
 import { useQuery } from "@tanstack/react-query"
 
 export function MonitorDialog({

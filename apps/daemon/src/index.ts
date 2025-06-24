@@ -1,9 +1,9 @@
+import { getConfig } from "@mon/config"
+
 import { scheduleContainerJob } from "./jobs/container"
 import { scheduleGithubJob } from "./jobs/github"
 import { scheduleHostJob } from "./jobs/host"
 import { scheduleWebsiteJob } from "./jobs/website"
-
-import { getConfig } from "@mon/config"
 
 async function main() {
   console.log("main")

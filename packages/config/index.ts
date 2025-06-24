@@ -1,6 +1,7 @@
+import { env } from "@mon/env"
+
 import { type Config, ConfigSchema, type MonitorTile } from "./schema"
 
-import { env } from "@mon/env"
 import { existsSync } from "fs"
 import { mkdir, readFile, writeFile } from "fs/promises"
 import { parse } from "smol-toml"

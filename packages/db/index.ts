@@ -1,6 +1,7 @@
+import { env } from "@mon/env"
+
 import * as schema from "./schema"
 
-import { env } from "@mon/env"
 import { drizzle } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
 

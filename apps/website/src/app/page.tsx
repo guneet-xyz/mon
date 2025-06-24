@@ -1,8 +1,8 @@
+import { getConfig } from "@mon/config"
+
 import { ClientOnly } from "@/components/client-only"
 
 import { TileGrid } from "./tile-grid"
-
-import { getConfig } from "@mon/config"
 
 export const dynamic = "force-dynamic"
 

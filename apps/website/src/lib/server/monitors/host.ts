@@ -1,8 +1,9 @@
-import type { IncidentPing } from "."
-
 import { db } from "@mon/db"
 import { and, asc, eq, gte, isNotNull } from "@mon/db/drizzle"
 import { hostPings } from "@mon/db/schema"
+
+import type { IncidentPing } from "."
+
 import dayjs from "dayjs"
 
 export async function getHostPings(

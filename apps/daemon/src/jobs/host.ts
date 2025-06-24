@@ -1,4 +1,5 @@
 import { db } from "@mon/db"
+
 import { execa } from "execa"
 import { scheduleJob } from "node-schedule"
 import type { Host } from "packages/config/schema"

@@ -1,8 +1,9 @@
 "use client"
 
+import type { MonitorTile } from "@mon/config/schema"
+
 import { getIncidents } from "@/lib/server/actions/get-incidents"
 
-import type { MonitorTile } from "@mon/config/schema"
 import { useQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
