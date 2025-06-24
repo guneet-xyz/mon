@@ -73,7 +73,7 @@ export function GithubTile({
         status={status}
         orientation={orientation}
         icon={config.icon}
-        top_right_icon="clarity:host-line"
+        top_right_icon="mdi:github"
       />
     </MonitorDialog>
   )

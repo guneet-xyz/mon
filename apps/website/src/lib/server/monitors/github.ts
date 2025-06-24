@@ -1,7 +1,7 @@
 import type { IncidentPing } from "."
 
 import { db } from "@mon/db"
-import { and, asc, eq, gte, isNotNull, isNull } from "@mon/db/drizzle"
+import { and, desc, eq, gte, isNotNull, isNull } from "@mon/db/drizzle"
 import { type DbSelectGithubPing, githubPings } from "@mon/db/schema"
 import dayjs from "dayjs"
 
@@ -18,7 +18,7 @@ export async function getGithubPings(
         gte(githubPings.timestamp, dayjs().subtract(1, "day").toDate()),
       ),
     )
-    .orderBy(asc(githubPings.timestamp))
+    .orderBy(desc(githubPings.timestamp))
   return pings
 }
 
@@ -38,7 +38,7 @@ export async function getGithubIncidentPings(
         gte(githubPings.timestamp, dayjs().subtract(1, "day").toDate()),
       ),
     )
-    .orderBy(asc(githubPings.timestamp))) as Array<{
+    .orderBy(desc(githubPings.timestamp))) as Array<{
     timestamp: Date
     error: string
   }>
@@ -51,7 +51,7 @@ export async function getGithubStatus(dbKey: string) {
     .select()
     .from(githubPings)
     .where(and(eq(githubPings.key, dbKey)))
-    .orderBy(asc(githubPings.timestamp))
+    .orderBy(desc(githubPings.timestamp))
     .limit(1)
 
   const ping = pings[0]
