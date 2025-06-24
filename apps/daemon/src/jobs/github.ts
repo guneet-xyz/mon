@@ -46,8 +46,25 @@ const ResponseSchema = z.object({
     z.object({
       id: z.number(),
       name: z.string(),
-      status: z.string(),
-      conclusion: z.string().nullable(),
+      status: z.enum([
+        "queued",
+        "in_progress",
+        "completed",
+        "waiting",
+        "requested",
+        "pending",
+      ]),
+      conclusion: z
+        .enum([
+          "success",
+          "failure",
+          "neutral",
+          "cancelled",
+          "skipped",
+          "timed_out",
+          "action_required",
+        ])
+        .nullable(),
       details_url: z.string(),
       started_at: z.coerce.date(),
       completed_at: z.coerce.date().nullable(),
