@@ -1,4 +1,5 @@
 import { scheduleContainerJob } from "./jobs/container"
+import { scheduleGithubJob } from "./jobs/github"
 import { scheduleHostJob } from "./jobs/host"
 import { scheduleWebsiteJob } from "./jobs/website"
 
@@ -22,6 +23,11 @@ async function main() {
   const containers = config.tiles.filter((tile) => tile.type === "container")
   for (const container of containers) {
     scheduleContainerJob(container)
+  }
+
+  const githubs = config.tiles.filter((tile) => tile.type === "github")
+  for (const github of githubs) {
+    scheduleGithubJob(github)
   }
 }
 

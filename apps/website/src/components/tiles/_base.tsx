@@ -74,7 +74,7 @@ export function BaseTile({
       {children}
 
       {statusLine && statusLine.length > 0 ? (
-        <div className="absolute bottom-0 left-0 flex h-1 w-full">
+        <div className="absolute bottom-0 left-0 flex h-1 w-full divide-x-2 divide-emerald-700 dark:divide-emerald-950">
           {statusLine.map((status, index) => (
             <div
               key={index}

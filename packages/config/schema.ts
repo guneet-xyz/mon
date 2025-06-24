@@ -46,6 +46,10 @@ export const ConfigSchema = z.object({
         container_name: z.string(),
         docker_socket: z.string().default("unix:///var/run/docker.sock"),
       }),
+      MonitorSchema.extend({
+        type: z.literal("github"),
+        repo: z.string().regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/),
+      }),
       TileSchema.extend({
         type: z.literal("empty"),
         row_start: z.number(),
@@ -94,3 +98,4 @@ type ExtractTileType<T extends Config["tiles"][number]["type"]> = Omit<
 export type Host = ExtractTileType<"host">
 export type Container = ExtractTileType<"container">
 export type Website = ExtractTileType<"website">
+export type Github = ExtractTileType<"github">
