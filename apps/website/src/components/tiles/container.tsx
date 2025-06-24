@@ -54,6 +54,7 @@ export function ContainerTile({
         r_span={r_span}
         c_span={c_span}
         status={status}
+        top_text={config.container_name}
         title={title}
         orientation={orientation}
         icon={config.icon}

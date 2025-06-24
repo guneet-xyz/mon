@@ -52,6 +52,7 @@ export function HostTile({
         r_span={r_span}
         c_span={c_span}
         title={title}
+        top_text={config.address}
         status={status}
         orientation={orientation}
         icon={config.icon}

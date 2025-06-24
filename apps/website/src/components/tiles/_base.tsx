@@ -7,6 +7,7 @@ export function BaseTile({
   c_span,
   status,
   title,
+  top_text,
   orientation,
   icon,
   top_right_icon,
@@ -18,6 +19,7 @@ export function BaseTile({
   r_span: number
   c_span: number
   title?: string
+  top_text?: string
   orientation?: "horizontal" | "vertical"
   status?: "online" | "offline" | "unknown"
   icon?: string
@@ -42,6 +44,12 @@ export function BaseTile({
       )}
       onClick={onClick}
     >
+      {top_text ? (
+        <div className="absolute top-1.5 left-1/2 -translate-x-1/2 font-display text-sm font-semibold text-emerald-500 dark:text-emerald-800">
+          {top_text}
+        </div>
+      ) : null}
+
       {status ? (
         <StatusDot status={status} className="absolute top-2 right-2" />
       ) : null}

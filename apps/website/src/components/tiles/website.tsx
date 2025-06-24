@@ -49,12 +49,15 @@ export function WebsiteTile({
     orientation = "vertical"
   }
 
+  const urlWithoutProtocol = config.url.replace(/(^\w+:|^)\/\//, "")
+
   return (
     <MonitorDialog dbKey={dbKey} type="website">
       <BaseTile
         r_span={r_span}
         c_span={c_span}
         title={title}
+        top_text={urlWithoutProtocol}
         status={status}
         orientation={orientation}
         icon={config.icon}

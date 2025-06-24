@@ -19,9 +19,11 @@ export async function getConfig() {
 export async function getMonitorConfig<T extends MonitorTile["type"]>(
   type: T,
   key: string,
-): Promise<MonitorTile | undefined> {
+): Promise<Extract<MonitorTile, { type: T }> | undefined> {
   const config = await getMonitors()
-  return config.find((tile) => tile.type === type && tile.key === key)
+  return config.find((tile) => tile.type === type && tile.key === key) as
+    | Extract<MonitorTile, { type: T }>
+    | undefined
 }
 
 export async function getMonitors(): Promise<MonitorTile[]> {

@@ -71,6 +71,7 @@ export function GithubTile({
         r_span={r_span}
         c_span={c_span}
         title={title}
+        top_text={config.repo}
         statusLine={statusLine}
         status={status}
         orientation={orientation}

@@ -5,8 +5,8 @@ import { getStatus } from "@/lib/server/monitors"
 import { getMonitorConfig } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
-export async function getMonitorTileInfo(
-  type: MonitorTile["type"],
+export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
+  type: T,
   dbKey: string,
 ) {
   const config = await getMonitorConfig(type, dbKey)
