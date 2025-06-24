@@ -5,19 +5,17 @@ import { and, desc, eq } from "@mon/db/drizzle"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
 
 export async function getLatestRuns(key: string) {
-  const latestPing = db
-    .$with("latest_ping")
-    .as(
-      db
-        .select({
-          commitHash: githubPings.commitHash,
-          timestamp: githubPings.timestamp,
-        })
-        .from(githubPings)
-        .where(eq(githubPings.key, key))
-        .orderBy(desc(githubPings.timestamp))
-        .limit(1),
-    )
+  const latestPing = db.$with("latest_ping").as(
+    db
+      .select({
+        commitHash: githubPings.commitHash,
+        timestamp: githubPings.timestamp,
+      })
+      .from(githubPings)
+      .where(eq(githubPings.key, key))
+      .orderBy(desc(githubPings.timestamp))
+      .limit(1),
+  )
 
   const latestCheckRunIds = db.$with("latest_check_run_ids").as(
     db
