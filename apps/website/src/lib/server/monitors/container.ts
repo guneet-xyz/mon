@@ -1,9 +1,9 @@
 import type { IncidentPing } from "."
 
 import { db } from "@mon/db"
+import { and, asc, eq, gte, isNotNull } from "@mon/db/drizzle"
 import { containerPings } from "@mon/db/schema"
 import dayjs from "dayjs"
-import { and, asc, eq, gte, isNotNull } from "drizzle-orm"
 
 export async function getContainerIncidentPings(
   dbKey: string,

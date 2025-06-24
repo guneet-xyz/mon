@@ -9,6 +9,7 @@ export const env = createEnv({
     APP: z.enum(["website", "daemon", "script"]),
     DATABASE_URL: z.string().url(),
     CONFIG_PATH: z.string().default("/etc/mon/config.toml"),
+    GITHUB_TOKEN: z.string().optional(),
   },
 
   clientPrefix: "NEXT_PUBLIC_",

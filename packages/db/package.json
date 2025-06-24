@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",
-    "drizzle-orm": "^0.39.1",
+    "drizzle-orm": "^0.44.2",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
