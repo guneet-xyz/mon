@@ -35,7 +35,9 @@ export function GithubTile({
   const { config, status } = data
 
   if (!config) {
-    throw new Error(`Host tile with key "${dbKey}" not found in configuration.`)
+    throw new Error(
+      `Github tile with key "${dbKey}" not found in configuration.`,
+    )
   }
   let title: string
   const name = config.name ?? config.key
