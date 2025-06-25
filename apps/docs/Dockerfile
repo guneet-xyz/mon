@@ -12,15 +12,15 @@ COPY packages/db/package.json /src/packages/db/package.json
 WORKDIR /src
 RUN bun install --frozen-lockfile
 COPY . /src
-WORKDIR /src/apps/website
+WORKDIR /src/apps/docs
 RUN SKIP_ENV_VALIDATION=1 bun run build
 
 FROM oven/bun:1
 
-COPY --from=build /src/apps/website/.next/standalone /app
-COPY --from=build /src/apps/website/.next/static /app/apps/website/.next/static
-COPY --from=build /src/apps/website/public /app/apps/website/public
+COPY --from=build /src/apps/docs/.next/standalone /app
+COPY --from=build /src/apps/docs/.next/static /app/apps/docs/.next/static
+COPY --from=build /src/apps/docs/public /app/apps/docs/public
 
 EXPOSE 3000
 WORKDIR /app
-ENTRYPOINT [ "bun", "run", "apps/website/server.js" ]
+ENTRYPOINT [ "bun", "run", "apps/docs/server.js" ]
