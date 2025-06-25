@@ -74,7 +74,7 @@ export default async function RootLayout({
         <Layout
           navbar={navbar}
           pageMap={await getPageMap("/docs")}
-          docsRepositoryBase="https://github.com/shuding/nextra/tree/main/docs"
+          docsRepositoryBase="https://github.com/guneet-xyz/mon/tree/main/apps/docs"
           footer={footer}
         >
           {children}
