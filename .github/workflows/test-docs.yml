@@ -1,9 +1,9 @@
-name: test-website
+name: test-docs
 on:
   pull_request:
     paths:
-      - .github/workflows/test-website.yml
-      - apps/website/**
+      - .github/workflows/test-docs.yml
+      - apps/docs/**
       - packages/**
   workflow_dispatch:
 
@@ -16,4 +16,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: build
-        run: docker build -t website -f apps/website/Dockerfile .
+        run: docker build -t docs -f apps/docs/Dockerfile .

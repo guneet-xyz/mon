@@ -6,6 +6,7 @@
   "workspaces": [
     "apps/website",
     "apps/daemon",
+    "apps/docs",
     "packages/db",
     "packages/config",
     "packages/env"
@@ -13,9 +14,10 @@
   "scripts": {
     "format:check": "bunx prettier --check .",
     "format:write": "bunx prettier --write .",
-    "lint": "bun run lint:tsc && bun run lint:next",
-    "lint:next": "cd apps/website && next lint",
-    "lint:tsc": "bunx tsc --noEmit"
+    "lint": "bun run lint:tsc && bun run lint:website && bun run lint:docs",
+    "lint:docs": "cd apps/docs && next lint",
+    "lint:tsc": "bunx tsc --noEmit",
+    "lint:website": "cd apps/website && next lint"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",

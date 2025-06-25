@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "verbatimModuleSyntax": true,
+    /* Base Options: */
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2022",
@@ -9,15 +8,16 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "checkJs": true,
     /* Bundled projects */
-    "lib": ["dom", "dom.iterable", "ES2023"],
+    "lib": ["dom", "dom.iterable", "ES2022"],
     "noEmit": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "jsx": "preserve",
     "plugins": [
       {
@@ -25,16 +25,19 @@
       }
     ],
     "incremental": true,
+    /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./apps/website/src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.js"],
-  "exclude": [
-    "apps/daemon/dist",
-    "apps/daemon/daemon.cjs",
-    "apps/website",
-    "apps/docs"
-  ]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.cjs",
+    "**/*.js",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "public/_pagefind"]
 }

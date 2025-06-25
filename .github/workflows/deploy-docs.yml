@@ -1,11 +1,11 @@
-name: deploy-website
+name: deploy-docs
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/deploy-website.yml
-      - apps/website/**
+      - .github/workflows/deploy-docs.yml
+      - apps/docs/**
       - packages/**
   workflow_dispatch:
 
@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: build
-        run: docker build -t ${{ secrets.DOCKER_REGISTRY }}/mon/website:latest -f apps/website/Dockerfile .
+        run: docker build -t ${{ secrets.DOCKER_REGISTRY }}/mon/docs:latest -f apps/docs/Dockerfile .
 
       - name: setup tailscale
         uses: tailscale/github-action@v3
@@ -34,7 +34,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: push
-        run: docker push ${{ secrets.DOCKER_REGISTRY }}/mon/website:latest
+        run: docker push ${{ secrets.DOCKER_REGISTRY }}/mon/docs:latest
 
   deploy:
     environment: deployment
