@@ -1,3 +1,4 @@
+name: test-docs
 on:
   pull_request:
     paths:
