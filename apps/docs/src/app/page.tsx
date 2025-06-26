@@ -15,8 +15,8 @@ import {
 export default function HomePage() {
   return (
     <div className="relative flex min-h-[calc(100vh-180px)] flex-col items-center justify-center">
-      <div className="absolute inset-0 bg-radial from-green-500 to-neutral-950 opacity-20 blur-3xl"></div>
-      <h1 className="pt-20 font-display text-4xl font-black md:text-6xl lg:text-8xl">
+      <div className="absolute inset-0 bg-radial from-green-500 to-neutral-100 opacity-20 blur-3xl dark:from-green-500 dark:to-neutral-950"></div>
+      <h1 className="z-10 pt-20 font-display text-4xl font-black md:text-6xl lg:text-8xl">
         MON
       </h1>
       <h2 className="px-8 py-4 text-center text-xl font-bold md:text-2xl lg:px-16 lg:text-3xl">
