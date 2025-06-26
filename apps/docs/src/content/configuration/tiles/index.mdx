@@ -1,0 +1,15 @@
+# About
+
+Tile refers to the blocks you see in on your monitor wall. There are few different type of tiles. If you're looking to monitor a service, you're looking for a [monitor tile](/docs/configuration/tiles/monitors).
+
+## Common Properties
+
+All tiles have the following common properties that you can set:
+
+| Property  | Type   | Description                                                                                                                                                                                                            | Required | Default Behavior        |
+| --------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------- |
+| type      | string | Type of the tile. Must be one of the supported tile types.                                                                                                                                                             | Yes      | -                       |
+| col_start | number | Column to start the tile in the grid. Follows 1-indexing, i.e., `col_start = 1` refers to the first column of the grid. Also supports negative indexing, i.e., `col_start = -1` refers to the last column of the grid. | No       | Tile can start anywhere |
+| col_span  | number | How many columns the tile should span. Should be a positive integer only.                                                                                                                                              | No       | 1                       |
+| row_start | number | Row to start the tile in the grid. Follows 1-indexing, i.e., `row_start = 1` refers to the first row of the grid. Also supports negative indexing, i.e., `row_start = -1` refers to the last row of the grid.          | No       | Tile can start anywhere |
+| row_span  | number | How many rows the tile should span. Should be a positive integer only.                                                                                                                                                 | No       | 1                       |

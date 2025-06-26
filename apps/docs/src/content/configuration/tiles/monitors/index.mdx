@@ -1,0 +1,22 @@
+# About
+
+Monitors are probably the tiles you will use the most.
+
+## Common Properties
+
+All monitors have the following common properties that you can set:
+
+| Property     | Type   | Description                                                                                         | Required |
+| ------------ | ------ | --------------------------------------------------------------------------------------------------- | -------- |
+| `key`        | string | Key to indentify this monitor in the database.                                                      | Yes      |
+| `name`       | string | Name of the monitor.                                                                                | No       |
+| `short_name` | string | Short name of the monitor. Used when the tile size is 1x1                                           | No       |
+| `icon`       | string | Icon to use for the monitor. This icon is used when tile is `1x1` size and `short_name` is not set. | No       |
+
+**Notes**:
+
+> `key` must be unique on a per monitor type basis.
+
+> If `name` is not set, the `key` will be used as the monitor name.
+
+> If `short_name` and `icon` are not set, first letter of the `name` will be used as the icon.

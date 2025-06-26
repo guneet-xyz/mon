@@ -50,7 +50,7 @@ export default function HomePage() {
               regular={<PiBook />}
               hover={<PiBookDuotone />}
             />
-            Read the Friendly Mannual
+            Read The Friendly Manual
           </Button>
         </Link>
       </div>
