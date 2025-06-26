@@ -23,22 +23,26 @@ export default function HomePage() {
         A monitor wall thats straight to the point.
       </h2>
       <div className="z-10 flex flex-wrap items-center justify-center gap-4 pt-4 pb-8 md:gap-8">
-        <Button className="group cursor-pointer">
-          <DuotoneHoverIcon
-            className="mr-2 ml-1"
-            regular={<PiPlay />}
-            hover={<PiPlayDuotone />}
-          />
-          Live Demo
-        </Button>
-        <Button className="group cursor-pointer">
-          <DuotoneHoverIcon
-            className="mr-2 ml-1"
-            regular={<PiBracketsAngle />}
-            hover={<PiBracketsAngleDuotone />}
-          />
-          Demo Code
-        </Button>
+        <Link href="/demo">
+          <Button className="group cursor-pointer">
+            <DuotoneHoverIcon
+              className="mr-2 ml-1"
+              regular={<PiPlay />}
+              hover={<PiPlayDuotone />}
+            />
+            Live Demo
+          </Button>
+        </Link>
+        <Link href="https://github.com/guneet-xyz/mon">
+          <Button className="group cursor-pointer">
+            <DuotoneHoverIcon
+              className="mr-2 ml-1"
+              regular={<PiBracketsAngle />}
+              hover={<PiBracketsAngleDuotone />}
+            />
+            Demo Code
+          </Button>
+        </Link>
         <Link href="/docs">
           <Button className="group cursor-pointer">
             <DuotoneHoverIcon
