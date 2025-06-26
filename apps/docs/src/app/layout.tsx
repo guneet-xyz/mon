@@ -1,3 +1,5 @@
+import { ClientOnly } from "@/components/client-only"
+import { ThemeButton } from "@/components/theme-button"
 import "@/styles/globals.css"
 
 import { type Metadata } from "next"
@@ -39,7 +41,11 @@ const navbar = (
   <Navbar
     logo={<div className="font-bold">MON</div>}
     projectLink="https://github.com/guneet-xyz/mon"
-  />
+  >
+    <ClientOnly>
+      <ThemeButton />
+    </ClientOnly>
+  </Navbar>
 )
 const footer = (
   <Footer>
