@@ -10,7 +10,7 @@ export function LogoTile({
   c_span: number
 }) {
   return (
-    <Link href="https://github.com/guneet-xyz/mon">
+    <Link href="https://mon.guneet.dev">
       <BaseTile
         r_span={r_span}
         c_span={c_span}

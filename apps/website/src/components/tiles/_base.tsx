@@ -45,7 +45,7 @@ export function BaseTile({
       onClick={onClick}
     >
       {top_text ? (
-        <div className="absolute top-1.5 left-1/2 -translate-x-1/2 font-display text-sm font-semibold text-emerald-500 dark:text-emerald-800">
+        <div className="absolute top-1.5 left-1/2 -translate-x-1/2 font-display text-xs font-semibold text-emerald-500 md:text-sm dark:text-emerald-800">
           {top_text}
         </div>
       ) : null}
