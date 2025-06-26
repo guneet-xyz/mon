@@ -3,6 +3,7 @@ import "@/styles/globals.css"
 import { type Metadata } from "next"
 import localFont from "next/font/local"
 import Link from "next/link"
+import type { PageMapItem } from "nextra"
 import { Footer, Layout, Navbar } from "nextra-theme-docs"
 import "nextra-theme-docs/style.css"
 import { Head } from "nextra/components"
@@ -34,10 +35,15 @@ const Satoshi = localFont({
   variable: "--font-satoshi",
 })
 
-const navbar = <Navbar logo={<div className="font-bold">MON</div>} />
+const navbar = (
+  <Navbar
+    logo={<div className="font-bold">MON</div>}
+    projectLink="https://github.com/guneet-xyz/mon"
+  />
+)
 const footer = (
   <Footer>
-    <p>
+    <p className="mx-auto">
       <span>Made by </span>
       <Link
         href="https://github.com/guneet-xyz"
@@ -62,6 +68,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const pageMap: Array<PageMapItem> = [...(await getPageMap("/docs"))]
   return (
     <html
       lang="en"
@@ -73,7 +80,7 @@ export default async function RootLayout({
       <body>
         <Layout
           navbar={navbar}
-          pageMap={await getPageMap("/docs")}
+          pageMap={pageMap}
           docsRepositoryBase="https://github.com/guneet-xyz/mon/tree/main/apps/docs"
           footer={footer}
         >
