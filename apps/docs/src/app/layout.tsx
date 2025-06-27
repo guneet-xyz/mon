@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   title: "mon",
   description:
     "mon is a minimalistic, open-source, and self-hosted monitoring solution.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
 }
 
 const CabinetGrotesk = localFont({

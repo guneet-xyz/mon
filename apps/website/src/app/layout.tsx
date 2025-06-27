@@ -9,7 +9,6 @@ import localFont from "next/font/local"
 export const metadata: Metadata = {
   title: "mon",
   description: "straight to the point serivce monitoring",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
 }
 
 const clash = localFont({
