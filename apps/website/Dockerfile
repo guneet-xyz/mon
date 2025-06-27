@@ -19,7 +19,7 @@ FROM oven/bun:1
 
 COPY --from=build /src/apps/website/.next/standalone /app
 COPY --from=build /src/apps/website/.next/static /app/apps/website/.next/static
-COPY --from=build /src/apps/website/public /app/apps/website/public
+# COPY --from=build /src/apps/website/public /app/apps/website/public
 
 EXPOSE 3000
 WORKDIR /app
