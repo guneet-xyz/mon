@@ -156,12 +156,31 @@ Each app builds to its own Docker image. There is no PaaS; CI pushes images to a
 
 ```bash
 # from repo root
-docker build -t mon/agent  -f apps/agent/Dockerfile  .
-docker build -t mon/website -f apps/website/Dockerfile .
-docker build -t mon/docs    -f apps/docs/Dockerfile    .
+docker build -t mon/agent    -f apps/agent/Dockerfile    .
+docker build -t mon/website  -f apps/website/Dockerfile  .
+docker build -t mon/docs     -f apps/docs/Dockerfile     .
+docker build -t mon/migrator -f packages/db/Dockerfile   .
 ```
 
 The website and docs Dockerfiles build with `SKIP_ENV_VALIDATION=1` — environment validation happens at runtime, not at build time, so images are portable across DBs.
+
+### Migrator image
+
+`mon/migrator` is a one-shot container that runs `drizzle-kit migrate` against `$DATABASE_URL` using the SQL files committed under [`packages/db/drizzle/`](./packages/db/drizzle), then exits. Use it to apply pending migrations before rolling out a new `agent` / `website` release.
+
+```bash
+# Apply migrations against a remote DB
+docker run --rm \
+  -e DATABASE_URL=postgres://mon:mon@db.example.com:5432/mon \
+  mon/migrator
+```
+
+Notes:
+
+- Requires only `DATABASE_URL`. No config file, no other env vars.
+- Exit code `0` means the DB is up to date; non-zero means at least one migration failed and the container halted on the failing statement (drizzle uses breakpoints between statements, so partial application is safe to retry).
+- In docker-compose, run it as a separate service with `restart: "no"` and gate `agent` / `website` on `depends_on: { migrator: { condition: service_completed_successfully } }`.
+- This replaces `bunx drizzle-kit push` for production. `push` diffs the live DB against `schema.ts` and is fine for local dev; `migrate` only ever applies the committed SQL files and is what you want in CI/CD.
 
 ### Runtime contract
 
