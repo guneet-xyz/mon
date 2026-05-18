@@ -1,3 +1,99 @@
 # How to configure
 
 Configuration is done using the `/etc/mon/config.toml` file. Read more on [TOML](https://toml.io/en/) syntax.
+
+## Distributed daemons
+
+`mon` supports running multiple daemons across different networks (home, office, cloud, etc.) that all report back to a single website. Each tile is assigned to exactly one daemon by name; daemons authenticate to the website with a bearer token whose SHA-256 hash is declared in the config.
+
+The TOML file lives on the **website host** only. Daemons fetch their job list from the website over HTTP.
+
+### Declaring daemons
+
+Each daemon gets a block under `[daemons.<id>]`:
+
+```toml
+[daemons.default]
+token_hash  = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+description = "Primary daemon"
+
+[daemons.office]
+token_hash  = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+description = "Office network probe"
+```
+
+| Property      | Type   | Description                                        | Required |
+| ------------- | ------ | -------------------------------------------------- | -------- |
+| `token_hash`  | string | Lowercase 64-char hex SHA-256 of the bearer token. | Yes      |
+| `description` | string | Human-readable label for the dashboard.            | No       |
+
+### Generating a token
+
+```bash
+# mint a random 32-byte token (give this to the daemon as DAEMON_TOKEN)
+token=$(openssl rand -hex 32)
+echo "$token"
+
+# hash it and paste the result into config.toml as token_hash
+echo -n "$token" | sha256sum
+```
+
+The plaintext token is never stored on the website side, only its hash. The daemon sends it in an `Authorization: Bearer <token>` header.
+
+### Assigning tiles to daemons
+
+Every monitor tile (`host`, `website`, `container`, `github`) accepts a `daemon` field:
+
+```toml
+[[tiles]]
+type    = "host"
+key     = "router"
+address = "192.168.1.1"
+daemon  = "default"
+
+[[tiles]]
+type    = "host"
+key     = "office-nas"
+address = "10.0.0.5"
+daemon  = "office"
+```
+
+If omitted, `daemon` defaults to `"default"`. Tiles whose `daemon` does not match any `[daemons.<id>]` block will never be polled.
+
+### Per-tile poll interval
+
+Monitor tiles also accept an optional `interval_seconds` integer (positive). When set, that tile is polled at the given cadence instead of the global `options.ping_interval_ms`:
+
+```toml
+[[tiles]]
+type             = "website"
+key              = "slow-endpoint"
+url              = "https://slow.example.com"
+interval_seconds = 60
+```
+
+### GitHub tokens
+
+`github` tiles accept a per-tile `github_token` (a GitHub PAT) used to call the Check Runs API. The daemon does **not** fall back to an environment variable, so if a `github` tile needs auth, set `github_token` on the tile.
+
+### Fetching jobs from the daemon side
+
+A daemon polls the website to learn its job list:
+
+```bash
+curl -H "Authorization: Bearer $DAEMON_TOKEN" \
+  https://mon.example.com/api/daemon/jobs
+```
+
+The response is a JSON array of tiles assigned to the daemon identified by the token.
+
+### Migration checklist
+
+Moving an existing single-daemon setup to the distributed model:
+
+1. Pick a daemon id (start with `default`).
+2. Generate a token (`openssl rand -hex 32`).
+3. Hash it (`echo -n "$token" | sha256sum`) and add `[daemons.default]` with the hash.
+4. Add `daemon = "default"` to each existing monitor tile, or leave it off since the default is `"default"`.
+5. Set `DAEMON_TOKEN=<plaintext>` and `DAEMON_ID=default` in the daemon's environment, and point it at the website URL instead of `CONFIG_PATH`.
+6. Restart the daemon. It will fetch its job list over HTTP and start posting pings.

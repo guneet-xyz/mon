@@ -24,13 +24,13 @@ src/
 
 ## WHERE TO LOOK
 
-| Task | Location |
-|------|----------|
-| Add a new tile UI | [components/tiles/](file:///Users/guneet/projects/mon/apps/website/src/components/tiles) + register in [tiles/index.tsx](file:///Users/guneet/projects/mon/apps/website/src/components/tiles/index.tsx) |
-| Add a server action | [src/lib/server/actions/](file:///Users/guneet/projects/mon/apps/website/src/lib/server/actions) — file-per-action, top-level `"use server"` |
-| DB read helpers | [src/lib/server/monitors/](file:///Users/guneet/projects/mon/apps/website/src/lib/server/monitors) — `index.ts` is the type-dispatcher facade |
-| Grid placement algorithm | [src/lib/client/tile-generation.ts](file:///Users/guneet/projects/mon/apps/website/src/lib/client/tile-generation.ts) |
-| Theme tokens / global CSS | [src/styles/globals.css](file:///Users/guneet/projects/mon/apps/website/src/styles/globals.css) (Tailwind v4 `@theme`) |
+| Task                      | Location                                                                                                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add a new tile UI         | [components/tiles/](file:///Users/guneet/projects/mon/apps/website/src/components/tiles) + register in [tiles/index.tsx](file:///Users/guneet/projects/mon/apps/website/src/components/tiles/index.tsx) |
+| Add a server action       | [src/lib/server/actions/](file:///Users/guneet/projects/mon/apps/website/src/lib/server/actions) — file-per-action, top-level `"use server"`                                                            |
+| DB read helpers           | [src/lib/server/monitors/](file:///Users/guneet/projects/mon/apps/website/src/lib/server/monitors) — `index.ts` is the type-dispatcher facade                                                           |
+| Grid placement algorithm  | [src/lib/client/tile-generation.ts](file:///Users/guneet/projects/mon/apps/website/src/lib/client/tile-generation.ts)                                                                                   |
+| Theme tokens / global CSS | [src/styles/globals.css](file:///Users/guneet/projects/mon/apps/website/src/styles/globals.css) (Tailwind v4 `@theme`)                                                                                  |
 
 ## CONVENTIONS
 

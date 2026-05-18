@@ -1,0 +1,14 @@
+{
+  "name": "@mon/test-utils",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "dependencies": {
+    "@mon/db": "*",
+    "drizzle-orm": "^0.44.2",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "ts5.8"
+  }
+}

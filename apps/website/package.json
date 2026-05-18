@@ -6,6 +6,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "e2e": "playwright test",
     "lint": "next lint",
     "start": "next start"
   },
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.40.0",
     "@tailwindcss/postcss": "^4.0.15",
     "@types/eslint": "^8.56.12",
     "@types/node": "ts5.8",

@@ -9,6 +9,8 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core"
 
@@ -17,6 +19,8 @@ export const createTable = pgTableCreator((name) => `mon_${name}`)
 export const hostPings = createTable(
   "host_ping",
   {
+    pingId: uuid("ping_id").primaryKey().defaultRandom(),
+    daemonId: text("daemon_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -31,6 +35,8 @@ export const hostPings = createTable(
 export const websitePings = createTable(
   "website_ping",
   {
+    pingId: uuid("ping_id").primaryKey().defaultRandom(),
+    daemonId: text("daemon_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -45,6 +51,8 @@ export const websitePings = createTable(
 export const containerPings = createTable(
   "container_ping",
   {
+    pingId: uuid("ping_id").primaryKey().defaultRandom(),
+    daemonId: text("daemon_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -78,6 +86,8 @@ export const githubCheckRun = createTable(
   "github_check_run",
   {
     _id: serial("_id").primaryKey(),
+    pingId: uuid("ping_id").notNull().unique().defaultRandom(),
+    daemonId: text("daemon_id"),
     id: bigint("id", { mode: "number" }).notNull(),
     name: varchar("name", { length: 256 }).notNull(),
     status: ghCheckRunStatusEnum().notNull(),
@@ -92,7 +102,7 @@ export const githubCheckRun = createTable(
       withTimezone: true,
     }),
   },
-  (t) => [index("github_check_run_id_idx").on(t.id)],
+  (t) => [uniqueIndex("github_check_run_id_unique").on(t.id)],
 )
 
 export type DbInsertGithubCheckRun = typeof githubCheckRun.$inferInsert
@@ -101,6 +111,8 @@ export type DbSelectGithubCheckRun = typeof githubCheckRun.$inferSelect
 export const githubPings = createTable(
   "github_ping",
   {
+    pingId: uuid("ping_id").primaryKey().defaultRandom(),
+    daemonId: text("daemon_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -108,7 +120,7 @@ export const githubPings = createTable(
     }).notNull(),
     commitHash: varchar("commit_hash", { length: 40 }),
     checkRunId: bigint("check_run_id", { mode: "number" }).references(
-      () => githubCheckRun._id,
+      () => githubCheckRun.id,
     ),
     error: varchar("error", { length: 256 }),
   },

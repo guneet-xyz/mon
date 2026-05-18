@@ -2,6 +2,9 @@ import { env } from "@mon/env"
 
 import { type Config, ConfigSchema, type MonitorTile } from "./schema"
 
+export type { Config, MonitorTile, NonMonitorTile, Tile, Daemon, Host, Container, Website, Github } from "./schema"
+export { getDaemonAssignments, verifyDaemonToken } from "./schema"
+
 import { existsSync } from "fs"
 import { mkdir, readFile, writeFile } from "fs/promises"
 import { parse } from "smol-toml"

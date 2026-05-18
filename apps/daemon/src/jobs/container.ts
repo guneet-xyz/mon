@@ -1,78 +1,68 @@
-import type { Container } from "@mon/config/schema"
-import { db } from "@mon/db"
-import { containerPings, websitePings } from "@mon/db/schema"
+import { daemonEnv } from "@mon/env"
+import type { ContainerJobTile, ContainerPingDTO } from "@mon/contracts"
 
-import { execa } from "execa"
-import { scheduleJob } from "node-schedule"
+export async function pingContainer(
+  tile: ContainerJobTile,
+  deps?: { fetch?: typeof globalThis.fetch; daemonId?: string },
+): Promise<ContainerPingDTO> {
+  const pingId = crypto.randomUUID()
+  const daemonId = deps?.daemonId ?? daemonEnv.DAEMON_ID
+  const recordedAt = new Date().toISOString()
+  const key = `container:${tile.container_name}`
 
-export function scheduleContainerJob(container: Container) {
-  scheduleJob(`container-${container.key}`, "0 * * * * *", async () => {
-    console.log(
-      `Pinging container: ${container.key} (${container.container_name})`,
-    )
-    const timestamp = new Date()
-    const resp = await pingContainer(
-      container.container_name,
-      container.docker_socket,
-    )
-    if (!resp.success) {
-      console.error(`Error pinging container ${container.key}:`, resp.error)
-      await db.insert(websitePings).values({
-        key: container.key,
-        timestamp: timestamp,
-        error: resp.error,
-      })
-    } else {
-      console.log(`Container ${container.key} pinged successfully`)
-      await db.insert(websitePings).values({
-        key: container.key,
-        timestamp: timestamp,
-      })
-    }
-  })
-}
-
-async function pingContainer(
-  containerName: string,
-  socket: string,
-): Promise<{ success: true } | { success: false; error: string }> {
-  const unixSocket = socket.startsWith("unix://") ? socket.slice(7) : null
-  const timestamp = new Date()
   try {
-    const { exitCode, stdout } = await execa("curl", [
-      "--silent",
-      ...(unixSocket ? ["--unix-socket", unixSocket] : []),
-      `${unixSocket ? "http://whatever" : socket}/v1.41/containers/${containerName}/json`,
-    ])
-    if (exitCode !== 0) {
-      await db.insert(containerPings).values({
-        key: containerName,
-        timestamp: timestamp,
-        error: `curl failed with exit code ${exitCode}`,
-      })
+    const fetchFn = deps?.fetch ?? globalThis.fetch
+    const unixSocket = tile.docker_socket?.startsWith("unix://")
+      ? tile.docker_socket.slice(7)
+      : null
+
+    const url = unixSocket
+      ? `http://localhost/v1.41/containers/${tile.container_name}/json`
+      : `${tile.docker_socket || "unix:///var/run/docker.sock"}/v1.41/containers/${tile.container_name}/json`
+
+    const res = await fetchFn(url)
+
+    if (!res.ok) {
       return {
-        success: false,
-        error: `curl failed with exit code ${exitCode}`,
+        kind: "container",
+        ping_id: pingId,
+        daemon_id: daemonId,
+        recorded_at: recordedAt,
+        key,
+        error: `HTTP ${res.status}`,
       }
     }
-    const output = JSON.parse(stdout)
-    const running = output.State?.Status === "running"
+
+    const json = await res.json()
+    const running = json.State?.Status === "running"
+
     if (running) {
-      await db.insert(containerPings).values({
-        key: containerName,
-        timestamp: timestamp,
-      })
-      return { success: true }
+      return {
+        kind: "container",
+        ping_id: pingId,
+        daemon_id: daemonId,
+        recorded_at: recordedAt,
+        key,
+        error: null,
+      }
     }
-    await db.insert(containerPings).values({
-      key: containerName,
-      timestamp: timestamp,
-    })
+
     return {
-      success: false,
-      error: `container is offline`,
+      kind: "container",
+      ping_id: pingId,
+      daemon_id: daemonId,
+      recorded_at: recordedAt,
+      key,
+      error: "container is offline",
     }
   } catch (error) {
-    return { success: false, error: (error as Error).message }
+    return {
+      kind: "container",
+      ping_id: pingId,
+      daemon_id: daemonId,
+      recorded_at: recordedAt,
+      key,
+      error: String(error),
+    }
   }
 }

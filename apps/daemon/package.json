@@ -9,6 +9,7 @@
     "start": "bun dist/daemon.cjs"
   },
   "dependencies": {
+    "@mon/contracts": "workspace:*",
     "execa": "^9.6.0",
     "node-schedule": "^2.1.1"
   },

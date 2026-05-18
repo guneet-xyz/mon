@@ -1,57 +1,51 @@
-import type { Website } from "@mon/config/schema"
-import { db } from "@mon/db"
-import { websitePings } from "@mon/db/schema"
+import { daemonEnv } from "@mon/env"
+import type { WebsiteJobTile, WebsitePingDTO } from "@mon/contracts"
 
-import { execa } from "execa"
-import { scheduleJob } from "node-schedule"
+export async function pingWebsite(
+  tile: WebsiteJobTile,
+  deps?: { fetch?: typeof globalThis.fetch; daemonId?: string },
+): Promise<WebsitePingDTO> {
+  const pingId = crypto.randomUUID()
+  const daemonId = deps?.daemonId ?? daemonEnv.DAEMON_ID
+  const recordedAt = new Date().toISOString()
+  const key = `website:${tile.url}`
+  const start = Date.now()
 
-export function scheduleWebsiteJob(website: Website) {
-  scheduleJob(`website-${website.key}`, "0 * * * * *", async () => {
-    console.log(`Pinging website: ${website.key} (${website.url})`)
-    const timestamp = new Date()
-    const resp = await pingWebsite(website.url)
-    if (!resp.success) {
-      console.error(`Error pinging website ${website.key}:`, resp.error)
-      await db.insert(websitePings).values({
-        key: website.key,
-        timestamp: timestamp,
-        error: resp.error,
-      })
-    } else {
-      console.log(`Website ${website.key} pinged successfully:`, resp.latency)
-      await db.insert(websitePings).values({
-        key: website.key,
-        timestamp: timestamp,
-        latency: resp.latency,
-      })
-    }
-  })
-}
-
-async function pingWebsite(
-  url: string,
-): Promise<
-  { success: true; latency: number } | { success: false; error: string }
-> {
   try {
-    const { stdout, exitCode } = await execa(
-      "curl",
-      ["-o", "/dev/null", "-s", "-w", "%{time_total}", url],
-      {
-        reject: false,
-      },
-    )
-    if (exitCode !== 0) {
-      return { success: false, error: `curl failed with exit code ${exitCode}` }
-    }
-    const latency_seconds = parseFloat(stdout.trim())
-    if (isNaN(latency_seconds)) {
-      return { success: false, error: "couldn't parse output" }
+    const fetchFn = deps?.fetch ?? globalThis.fetch
+    const res = await fetchFn(tile.url, { method: "HEAD", redirect: "manual" })
+    const latencyMs = Date.now() - start
+
+    if (res.ok || (res.status >= 300 && res.status < 400)) {
+      return {
+        kind: "website",
+        ping_id: pingId,
+        daemon_id: daemonId,
+        recorded_at: recordedAt,
+        key,
+        latency_ms: latencyMs,
+        error: null,
+      }
     }
 
-    const latency_ms = latency_seconds * 1000
-    return { success: true, latency: latency_ms }
+    return {
+      kind: "website",
+      ping_id: pingId,
+      daemon_id: daemonId,
+      recorded_at: recordedAt,
+      key,
+      latency_ms: null,
+      error: `HTTP ${res.status}`,
+    }
   } catch (error) {
-    return { success: false, error: "curl command failed" }
+    return {
+      kind: "website",
+      ping_id: pingId,
+      daemon_id: daemonId,
+      recorded_at: recordedAt,
+      key,
+      latency_ms: null,
+      error: String(error),
+    }
   }
 }

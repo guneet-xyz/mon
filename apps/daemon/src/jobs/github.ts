@@ -1,46 +1,7 @@
-import type { Github } from "@mon/config/schema"
-import { db } from "@mon/db"
-import {
-  type DbInsertGithubCheckRun,
-  githubCheckRun,
-  githubPings,
-} from "@mon/db/schema"
-import { env } from "@mon/env"
+import { daemonEnv } from "@mon/env"
+import type { GithubJobTile, GithubPingDTO, GithubCheckRunDTO } from "@mon/contracts"
 
-import { scheduleJob } from "node-schedule"
 import { z } from "zod"
-
-export function scheduleGithubJob(gh: Github) {
-  scheduleJob(`github-${gh.key}`, "0 * * * * *", async () => {
-    console.log(`Pinging GitHub: ${gh.key} (${gh.repo})`)
-    const timestamp = new Date()
-    const resp = await ping(gh.repo)
-    if (!resp.success) {
-      console.error(`Error pinging GitHub ${gh.key}:`, resp.error)
-      await db.insert(githubPings).values({
-        key: gh.key,
-        timestamp: timestamp,
-        error: resp.error,
-      })
-    } else {
-      console.log(`GitHub ${gh.key} pinged successfully`)
-      const commit_hash = resp.data.commit_hash
-      const runs = resp.data.runs
-      const ids = await db
-        .insert(githubCheckRun)
-        .values(runs)
-        .returning({ id: githubCheckRun._id })
-      await db.insert(githubPings).values(
-        ids.map(({ id }) => ({
-          key: gh.key,
-          timestamp: timestamp,
-          commitHash: commit_hash,
-          checkRunId: id,
-        })),
-      )
-    }
-  })
-}
 
 const ResponseSchema = z.object({
   check_runs: z.array(
@@ -74,88 +35,194 @@ const ResponseSchema = z.object({
   ),
 })
 
-async function ping(repo: string): Promise<
-  | {
-      success: true
-      data: {
-        commit_hash: string
-        runs: Array<DbInsertGithubCheckRun>
-      }
-    }
-  | { success: false; error: string }
-> {
+export async function pingGithub(
+  tile: GithubJobTile,
+  deps?: { fetch?: typeof globalThis.fetch; daemonId?: string },
+): Promise<{ ping: GithubPingDTO; checkRuns: GithubCheckRunDTO[] }> {
+  const daemonId = deps?.daemonId ?? daemonEnv.DAEMON_ID
+  const recordedAt = new Date().toISOString()
+  const key = `github:${tile.repo}`
+  const token = tile.github_token
+
   try {
-    const url = `https://api.github.com/repos/${repo}/commits/HEAD/check-runs`
-    const headers = {
+    const fetchFn = deps?.fetch ?? globalThis.fetch
+    const url = `https://api.github.com/repos/${tile.repo}/commits/HEAD/check-runs`
+    const headers: Record<string, string> = {
       Accept: "application/vnd.github.v3+json",
-      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
       "X-Github-Api-Version": "2022-11-28",
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
     }
 
     let resp: Response
     try {
-      resp = await fetch(url, {
-        headers,
-      })
+      resp = await fetchFn(url, { headers })
     } catch (error) {
-      if (error instanceof Error) throw error.message
-      throw "Unknown error occurred while fetching GitHub API"
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      return {
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: errorMsg,
+        },
+        checkRuns: [],
+      }
     }
 
-    if (!resp.ok)
-      throw `GitHub API request failed with status ${resp.status}: ${resp.statusText}`
+    if (!resp.ok) {
+      const errorMsg = `GitHub API request failed with status ${resp.status}: ${resp.statusText}`
+      return {
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: errorMsg,
+        },
+        checkRuns: [],
+      }
+    }
 
     let json: unknown
     try {
       json = await resp.json()
     } catch (error) {
-      if (error instanceof Error) throw error.message
-      throw "Unknown error occurred while parsing GitHub API response"
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      return {
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: errorMsg,
+        },
+        checkRuns: [],
+      }
     }
-    console.log("GitHub API response:", json)
 
     const { data, success, error } = ResponseSchema.safeParse(json)
-    if (!success)
-      return { success: false, error: `couldn't parse output: ${error}` }
+    if (!success) {
+      return {
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: `couldn't parse output: ${error}`,
+        },
+        checkRuns: [],
+      }
+    }
+
+    if (data.check_runs.length === 0) {
+      return {
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: "no check runs",
+        },
+        checkRuns: [],
+      }
+    }
 
     const _commit_hash = new Set(data.check_runs.map((run) => run.head_sha))
-    if (_commit_hash.size !== 1)
+    if (_commit_hash.size !== 1) {
       return {
-        success: false,
-        error: "How did you get here? (multiple commit hashes found)",
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: "multiple commit hashes found",
+        },
+        checkRuns: [],
       }
+    }
 
     const commit_hash = _commit_hash.values().next().value
-    if (!commit_hash)
+    if (!commit_hash) {
       return {
-        success: false,
-        error: "How did you get here? (no commit has found in response)",
+        ping: {
+          kind: "github_ping",
+          ping_id: crypto.randomUUID(),
+          daemon_id: daemonId,
+          recorded_at: recordedAt,
+          key,
+          commit_hash: null,
+          check_run_id: null,
+          error: "no commit hash found in response",
+        },
+        checkRuns: [],
       }
+    }
 
-    const runs = data.check_runs.map((run) => ({
+    const pingId = crypto.randomUUID()
+    const checkRuns: GithubCheckRunDTO[] = data.check_runs.map((run) => ({
+      kind: "github_check_run",
+      ping_id: pingId,
+      daemon_id: daemonId,
+      recorded_at: recordedAt,
+      key,
       id: run.id,
       name: run.name,
       status: run.status,
       conclusion: run.conclusion,
-      detailsUrl: run.details_url,
-      startedAt: run.started_at,
-      completedAt: run.completed_at,
+      details_url: run.details_url,
+      started_at: run.started_at.toISOString(),
+      completed_at: run.completed_at?.toISOString() ?? null,
     }))
 
     return {
-      success: true,
-      data: {
-        commit_hash: commit_hash,
-        runs: runs,
+      ping: {
+        kind: "github_ping",
+        ping_id: pingId,
+        daemon_id: daemonId,
+        recorded_at: recordedAt,
+        key,
+        commit_hash,
+        check_run_id: data.check_runs[0]!.id,
+        error: null,
       },
+      checkRuns,
     }
   } catch (error) {
-    let errorMessage: string
-
-    if (error instanceof Error) errorMessage = error.message
-    else if (typeof error === "string") errorMessage = error
-    else errorMessage = "An unknown error occurred"
-
-    return { success: false, error: errorMessage }
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    return {
+      ping: {
+        kind: "github_ping",
+        ping_id: crypto.randomUUID(),
+        daemon_id: daemonId,
+        recorded_at: recordedAt,
+        key,
+        commit_hash: null,
+        check_run_id: null,
+        error: errorMsg,
+      },
+      checkRuns: [],
+    }
   }
 }

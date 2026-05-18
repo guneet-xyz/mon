@@ -1,0 +1,40 @@
+{
+  "active_plan": "/Users/guneet/projects/mon/.sisyphus/plans/distributed-mon.md",
+  "started_at": "2026-05-18T12:21:20.583Z",
+  "session_ids": [
+    "ses_1c52a48abffeqfqCqj7D5JZKFN"
+  ],
+  "session_origins": {
+    "ses_1c52a48abffeqfqCqj7D5JZKFN": "direct"
+  },
+  "plan_name": "distributed-mon",
+  "agent": "atlas",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Extend `packages/config/schema.ts` with daemons block + per-tile daemon field + optional `github_token`",
+      "session_id": "ses_1c4f4ff79ffetEhLS2BqrSVF2K",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-18T12:26:18.314Z"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "Drizzle schema: add `daemon_id` + `ping_id` (PRIMARY KEY) to all 5 ping tables; re-point `githubPings.check_run_id` FK to `githubCheckRun.id`",
+      "session_id": "ses_1c4f109b7ffe1Gse168mareO87",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-18T12:30:18.918Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "Website: `src/lib/server/daemon-auth.ts` (SHA-256 bearer-token verifier)",
+      "session_id": "ses_1c4bfb57bffejfKM2DoxaVSq7P",
+      "agent": "oracle",
+      "updated_at": "2026-05-18T13:23:23.781Z"
+    }
+  }
+}

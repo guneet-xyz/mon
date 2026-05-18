@@ -1,0 +1,24 @@
+=== VERIFICATION: deploy-daemon.yml ===
+
+✓ New env vars present:
+          WEBSITE_URL: ${{ secrets.WEBSITE_URL }}
+          DAEMON_ID: ${{ secrets.DAEMON_ID }}
+          DAEMON_TOKEN: ${{ secrets.DAEMON_TOKEN }}
+
+✓ Old env vars NOT present (CONFIG_PATH, DATABASE_URL, GITHUB_TOKEN):
+PASS - None of the old env vars found in deploy-daemon.yml
+
+=== VERIFICATION: deploy-website.yml ===
+
+✓ CONFIG_PATH env var present:
+          CONFIG_PATH: ${{ secrets.CONFIG_PATH }}
+
+=== YAML VALIDATION ===
+✓ deploy-daemon.yml: Valid YAML
+✓ deploy-website.yml: Valid YAML
+
+=== SUMMARY ===
+✓ deploy-daemon.yml: Added WEBSITE_URL, DAEMON_ID, DAEMON_TOKEN env vars
+✓ deploy-website.yml: Added CONFIG_PATH env var
+✓ No old env vars (CONFIG_PATH, DATABASE_URL, GITHUB_TOKEN) in deploy-daemon.yml
+✓ Both files have valid YAML syntax

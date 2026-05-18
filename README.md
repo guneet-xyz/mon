@@ -82,17 +82,25 @@ bunx drizzle-kit push
 Drop a `config.dev.toml` at the repo root (path is up to you; match `CONFIG_PATH`):
 
 ```toml
-[[tiles]]
-type = "host"
-key  = "router"
-name = "Home Router"
-address = "192.168.1.1"
+# sha256 of the bearer token the daemon will present. Generate with:
+#   token=$(openssl rand -hex 32); echo -n "$token" | sha256sum
+[daemons.default]
+token_hash  = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+description = "Primary daemon"
 
 [[tiles]]
-type = "website"
-key  = "example"
-name = "Example"
-url  = "https://example.com"
+type    = "host"
+key     = "router"
+name    = "Home Router"
+address = "192.168.1.1"
+daemon  = "default"
+
+[[tiles]]
+type   = "website"
+key    = "example"
+name   = "Example"
+url    = "https://example.com"
+daemon = "default"
 
 [[tiles]]
 type = "logo"
@@ -100,6 +108,8 @@ type = "logo"
 [[tiles]]
 type = "theme"
 ```
+
+The `daemon` field on each monitor tile says which daemon polls it (defaults to `"default"`). See the [Distributed daemons](./apps/docs/src/content/configuration#distributed-daemons) section in the docs for the full migration guide.
 
 See [`apps/docs/src/content/configuration/`](./apps/docs/src/content/configuration) or run the docs site for the full schema reference.
 

@@ -4,11 +4,11 @@ Bun-runtime cron poller. Reads tiles from `@mon/config`, schedules one job per m
 
 ## WHERE TO LOOK
 
-| Task | Location |
-|------|----------|
-| Add a new monitor type | [src/jobs/](file:///Users/guneet/projects/mon/apps/daemon/src/jobs) — one file per tile type, exported as `schedule<Type>Job(tile)`; wire into [src/index.ts](file:///Users/guneet/projects/mon/apps/daemon/src/index.ts) |
-| Change polling schedule | inline cron string in each `scheduleJob(...)` call |
-| Graceful shutdown | [src/index.ts](file:///Users/guneet/projects/mon/apps/daemon/src/index.ts#L34-L43) — `SIGINT`/`SIGTERM`/`SIGKILL` (note: `SIGKILL` is uncatchable, present anyway) |
+| Task                    | Location                                                                                                                                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add a new monitor type  | [src/jobs/](file:///Users/guneet/projects/mon/apps/daemon/src/jobs) — one file per tile type, exported as `schedule<Type>Job(tile)`; wire into [src/index.ts](file:///Users/guneet/projects/mon/apps/daemon/src/index.ts) |
+| Change polling schedule | inline cron string in each `scheduleJob(...)` call                                                                                                                                                                        |
+| Graceful shutdown       | [src/index.ts](file:///Users/guneet/projects/mon/apps/daemon/src/index.ts#L34-L43) — `SIGINT`/`SIGTERM`/`SIGKILL` (note: `SIGKILL` is uncatchable, present anyway)                                                        |
 
 ## CONVENTIONS
 
