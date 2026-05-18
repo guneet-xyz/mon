@@ -1,5 +1,5 @@
-import { daemonEnv } from "@mon/env"
 import type { WebsiteJobTile, WebsitePingDTO } from "@mon/contracts"
+import { daemonEnv } from "@mon/env"
 
 export async function pingWebsite(
   tile: WebsiteJobTile,

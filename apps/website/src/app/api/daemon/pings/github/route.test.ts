@@ -70,7 +70,7 @@ let insertGithubPingCallCount = 0
 let insertGithubCheckRunCallCount = 0
 let nextDeduplicated = false
 
-beforeEach(() => {
+beforeEach(async () => {
   insertGithubPingCallCount = 0
   insertGithubCheckRunCallCount = 0
   nextDeduplicated = false
@@ -117,7 +117,7 @@ describe("POST /api/daemon/pings/github", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest("not-json{", authHeaders()))
     expect(res.status).toBe(400)
-    const body = await res.json()
+    const body = (await res.json()) as { error: string }
     expect(body.error).toBe("invalid_payload")
   })
 
@@ -125,7 +125,7 @@ describe("POST /api/daemon/pings/github", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest({ foo: "bar" }, authHeaders()))
     expect(res.status).toBe(400)
-    const body = await res.json()
+    const body = (await res.json()) as { error: string }
     expect(body.error).toBe("invalid_payload")
   })
 
@@ -142,7 +142,7 @@ describe("POST /api/daemon/pings/github", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest(validGithubPingDto(), authHeaders()))
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as { ok: boolean; deduplicated: boolean }
     expect(body).toEqual({ ok: true, deduplicated: false })
     expect(insertGithubPingCallCount).toBe(1)
   })
@@ -152,7 +152,7 @@ describe("POST /api/daemon/pings/github", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest(validGithubPingDto(), authHeaders()))
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as { ok: boolean; deduplicated: boolean }
     expect(body).toEqual({ ok: true, deduplicated: true })
   })
 

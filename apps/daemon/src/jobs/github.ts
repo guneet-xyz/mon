@@ -1,5 +1,9 @@
+import type {
+  GithubCheckRunDTO,
+  GithubJobTile,
+  GithubPingDTO,
+} from "@mon/contracts"
 import { daemonEnv } from "@mon/env"
-import type { GithubJobTile, GithubPingDTO, GithubCheckRunDTO } from "@mon/contracts"
 
 import { z } from "zod"
 

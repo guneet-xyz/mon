@@ -1,7 +1,5 @@
 import type { GithubCheckRunDTO, GithubPingDTO } from "@mon/contracts"
 
-import { insertGithubCheckRun, insertGithubPing } from "./github"
-
 import { describe, expect, it, mock } from "bun:test"
 
 describe("insertGithubCheckRun", () => {

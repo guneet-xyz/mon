@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test"
-import { pingWebsite } from "./website"
 import type { WebsiteJobTile } from "@mon/contracts"
+
+import { pingWebsite } from "./website"
+
+import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingWebsite", () => {
   let mockFetch: any
@@ -21,7 +23,10 @@ describe("pingWebsite", () => {
       status: 200,
     }))
 
-    const result = await pingWebsite(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingWebsite(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("website")
     expect(result.error).toBeNull()
@@ -38,7 +43,10 @@ describe("pingWebsite", () => {
       status: 301,
     }))
 
-    const result = await pingWebsite(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingWebsite(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("website")
     expect(result.error).toBeNull()
@@ -51,7 +59,10 @@ describe("pingWebsite", () => {
       status: 404,
     }))
 
-    const result = await pingWebsite(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingWebsite(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("website")
     expect(result.error).toBe("HTTP 404")
@@ -64,7 +75,10 @@ describe("pingWebsite", () => {
       status: 500,
     }))
 
-    const result = await pingWebsite(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingWebsite(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("website")
     expect(result.error).toBe("HTTP 500")
@@ -76,7 +90,10 @@ describe("pingWebsite", () => {
       throw new Error("network timeout")
     })
 
-    const result = await pingWebsite(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingWebsite(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("website")
     expect(result.error).toContain("network timeout")

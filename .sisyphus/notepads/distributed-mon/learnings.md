@@ -93,6 +93,7 @@
 - README example TOML updated with `[daemons.default]` block + `daemon = "default"` on tiles, with link to docs section
 
 ## 2026-05-18 T10–T13: Website Ingest Helpers Created
+
 - Created 4 ingest helper files in `apps/website/src/lib/server/ingest/`:
   - `host.ts` — insertHostPing(HostPingDTO) → { ok: true, deduplicated: boolean }
   - `website.ts` — insertWebsitePing(WebsitePingDTO) → same pattern
@@ -108,6 +109,7 @@
 - All 10 tests pass; files properly formatted (Prettier: `semi: false`, import order `@mon → @/ → relative`)
 
 ## 2026-05-18 T14/T15 Daemon Client
+
 - `bun:test` mocks: `mock(async () => ...)` returns `{ mock: { calls } }` for assertions
 - `mock(fn) as unknown as typeof fetch` is needed to satisfy fetch type signature
 - AbortSignal-aware sleep: check `signal.aborted` BEFORE setTimeout to short-circuit
@@ -116,6 +118,7 @@
 - Pre-existing TSC errors on `main` in packages/config/schema.test.ts and apps/daemon/src/jobs/github.ts — not introduced by this work
 
 ## T8/T9 (2026-05-18)
+
 - `bun test` from repo root loads `@mon/env` at module-import time → DATABASE_URL required
 - Solution: root `bunfig.toml` with `[test] preload = ["./apps/website/test-setup.ts"]`
 - test-setup.ts sets `SKIP_ENV_VALIDATION=1` + dummy `DATABASE_URL` before any test imports
@@ -139,6 +142,7 @@
 - Pre-existing lint failures in apps/daemon (missing exports) are unrelated to this change
 
 ## Daemon orchestrator rewrite
+
 - `apps/daemon/src/index.ts` now uses `WebsiteApiClient` + `startPullLoop` only. No `@mon/config`/`@mon/db`/`smol-toml`.
 - Package.json was already clean (no postgres/drizzle/smol-toml/config/db deps); only daemon source needed change.
 - Job files (`host.ts`, `website.ts`, `container.ts`, `github.ts`) still export `scheduleXxxJob` (cron-based, unused by new index) AND `pingXxx` (used). Kept both — pull-loop is the only scheduler invoked.

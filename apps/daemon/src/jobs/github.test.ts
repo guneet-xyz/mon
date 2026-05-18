@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test"
-import { pingGithub } from "./github"
 import type { GithubJobTile } from "@mon/contracts"
+
+import { pingGithub } from "./github"
+
+import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingGithub", () => {
   let mockFetch: any
@@ -35,7 +37,10 @@ describe("pingGithub", () => {
       }),
     }))
 
-    const result = await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingGithub(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.ping.kind).toBe("github_ping")
     expect(result.ping.error).toBeNull()
@@ -55,7 +60,10 @@ describe("pingGithub", () => {
       }),
     }))
 
-    const result = await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingGithub(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.ping.kind).toBe("github_ping")
     expect(result.ping.error).toBe("no check runs")
@@ -71,7 +79,10 @@ describe("pingGithub", () => {
       statusText: "Unauthorized",
     }))
 
-    const result = await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingGithub(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.ping.kind).toBe("github_ping")
     expect(result.ping.error).toContain("401")
@@ -85,7 +96,10 @@ describe("pingGithub", () => {
       throw new Error("network error")
     })
 
-    const result = await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingGithub(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.ping.kind).toBe("github_ping")
     expect(result.ping.error).toContain("network error")
@@ -102,7 +116,10 @@ describe("pingGithub", () => {
       },
     }))
 
-    const result = await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingGithub(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.ping.kind).toBe("github_ping")
     expect(result.ping.error).toContain("invalid json")
@@ -140,7 +157,10 @@ describe("pingGithub", () => {
       }),
     }))
 
-    const result = await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingGithub(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.ping.kind).toBe("github_ping")
     expect(result.ping.error).toContain("multiple commit hashes")
@@ -175,6 +195,8 @@ describe("pingGithub", () => {
     await pingGithub(tile, { fetch: mockFetch, daemonId: "test-daemon" })
 
     expect(fetchCalls).toHaveLength(1)
-    expect(fetchCalls[0]!.options.headers.Authorization).toBe("Bearer ghp_test123")
+    expect(fetchCalls[0]!.options.headers.Authorization).toBe(
+      "Bearer ghp_test123",
+    )
   })
 })

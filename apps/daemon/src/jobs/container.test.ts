@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test"
-import { pingContainer } from "./container"
 import type { ContainerJobTile } from "@mon/contracts"
+
+import { pingContainer } from "./container"
+
+import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingContainer", () => {
   let mockFetch: any
@@ -26,7 +28,10 @@ describe("pingContainer", () => {
       }),
     }))
 
-    const result = await pingContainer(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingContainer(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("container")
     expect(result.error).toBeNull()
@@ -46,7 +51,10 @@ describe("pingContainer", () => {
       }),
     }))
 
-    const result = await pingContainer(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingContainer(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("container")
     expect(result.error).toBe("container is offline")
@@ -58,7 +66,10 @@ describe("pingContainer", () => {
       status: 404,
     }))
 
-    const result = await pingContainer(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingContainer(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("container")
     expect(result.error).toBe("HTTP 404")
@@ -69,7 +80,10 @@ describe("pingContainer", () => {
       throw new Error("connection refused")
     })
 
-    const result = await pingContainer(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingContainer(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("container")
     expect(result.error).toContain("connection refused")
@@ -83,7 +97,10 @@ describe("pingContainer", () => {
       },
     }))
 
-    const result = await pingContainer(tile, { fetch: mockFetch, daemonId: "test-daemon" })
+    const result = await pingContainer(tile, {
+      fetch: mockFetch,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("container")
     expect(result.error).toContain("invalid json")

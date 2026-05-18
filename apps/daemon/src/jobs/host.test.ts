@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, mock } from "bun:test"
-import { pingHost } from "./host"
 import type { HostJobTile } from "@mon/contracts"
+
+import { pingHost } from "./host"
+
+import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingHost", () => {
   let mockExeca: any
@@ -17,11 +19,15 @@ describe("pingHost", () => {
 
   it("returns DTO with latency_ms on successful ping", async () => {
     mockExeca = mock(async () => ({
-      stdout: "PING example.com (1.2.3.4): 56 data bytes\n64 bytes from 1.2.3.4: icmp_seq=0 ttl=64 time=42.5 ms",
+      stdout:
+        "PING example.com (1.2.3.4): 56 data bytes\n64 bytes from 1.2.3.4: icmp_seq=0 ttl=64 time=42.5 ms",
       exitCode: 0,
     }))
 
-    const result = await pingHost(tile, { execa: mockExeca, daemonId: "test-daemon" })
+    const result = await pingHost(tile, {
+      execa: mockExeca,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("host")
     expect(result.error).toBeNull()
@@ -38,7 +44,10 @@ describe("pingHost", () => {
       exitCode: 2,
     }))
 
-    const result = await pingHost(tile, { execa: mockExeca, daemonId: "test-daemon" })
+    const result = await pingHost(tile, {
+      execa: mockExeca,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("host")
     expect(result.error).toBe("unreachable")
@@ -51,7 +60,10 @@ describe("pingHost", () => {
       exitCode: 68,
     }))
 
-    const result = await pingHost(tile, { execa: mockExeca, daemonId: "test-daemon" })
+    const result = await pingHost(tile, {
+      execa: mockExeca,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("host")
     expect(result.error).toBe("timeout")
@@ -64,7 +76,10 @@ describe("pingHost", () => {
       exitCode: 1,
     }))
 
-    const result = await pingHost(tile, { execa: mockExeca, daemonId: "test-daemon" })
+    const result = await pingHost(tile, {
+      execa: mockExeca,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("host")
     expect(result.error).toContain("exit code 1")
@@ -77,7 +92,10 @@ describe("pingHost", () => {
       exitCode: 0,
     }))
 
-    const result = await pingHost(tile, { execa: mockExeca, daemonId: "test-daemon" })
+    const result = await pingHost(tile, {
+      execa: mockExeca,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("host")
     expect(result.error).toBe("couldn't parse output")
@@ -89,7 +107,10 @@ describe("pingHost", () => {
       throw new Error("command not found")
     })
 
-    const result = await pingHost(tile, { execa: mockExeca, daemonId: "test-daemon" })
+    const result = await pingHost(tile, {
+      execa: mockExeca,
+      daemonId: "test-daemon",
+    })
 
     expect(result.kind).toBe("host")
     expect(result.error).toContain("command not found")

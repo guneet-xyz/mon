@@ -1,7 +1,5 @@
 import type { ContainerPingDTO } from "@mon/contracts"
 
-import { insertContainerPing } from "./container"
-
 import { describe, expect, it, mock } from "bun:test"
 
 describe("insertContainerPing", () => {

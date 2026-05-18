@@ -1,5 +1,5 @@
-import { daemonEnv } from "@mon/env"
 import type { JobTile } from "@mon/contracts"
+import { daemonEnv } from "@mon/env"
 
 import { WebsiteApiClient } from "./client/api-client"
 import { startPullLoop } from "./client/pull-loop"

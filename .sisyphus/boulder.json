@@ -2,10 +2,18 @@
   "active_plan": "/Users/guneet/projects/mon/.sisyphus/plans/distributed-mon.md",
   "started_at": "2026-05-18T12:21:20.583Z",
   "session_ids": [
-    "ses_1c52a48abffeqfqCqj7D5JZKFN"
+    "ses_1c52a48abffeqfqCqj7D5JZKFN",
+    "ses_1c4adc902ffeSXroSBhvWzuGsV",
+    "ses_1c4ad8a60ffe3kKI2z3r6RpvQJ",
+    "ses_1c4ad8969ffeLFnGuV0okdG1TI",
+    "ses_1c4ad3bd6ffeUCzB5fPRnjtWeB"
   ],
   "session_origins": {
-    "ses_1c52a48abffeqfqCqj7D5JZKFN": "direct"
+    "ses_1c52a48abffeqfqCqj7D5JZKFN": "direct",
+    "ses_1c4adc902ffeSXroSBhvWzuGsV": "appended",
+    "ses_1c4ad8a60ffe3kKI2z3r6RpvQJ": "appended",
+    "ses_1c4ad8969ffeLFnGuV0okdG1TI": "appended",
+    "ses_1c4ad3bd6ffeUCzB5fPRnjtWeB": "appended"
   },
   "plan_name": "distributed-mon",
   "agent": "atlas",
@@ -32,9 +40,19 @@
       "task_key": "todo:8",
       "task_label": "8",
       "task_title": "Website: `src/lib/server/daemon-auth.ts` (SHA-256 bearer-token verifier)",
-      "session_id": "ses_1c4bfb57bffejfKM2DoxaVSq7P",
-      "agent": "oracle",
-      "updated_at": "2026-05-18T13:23:23.781Z"
+      "session_id": "ses_1c4b073c6ffeN8wYsQIJm0yTtz",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-18T13:39:33.092Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_1c4ad8969ffeLFnGuV0okdG1TI",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-18T13:43:37.481Z"
     }
   }
 }

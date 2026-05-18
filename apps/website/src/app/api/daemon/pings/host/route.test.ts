@@ -51,7 +51,7 @@ function validDto() {
 let insertCallCount = 0
 let nextDeduplicated = false
 
-beforeEach(() => {
+beforeEach(async () => {
   insertCallCount = 0
   nextDeduplicated = false
 
@@ -93,7 +93,7 @@ describe("POST /api/daemon/pings/host", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest("not-json{", authHeaders()))
     expect(res.status).toBe(400)
-    const body = await res.json()
+    const body = (await res.json()) as { error: string }
     expect(body.error).toBe("invalid_payload")
   })
 
@@ -101,7 +101,7 @@ describe("POST /api/daemon/pings/host", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest({ foo: "bar" }, authHeaders()))
     expect(res.status).toBe(400)
-    const body = await res.json()
+    const body = (await res.json()) as { error: string }
     expect(body.error).toBe("invalid_payload")
   })
 
@@ -118,7 +118,7 @@ describe("POST /api/daemon/pings/host", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest(validDto(), authHeaders()))
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as { ok: boolean; deduplicated: boolean }
     expect(body).toEqual({ ok: true, deduplicated: false })
     expect(insertCallCount).toBe(1)
   })
@@ -128,7 +128,7 @@ describe("POST /api/daemon/pings/host", () => {
     const { POST } = await import("./route")
     const res = await POST(makeRequest(validDto(), authHeaders()))
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = (await res.json()) as { ok: boolean; deduplicated: boolean }
     expect(body).toEqual({ ok: true, deduplicated: true })
   })
 })

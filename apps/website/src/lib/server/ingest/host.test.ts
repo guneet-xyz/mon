@@ -1,7 +1,5 @@
 import type { HostPingDTO } from "@mon/contracts"
 
-import { insertHostPing } from "./host"
-
 import { describe, expect, it, mock } from "bun:test"
 
 describe("insertHostPing", () => {

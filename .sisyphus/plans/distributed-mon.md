@@ -829,7 +829,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `README.md`, `apps/docs/src/content/**`
   - Pre-commit: `cd apps/docs && bun run build`
 
-- [ ] 8. Website: `src/lib/server/daemon-auth.ts` (SHA-256 bearer-token verifier)
+- [x] 8. Website: `src/lib/server/daemon-auth.ts` (SHA-256 bearer-token verifier)
 
   **What to do**:
 
@@ -901,7 +901,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/website/src/lib/server/daemon-auth.ts`, `apps/website/src/lib/server/daemon-auth.test.ts`
   - Pre-commit: `bun run lint && bun test apps/website/src/lib/server/daemon-auth.test.ts`
 
-- [ ] 9. Website: `src/lib/server/config-cache.ts` (5s TTL config cache)
+- [x] 9. Website: `src/lib/server/config-cache.ts` (5s TTL config cache)
 
   **What to do**:
 
@@ -967,7 +967,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/website/src/lib/server/config-cache.ts`, `apps/website/src/lib/server/config-cache.test.ts`
   - Pre-commit: `bun run lint && bun test apps/website/src/lib/server/config-cache.test.ts`
 
-- [ ] 10. Website: `src/lib/server/ingest/host.ts` — DB insert with idempotency
+- [x] 10. Website: `src/lib/server/ingest/host.ts` — DB insert with idempotency
 
   **What to do**:
 
@@ -1034,7 +1034,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/website/src/lib/server/ingest/host.ts` + test
   - Pre-commit: `bun run lint && bun test apps/website/src/lib/server/ingest/host.test.ts`
 
-- [ ] 11. Website: `src/lib/server/ingest/website.ts`
+- [x] 11. Website: `src/lib/server/ingest/website.ts`
 
   **What to do**: Mirror T10 against the `websitePings` symbol (exported at `packages/db/schema.ts` line 31). Columns: `key`, `timestamp`, `latency`, `error` + new `daemonId`, `pingId`. Same `onConflictDoNothing({ target: websitePings.pingId }).returning({ pingId: websitePings.pingId })` pattern.
 
@@ -1062,7 +1062,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T10.
 
-- [ ] 12. Website: `src/lib/server/ingest/container.ts`
+- [x] 12. Website: `src/lib/server/ingest/container.ts`
 
   **What to do**: Mirror T10 against `containerPings` (exported at `packages/db/schema.ts` line 45). Columns: `key`, `timestamp`, `error` (note: no `latency` column on container_ping) + new `daemonId`, `pingId`. **DTO note**: `ContainerPingDTO` therefore must NOT include a `latency_ms` field (or it must be ignored at insert time).
 
@@ -1090,7 +1090,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T10.
 
-- [ ] 13. Website: `src/lib/server/ingest/github.ts` (incl. check runs)
+- [x] 13. Website: `src/lib/server/ingest/github.ts` (incl. check runs)
 
   **What to do**:
 
@@ -1128,7 +1128,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T10. Combined message: `feat(website): add ingest helpers for host, website, container, github pings`. Files: all 4 ingest dirs + tests. Pre-commit: `bun run lint && bun test apps/website/src/lib/server/ingest`.
 
-- [ ] 14. Daemon: `apps/daemon/src/client/api-client.ts` (typed HTTP client)
+- [x] 14. Daemon: `apps/daemon/src/client/api-client.ts` (typed HTTP client)
 
   **What to do**:
 
@@ -1201,7 +1201,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/daemon/src/client/api-client.ts` + test
   - Pre-commit: `bun run lint && bun test apps/daemon/src/client/api-client.test.ts`
 
-- [ ] 15. Daemon: `apps/daemon/src/client/pull-loop.ts` (poll + cron scheduler)
+- [x] 15. Daemon: `apps/daemon/src/client/pull-loop.ts` (poll + cron scheduler)
 
   **What to do**:
 
@@ -1274,7 +1274,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/daemon/src/client/pull-loop.ts` + test
   - Pre-commit: `bun run lint && bun test apps/daemon/src/client/pull-loop.test.ts`
 
-- [ ] 16. Website: `GET /api/daemon/jobs` route handler + unit test
+- [x] 16. Website: `GET /api/daemon/jobs` route handler + unit test
 
   **What to do**:
 
@@ -1338,7 +1338,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: route + test
   - Pre-commit: `bun run lint && bun test apps/website/src/app/api/daemon/jobs/route.test.ts`
 
-- [ ] 17. Website: `POST /api/daemon/pings/host` + Postgres-backed integration test
+- [x] 17. Website: `POST /api/daemon/pings/host` + Postgres-backed integration test
 
   **What to do**:
 
@@ -1407,7 +1407,7 @@ Max Concurrent: 9 (Wave 3)
   - Message: `feat(website): ingest endpoints for all 4 ping types`
   - Pre-commit: `bun run lint && bun test apps/website/src/app/api/daemon/pings`
 
-- [ ] 18. Website: `POST /api/daemon/pings/website` + integration test
+- [x] 18. Website: `POST /api/daemon/pings/website` + integration test
 
   **What to do**: Mirror T17 for website pings. Same auth, same `daemon_id` cross-check, same idempotency contract via `insertWebsitePing` (T11).
 
@@ -1441,7 +1441,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T17.
 
-- [ ] 19. Website: `POST /api/daemon/pings/container` + integration test
+- [x] 19. Website: `POST /api/daemon/pings/container` + integration test
 
   **What to do**: Mirror T17 for container pings via `insertContainerPing` (T12).
 
@@ -1469,7 +1469,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T17.
 
-- [ ] 20. Website: `POST /api/daemon/pings/github` + integration test (incl. check runs)
+- [x] 20. Website: `POST /api/daemon/pings/github` + integration test (incl. check runs)
 
   **What to do**:
 
@@ -1507,7 +1507,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T17. Combined message: `feat(website): ingest endpoints for host, website, container, github ping types`. Files: all 4 routes + tests. Pre-commit: full `bun test apps/website/src/app/api/daemon/pings`.
 
-- [ ] 21. Daemon: rewrite `apps/daemon/src/jobs/host.ts` to return a DTO
+- [x] 21. Daemon: rewrite `apps/daemon/src/jobs/host.ts` to return a DTO
 
   **What to do**:
 
@@ -1566,7 +1566,7 @@ Max Concurrent: 9 (Wave 3)
   - Message: `refactor(daemon): jobs return DTOs instead of inserting into DB`
   - Pre-commit: `bun run lint && bun test apps/daemon/src/jobs`
 
-- [ ] 22. Daemon: rewrite `apps/daemon/src/jobs/website.ts` to return a DTO
+- [x] 22. Daemon: rewrite `apps/daemon/src/jobs/website.ts` to return a DTO
 
   **What to do**: Same shape as T21, but HTTP HEAD probe via fetch. Signature: `pingWebsite(tile: WebsiteJobTile, ...): Promise<WebsitePingDTO>` — `WebsiteJobTile` is from `@mon/contracts` (T2). On 2xx/3xx response: `latency_ms: <measured>`, `error: null`. On 4xx/5xx or network error: `latency_ms: null`, `error: \`HTTP ${status}\``(or the network error message). Build`key`as`website:<tile.url>`.
 
@@ -1603,7 +1603,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T21.
 
-- [ ] 23. Daemon: rewrite `apps/daemon/src/jobs/container.ts` to return a DTO
+- [x] 23. Daemon: rewrite `apps/daemon/src/jobs/container.ts` to return a DTO
 
   **What to do**:
 
@@ -1641,7 +1641,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T21.
 
-- [ ] 24. Daemon: rewrite `apps/daemon/src/jobs/github.ts` to return DTOs (ping + check runs)
+- [x] 24. Daemon: rewrite `apps/daemon/src/jobs/github.ts` to return DTOs (ping + check runs)
 
   **What to do**:
 
@@ -1686,7 +1686,7 @@ Max Concurrent: 9 (Wave 3)
 
   **Commit**: groups with T21. Combined message: `refactor(daemon): jobs return DTOs; remove DB writes from daemon`. Files: all 4 jobs + tests. Pre-commit: `bun run lint && bun test apps/daemon/src/jobs`.
 
-- [ ] 25. Daemon: new `apps/daemon/src/index.ts` orchestrator (delete getConfig + DB)
+- [x] 25. Daemon: new `apps/daemon/src/index.ts` orchestrator (delete getConfig + DB)
 
   **What to do**:
 
@@ -1764,7 +1764,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/daemon/src/index.ts`, `apps/daemon/package.json`
   - Pre-commit: `bun run lint && bun test apps/daemon`
 
-- [ ] 26. Verify esbuild bundle has no `pg`/`drizzle`/`smol-toml`/`@mon/db`/`@mon/config`
+- [x] 26. Verify esbuild bundle has no `pg`/`drizzle`/`smol-toml`/`@mon/db`/`@mon/config`
 
   **What to do**:
 
@@ -1809,7 +1809,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `.github/workflows/test-daemon.yml` (or repo-wide test workflow if that's where daemon is)
   - Pre-commit: `cd apps/daemon && bun run build && ! grep -E "(...)" dist/daemon.cjs`
 
-- [ ] 27. Update `.github/workflows/deploy-daemon.yml` + `deploy-website.yml`
+- [x] 27. Update `.github/workflows/deploy-daemon.yml` + `deploy-website.yml`
 
   **What to do**:
 
@@ -1863,7 +1863,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `.github/workflows/deploy-daemon.yml`, `.github/workflows/deploy-website.yml`
   - Pre-commit: `actionlint` if available
 
-- [ ] 28. Playwright e2e: real daemon child process + real website + real Postgres
+- [x] 28. Playwright e2e: real daemon child process + real website + real Postgres
 
   **What to do**:
 
@@ -1939,7 +1939,7 @@ Max Concurrent: 9 (Wave 3)
   - Files: `apps/website/e2e/distributed-mon.spec.ts`
   - Pre-commit: `cd apps/website && bunx playwright test`
 
-- [ ] 29. Delete dead code from migration
+- [x] 29. Delete dead code from migration
 
   **What to do**:
 
@@ -2010,19 +2010,19 @@ Max Concurrent: 9 (Wave 3)
 
 > 4 review agents run in PARALLEL. ALL must APPROVE. Present consolidated results to user and get explicit "okay" before completing.
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
       Read this plan end-to-end. For each "Must Have": verify implementation exists (open file, curl endpoint, run bun test). For each "Must NOT Have": grep codebase for forbidden patterns and reject with file:line. Check evidence files exist in `.sisyphus/evidence/`. Compare deliverables list against actual files. Specifically verify: daemon has zero `pg`/`drizzle`/`smol-toml`/`@mon/db`/`@mon/config` imports; website has the 5 new routes; all 5 ping tables have `daemon_id` + `ping_id`.
       Output: `Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
       Run `bun run lint` + `bunx drizzle-kit check` + `bun test` + `bunx playwright test` (full pyramid). Review changed files for: `as any`, `@ts-ignore`, empty `catch {}`, commented-out code, unused imports, leftover `console.log` debug statements (logger calls are fine), generic names (`data`, `result`, `item`), copy-pasted blocks that should be helpers.
       Output: `Build [PASS/FAIL] | Lint [PASS/FAIL] | Unit/Integration tests [N pass/N fail] | Playwright [N pass/N fail] | Files [N clean/N issues] | VERDICT`
 
-- [ ] F3. **Real Manual QA** — `unspecified-high` + `playwright`
+- [x] F3. **Real Manual QA** — `unspecified-high` + `playwright`
       Boot website + Postgres + daemon process (real binaries, not mocks) from a clean state. Execute every QA scenario from every task; capture evidence. Test integration: tile assigned to a daemon ⇒ daemon pulls ⇒ daemon pings ⇒ pushes ⇒ DB row written ⇒ UI renders status. Test edge cases: unknown daemon token (401), tile assigned to non-existent daemon, duplicate `ping_id`, daemon down (UI shows stale), daemon up after website restart (continues working).
       Output: `Scenarios [N/N pass] | Integration [N/N] | Edge Cases [N tested] | VERDICT`
 
-- [ ] F4. **Scope Fidelity Check** — `deep`
+- [x] F4. **Scope Fidelity Check** — `deep`
       For each task: read "What to do", read actual git diff for that task's files. Verify 1:1 — everything specified was built, nothing beyond spec was built. Check "Must NOT do" compliance per-task. Detect cross-task contamination (task N touched task M's files). Flag unaccounted changes (files modified outside any task's scope).
       Output: `Tasks [N/N compliant] | Contamination [CLEAN/N issues] | Unaccounted [CLEAN/N files] | VERDICT`
 

@@ -1,7 +1,5 @@
 import type { WebsitePingDTO } from "@mon/contracts"
 
-import { insertWebsitePing } from "./website"
-
 import { describe, expect, it, mock } from "bun:test"
 
 describe("insertWebsitePing", () => {

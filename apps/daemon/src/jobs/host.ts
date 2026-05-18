@@ -1,5 +1,5 @@
-import { daemonEnv } from "@mon/env"
 import type { HostJobTile, HostPingDTO } from "@mon/contracts"
+import { daemonEnv } from "@mon/env"
 
 import { execa } from "execa"
 
@@ -14,9 +14,13 @@ export async function pingHost(
 
   try {
     const execaFn = deps?.execa ?? execa
-    const { stdout, exitCode } = await execaFn("ping", ["-c", "1", tile.address], {
-      reject: false,
-    })
+    const { stdout, exitCode } = await execaFn(
+      "ping",
+      ["-c", "1", tile.address],
+      {
+        reject: false,
+      },
+    )
 
     if (exitCode === 2) {
       return {
