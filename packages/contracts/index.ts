@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-// ─── Job Tile shapes (daemon-visible subset; website maps config tiles → these) ───
+// ─── Job Tile shapes (agent-visible subset; website maps config tiles → these) ───
 
 export const HostJobTileSchema = z.object({
   kind: z.literal("host"),
@@ -43,12 +43,12 @@ export const JobsResponseSchema = z.object({
   tiles: z.array(JobTileSchema),
 })
 
-// ─── Ping DTOs (daemon → website wire format) ───
+// ─── Ping DTOs (agent → website wire format) ───
 
 export const HostPingDTOSchema = z.object({
   kind: z.literal("host"),
   ping_id: z.string().uuid(),
-  daemon_id: z.string().min(1),
+  agent_id: z.string().min(1),
   recorded_at: z.string().datetime(),
   key: z.string(),
   latency_ms: z.number().nullable(),
@@ -58,7 +58,7 @@ export const HostPingDTOSchema = z.object({
 export const WebsitePingDTOSchema = z.object({
   kind: z.literal("website"),
   ping_id: z.string().uuid(),
-  daemon_id: z.string().min(1),
+  agent_id: z.string().min(1),
   recorded_at: z.string().datetime(),
   key: z.string(),
   latency_ms: z.number().nullable(),
@@ -68,7 +68,7 @@ export const WebsitePingDTOSchema = z.object({
 export const ContainerPingDTOSchema = z.object({
   kind: z.literal("container"),
   ping_id: z.string().uuid(),
-  daemon_id: z.string().min(1),
+  agent_id: z.string().min(1),
   recorded_at: z.string().datetime(),
   key: z.string(),
   // no latency_ms — container_ping table has no latency column
@@ -79,7 +79,7 @@ export const GithubPingDTOSchema = z
   .object({
     kind: z.literal("github_ping"),
     ping_id: z.string().uuid(),
-    daemon_id: z.string().min(1),
+    agent_id: z.string().min(1),
     recorded_at: z.string().datetime(),
     key: z.string(),
     commit_hash: z.string().nullable(),
@@ -98,7 +98,7 @@ export const GithubPingDTOSchema = z
 export const GithubCheckRunDTOSchema = z.object({
   kind: z.literal("github_check_run"),
   ping_id: z.string().uuid(),
-  daemon_id: z.string().min(1),
+  agent_id: z.string().min(1),
   recorded_at: z.string().datetime(),
   key: z.string(),
   id: z.number(), // GitHub's check-run ID (bigint)

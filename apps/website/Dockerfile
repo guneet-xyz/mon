@@ -2,7 +2,7 @@ FROM oven/bun:1 AS build
 
 COPY package.json /src/package.json
 COPY bun.lock /src/bun.lock
-COPY apps/daemon/package.json /src/apps/daemon/package.json
+COPY apps/agent/package.json /src/apps/agent/package.json
 COPY apps/website/package.json /src/apps/website/package.json
 COPY apps/docs/package.json /src/apps/docs/package.json
 COPY packages/config/package.json /src/packages/config/package.json

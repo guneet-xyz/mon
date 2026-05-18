@@ -14,8 +14,8 @@
         "prettier-plugin-tailwindcss": "^0.6.11",
       },
     },
-    "apps/daemon": {
-      "name": "@mon/daemon",
+    "apps/agent": {
+      "name": "@mon/agent",
       "version": "0.1.0",
       "dependencies": {
         "@mon/contracts": "workspace:*",
@@ -346,11 +346,11 @@
 
     "@mermaid-js/parser": ["@mermaid-js/parser@0.5.0", "", { "dependencies": { "langium": "3.3.1" } }, "sha512-AiaN7+VjXC+3BYE+GwNezkpjIcCI2qIMB/K4S2/vMWe0q/XJCBbx5+K7iteuz7VyltX9iAK4FmVTvGc9kjOV4w=="],
 
+    "@mon/agent": ["@mon/agent@workspace:apps/agent"],
+
     "@mon/config": ["@mon/config@workspace:packages/config"],
 
     "@mon/contracts": ["@mon/contracts@workspace:packages/contracts"],
-
-    "@mon/daemon": ["@mon/daemon@workspace:apps/daemon"],
 
     "@mon/db": ["@mon/db@workspace:packages/db"],
 

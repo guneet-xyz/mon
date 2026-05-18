@@ -9,7 +9,7 @@ export async function insertGithubCheckRun(
     .insert(githubCheckRun)
     .values({
       pingId: dto.ping_id,
-      daemonId: dto.daemon_id,
+      agentId: dto.agent_id,
       id: dto.id,
       name: dto.name,
       status: dto.status,
@@ -30,7 +30,7 @@ export async function insertGithubPing(
     .insert(githubPings)
     .values({
       pingId: dto.ping_id,
-      daemonId: dto.daemon_id,
+      agentId: dto.agent_id,
       key: dto.key,
       timestamp: new Date(dto.recorded_at),
       commitHash: dto.commit_hash ?? null,

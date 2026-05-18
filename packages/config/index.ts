@@ -11,13 +11,13 @@ export type {
   MonitorTile,
   NonMonitorTile,
   Tile,
-  Daemon,
+  Agent,
   Host,
   Container,
   Website,
   Github,
 } from "./schema"
-export { getDaemonAssignments, verifyDaemonToken } from "./schema"
+export { getAgentAssignments, verifyAgentToken } from "./schema"
 
 export async function getConfig() {
   if (existsSync(env.CONFIG_PATH) === false) {

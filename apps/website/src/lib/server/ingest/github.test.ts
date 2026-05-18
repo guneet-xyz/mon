@@ -23,7 +23,7 @@ describe("insertGithubCheckRun", () => {
     const dto: GithubCheckRunDTO = {
       kind: "github_check_run",
       ping_id: "test-id",
-      daemon_id: "daemon-1",
+      agent_id: "agent-1",
       recorded_at: "2026-05-18T12:00:00Z",
       key: "github-1",
       id: 123456,
@@ -59,7 +59,7 @@ describe("insertGithubCheckRun", () => {
     const dto: GithubCheckRunDTO = {
       kind: "github_check_run",
       ping_id: "test-id",
-      daemon_id: "daemon-1",
+      agent_id: "agent-1",
       recorded_at: "2026-05-18T12:00:00Z",
       key: "github-1",
       id: 123456,
@@ -97,7 +97,7 @@ describe("insertGithubPing", () => {
     const dto: GithubPingDTO = {
       kind: "github_ping",
       ping_id: "test-id",
-      daemon_id: "daemon-1",
+      agent_id: "agent-1",
       recorded_at: "2026-05-18T12:00:00Z",
       key: "github-1",
       commit_hash: "abc123",
@@ -129,7 +129,7 @@ describe("insertGithubPing", () => {
     const dto: GithubPingDTO = {
       kind: "github_ping",
       ping_id: "test-id",
-      daemon_id: "daemon-1",
+      agent_id: "agent-1",
       recorded_at: "2026-05-18T12:00:00Z",
       key: "github-1",
       commit_hash: "abc123",

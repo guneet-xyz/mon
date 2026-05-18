@@ -33,8 +33,8 @@
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.cjs", "**/*.js"],
   "exclude": [
-    "apps/daemon/dist",
-    "apps/daemon/daemon.cjs",
+    "apps/agent/dist",
+    "apps/agent/agent.cjs",
     "apps/website",
     "apps/docs"
   ]

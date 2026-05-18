@@ -20,7 +20,7 @@ export const hostPings = createTable(
   "host_ping",
   {
     pingId: uuid("ping_id").primaryKey().defaultRandom(),
-    daemonId: text("daemon_id"),
+    agentId: text("agent_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -36,7 +36,7 @@ export const websitePings = createTable(
   "website_ping",
   {
     pingId: uuid("ping_id").primaryKey().defaultRandom(),
-    daemonId: text("daemon_id"),
+    agentId: text("agent_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -52,7 +52,7 @@ export const containerPings = createTable(
   "container_ping",
   {
     pingId: uuid("ping_id").primaryKey().defaultRandom(),
-    daemonId: text("daemon_id"),
+    agentId: text("agent_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",
@@ -87,7 +87,7 @@ export const githubCheckRun = createTable(
   {
     _id: serial("_id").primaryKey(),
     pingId: uuid("ping_id").notNull().unique().defaultRandom(),
-    daemonId: text("daemon_id"),
+    agentId: text("agent_id"),
     id: bigint("id", { mode: "number" }).notNull(),
     name: varchar("name", { length: 256 }).notNull(),
     status: ghCheckRunStatusEnum().notNull(),
@@ -112,7 +112,7 @@ export const githubPings = createTable(
   "github_ping",
   {
     pingId: uuid("ping_id").primaryKey().defaultRandom(),
-    daemonId: text("daemon_id"),
+    agentId: text("agent_id"),
     key: varchar("key", { length: 64 }).notNull(),
     timestamp: timestamp("timestamp", {
       mode: "date",

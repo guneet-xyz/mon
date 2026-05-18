@@ -23,7 +23,7 @@ describe("insertContainerPing", () => {
     const dto: ContainerPingDTO = {
       kind: "container",
       ping_id: "test-id",
-      daemon_id: "daemon-1",
+      agent_id: "agent-1",
       recorded_at: "2026-05-18T12:00:00Z",
       key: "container-1",
       error: null,
@@ -53,7 +53,7 @@ describe("insertContainerPing", () => {
     const dto: ContainerPingDTO = {
       kind: "container",
       ping_id: "test-id",
-      daemon_id: "daemon-1",
+      agent_id: "agent-1",
       recorded_at: "2026-05-18T12:00:00Z",
       key: "container-1",
       error: null,

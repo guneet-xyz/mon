@@ -1,6 +1,6 @@
 # packages/config
 
-The **single source of truth** for tile shape. Loads `/etc/mon/config.toml` (path from `env.CONFIG_PATH`), parses with `smol-toml`, validates with Zod, returns typed config. Consumed by both daemon and website.
+The **single source of truth** for tile shape. Loads `/etc/mon/config.toml` (path from `env.CONFIG_PATH`), parses with `smol-toml`, validates with Zod, returns typed config. Consumed by both agent and website.
 
 ## CONVENTIONS
 
@@ -16,4 +16,4 @@ The **single source of truth** for tile shape. Loads `/etc/mon/config.toml` (pat
 
 - **Do not read `env.CONFIG_PATH` and `parse()` directly** in app code — call `getConfig()` so defaults, auto-create, and validation all run.
 - **Do not put runtime logic, fetchers, or side effects here.** This package is pure schema + a thin file loader.
-- **Do not depend on `@mon/db`** — the daemon and website wire config↔DB themselves; keeping config DB-free lets the docs site and scripts import it cheaply.
+- **Do not depend on `@mon/db`** — the agent and website wire config↔DB themselves; keeping config DB-free lets the docs site and scripts import it cheaply.

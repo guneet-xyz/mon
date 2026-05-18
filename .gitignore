@@ -2,9 +2,9 @@
 tsconfig.tsbuildinfo
 
 # Writing these explicitly so I know they exist
-apps/daemon/.env
-apps/daemon/dist
-apps/daemon/daemon.cjs
+apps/agent/.env
+apps/agent/dist
+apps/agent/agent.cjs
 
 apps/website/.env
 packages/db/.env

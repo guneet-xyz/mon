@@ -1,6 +1,6 @@
 import type { createTestDb as CreateTestDb } from "@mon/test-utils"
 
-import { hashToken } from "@/lib/server/daemon-auth"
+import { hashToken } from "@/lib/server/agent-auth"
 
 import { expect, test } from "@playwright/test"
 import { spawn } from "child_process"
@@ -12,7 +12,7 @@ import { fileURLToPath } from "url"
 
 const E2E_TOKEN = "e2e-test-token-32-bytes-long-here"
 const E2E_TOKEN_HASH = hashToken(E2E_TOKEN)
-const DAEMON_ID = "e2e"
+const AGENT_ID = "e2e"
 
 const REPO_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -20,12 +20,12 @@ const REPO_ROOT = resolve(
   "..",
   "..",
 )
-const DAEMON_BUNDLE = join(REPO_ROOT, "apps", "daemon", "dist", "daemon.cjs")
+const AGENT_BUNDLE = join(REPO_ROOT, "apps", "agent", "dist", "agent.cjs")
 
 let testDb: Awaited<ReturnType<typeof CreateTestDb>>
 let sql: ReturnType<typeof postgres>
 let tmpConfigPath: string
-let daemonProcess: ReturnType<typeof spawn> | null = null
+let agentProcess: ReturnType<typeof spawn> | null = null
 
 test.beforeAll(async () => {
   const mod = (await import("@mon/test-utils")) as {
@@ -42,7 +42,7 @@ test.beforeAll(async () => {
   writeFileSync(
     tmpConfigPath,
     `
-[daemons.${DAEMON_ID}]
+[agents.${AGENT_ID}]
 token_hash = "${E2E_TOKEN_HASH}"
 
 [[tiles]]
@@ -50,16 +50,16 @@ type = "host"
 key = "e2e-host"
 name = "E2E Host"
 address = "127.0.0.1"
-daemon = "${DAEMON_ID}"
+agent = "${AGENT_ID}"
 interval_seconds = 5
 `,
   )
 })
 
 test.afterAll(async () => {
-  if (daemonProcess) {
-    daemonProcess.kill("SIGTERM")
-    daemonProcess = null
+  if (agentProcess) {
+    agentProcess.kill("SIGTERM")
+    agentProcess = null
   }
   try {
     await sql?.end({ timeout: 2 })
@@ -69,22 +69,22 @@ test.afterAll(async () => {
   testDb?.stop()
 })
 
-test("happy path — daemon pings, row appears, UI renders", async ({ page }) => {
-  daemonProcess = spawn("bun", [DAEMON_BUNDLE], {
+test("happy path — agent pings, row appears, UI renders", async ({ page }) => {
+  agentProcess = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
       DATABASE_URL: testDb.url,
       CONFIG_PATH: tmpConfigPath,
       WEBSITE_URL: "http://localhost:3000",
-      DAEMON_ID,
-      DAEMON_TOKEN: E2E_TOKEN,
-      DAEMON_POLL_INTERVAL_SECONDS: "5",
+      AGENT_ID,
+      AGENT_TOKEN: E2E_TOKEN,
+      AGENT_POLL_INTERVAL_SECONDS: "5",
       NODE_ENV: "test",
     },
     cwd: REPO_ROOT,
   })
 
-  // Allow up to 90s: daemon boot + jobs fetch + first cron tick (5s interval)
+  // Allow up to 90s: agent boot + jobs fetch + first cron tick (5s interval)
   let rowFound = false
   const deadline = Date.now() + 90_000
   while (Date.now() < deadline) {
@@ -106,20 +106,20 @@ test("happy path — daemon pings, row appears, UI renders", async ({ page }) =>
     timeout: 10_000,
   })
 
-  daemonProcess.kill("SIGTERM")
-  daemonProcess = null
+  agentProcess.kill("SIGTERM")
+  agentProcess = null
 })
 
-test("bad token — daemon exits with code 78", async () => {
-  const proc = spawn("bun", [DAEMON_BUNDLE], {
+test("bad token — agent exits with code 78", async () => {
+  const proc = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
       DATABASE_URL: testDb.url,
       CONFIG_PATH: tmpConfigPath,
       WEBSITE_URL: "http://localhost:3000",
-      DAEMON_ID,
-      DAEMON_TOKEN: "wrong-token",
-      DAEMON_POLL_INTERVAL_SECONDS: "5",
+      AGENT_ID,
+      AGENT_TOKEN: "wrong-token",
+      AGENT_POLL_INTERVAL_SECONDS: "5",
       NODE_ENV: "test",
     },
     cwd: REPO_ROOT,
@@ -139,16 +139,16 @@ test("bad token — daemon exits with code 78", async () => {
   expect(exitCode).toBe(78)
 })
 
-test("ghost daemon — no jobs assigned, no ping rows", async () => {
-  const proc = spawn("bun", [DAEMON_BUNDLE], {
+test("ghost agent — no jobs assigned, no ping rows", async () => {
+  const proc = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
       DATABASE_URL: testDb.url,
       CONFIG_PATH: tmpConfigPath,
       WEBSITE_URL: "http://localhost:3000",
-      DAEMON_ID: "ghost",
-      DAEMON_TOKEN: E2E_TOKEN,
-      DAEMON_POLL_INTERVAL_SECONDS: "5",
+      AGENT_ID: "ghost",
+      AGENT_TOKEN: E2E_TOKEN,
+      AGENT_POLL_INTERVAL_SECONDS: "5",
       NODE_ENV: "test",
     },
     cwd: REPO_ROOT,
@@ -158,7 +158,7 @@ test("ghost daemon — no jobs assigned, no ping rows", async () => {
     // 30s window covers several poll intervals (5s); ensures no jobs are ever assigned
     await new Promise((r) => setTimeout(r, 30_000))
     const rows =
-      await sql`SELECT * FROM mon_host_ping WHERE daemon_id = 'ghost' LIMIT 1`
+      await sql`SELECT * FROM mon_host_ping WHERE agent_id = 'ghost' LIMIT 1`
     expect(rows.length).toBe(0)
   } finally {
     proc.kill("SIGTERM")

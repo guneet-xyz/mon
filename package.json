@@ -5,7 +5,7 @@
   "type": "module",
   "workspaces": [
     "apps/website",
-    "apps/daemon",
+    "apps/agent",
     "apps/docs",
     "packages/db",
     "packages/config",

@@ -10,7 +10,7 @@ One file per tile variant from the Zod discriminated union in `@mon/config/schem
 - **Adding a new tile type** = 5 edits:
   1. add variant in [packages/config/schema.ts](file:///Users/guneet/projects/mon/packages/config/schema.ts) discriminated union,
   2. add DB table in [packages/db/schema.ts](file:///Users/guneet/projects/mon/packages/db/schema.ts) via `createTable("…")`,
-  3. add daemon job in `apps/daemon/src/jobs/`,
+  3. add agent job in `apps/agent/src/jobs/`,
   4. add `<NewTile>` here + register in [index.tsx](file:///Users/guneet/projects/mon/apps/website/src/components/tiles/index.tsx),
   5. add branch in [lib/server/monitors/index.ts](file:///Users/guneet/projects/mon/apps/website/src/lib/server/monitors/index.ts) (getStatus/getIncidentPings/getPings).
 - **Title sizing rule** (host.tsx is the canonical example): if `short_name` set use it; else if 1×1 cell render single uppercase initial of `name`; else full name.

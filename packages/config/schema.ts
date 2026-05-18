@@ -16,8 +16,8 @@ const _OptionsSchema = z.object({
 
 const OptionsSchema = _OptionsSchema.default(_OptionsSchema.parse({}))
 
-const DaemonSchema = z.object({
-  token_hash: z.string().regex(/^[0-9a-f]{64}$/), // sha256 hex of the daemon's bearer token
+const AgentSchema = z.object({
+  token_hash: z.string().regex(/^[0-9a-f]{64}$/), // sha256 hex of the agent's bearer token
   description: z.string().optional(),
 })
 
@@ -33,13 +33,13 @@ const MonitorSchema = TileSchema.extend({
   name: z.string().optional(),
   icon: z.string().optional(),
   short_name: z.string().optional(),
-  daemon: z.string().default("default"), // which daemon handles this tile
+  agent: z.string().default("default"), // which agent handles this tile
   interval_seconds: z.number().int().positive().optional(), // per-tile override; falls back to options.ping_interval_ms
 })
 
 export const ConfigSchema = z.object({
   options: OptionsSchema,
-  daemons: z.record(z.string(), DaemonSchema).optional().default({}),
+  agents: z.record(z.string(), AgentSchema).optional().default({}),
   tiles: z.array(
     z.discriminatedUnion("type", [
       MonitorSchema.extend({
@@ -58,7 +58,7 @@ export const ConfigSchema = z.object({
       MonitorSchema.extend({
         type: z.literal("github"),
         repo: z.string().regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/),
-        github_token: z.string().optional(), // per-tile GitHub PAT; daemon must not use env.GITHUB_TOKEN
+        github_token: z.string().optional(), // per-tile GitHub PAT; agent must not use env.GITHUB_TOKEN
       }),
       TileSchema.extend({
         type: z.literal("empty"),
@@ -91,7 +91,7 @@ export const ConfigSchema = z.object({
 })
 
 export type Config = z.infer<typeof ConfigSchema>
-export type Daemon = z.infer<typeof DaemonSchema>
+export type Agent = z.infer<typeof AgentSchema>
 export type Tile = Config["tiles"][number]
 
 export type NonMonitorTile = Extract<
@@ -111,9 +111,9 @@ export type Container = ExtractTileType<"container">
 export type Website = ExtractTileType<"website">
 export type Github = ExtractTileType<"github">
 
-export function getDaemonAssignments(
+export function getAgentAssignments(
   config: Config,
-  daemonId: string,
+  agentId: string,
 ): MonitorTile[] {
   return config.tiles.filter(
     (tile): tile is MonitorTile =>
@@ -121,22 +121,22 @@ export function getDaemonAssignments(
       tile.type !== "hidden" &&
       tile.type !== "logo" &&
       tile.type !== "theme" &&
-      tile.daemon === daemonId,
+      tile.agent === agentId,
   )
 }
 
-export function verifyDaemonToken(
+export function verifyAgentToken(
   config: Config,
-  daemonId: string,
+  agentId: string,
   presentedToken: string,
 ): boolean {
-  const daemon = config.daemons?.[daemonId]
-  if (!daemon) return false
+  const agent = config.agents?.[agentId]
+  if (!agent) return false
   const presented = Buffer.from(
     createHash("sha256").update(presentedToken).digest("hex"),
     "hex",
   )
-  const stored = Buffer.from(daemon.token_hash, "hex")
+  const stored = Buffer.from(agent.token_hash, "hex")
   if (presented.length !== stored.length) return false
   return timingSafeEqual(presented, stored)
 }

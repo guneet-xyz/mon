@@ -9,7 +9,7 @@ export async function insertContainerPing(
     .insert(containerPings)
     .values({
       pingId: dto.ping_id,
-      daemonId: dto.daemon_id,
+      agentId: dto.agent_id,
       key: dto.key,
       timestamp: new Date(dto.recorded_at),
       error: dto.error,

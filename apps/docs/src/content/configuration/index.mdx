@@ -2,22 +2,22 @@
 
 Configuration is done using the `/etc/mon/config.toml` file. Read more on [TOML](https://toml.io/en/) syntax.
 
-## Distributed daemons
+## Distributed agents
 
-`mon` supports running multiple daemons across different networks (home, office, cloud, etc.) that all report back to a single website. Each tile is assigned to exactly one daemon by name; daemons authenticate to the website with a bearer token whose SHA-256 hash is declared in the config.
+`mon` supports running multiple agents across different networks (home, office, cloud, etc.) that all report back to a single website. Each tile is assigned to exactly one agent by name; agents authenticate to the website with a bearer token whose SHA-256 hash is declared in the config.
 
-The TOML file lives on the **website host** only. Daemons fetch their job list from the website over HTTP.
+The TOML file lives on the **website host** only. Agents fetch their job list from the website over HTTP.
 
-### Declaring daemons
+### Declaring agents
 
-Each daemon gets a block under `[daemons.<id>]`:
+Each agent gets a block under `[agents.<id>]`:
 
 ```toml
-[daemons.default]
+[agents.default]
 token_hash  = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
-description = "Primary daemon"
+description = "Primary agent"
 
-[daemons.office]
+[agents.office]
 token_hash  = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 description = "Office network probe"
 ```
@@ -30,7 +30,7 @@ description = "Office network probe"
 ### Generating a token
 
 ```bash
-# mint a random 32-byte token (give this to the daemon as DAEMON_TOKEN)
+# mint a random 32-byte token (give this to the agent as AGENT_TOKEN)
 token=$(openssl rand -hex 32)
 echo "$token"
 
@@ -38,27 +38,27 @@ echo "$token"
 echo -n "$token" | sha256sum
 ```
 
-The plaintext token is never stored on the website side, only its hash. The daemon sends it in an `Authorization: Bearer <token>` header.
+The plaintext token is never stored on the website side, only its hash. The agent sends it in an `Authorization: Bearer <token>` header.
 
-### Assigning tiles to daemons
+### Assigning tiles to agents
 
-Every monitor tile (`host`, `website`, `container`, `github`) accepts a `daemon` field:
+Every monitor tile (`host`, `website`, `container`, `github`) accepts a `agent` field:
 
 ```toml
 [[tiles]]
 type    = "host"
 key     = "router"
 address = "192.168.1.1"
-daemon  = "default"
+agent  = "default"
 
 [[tiles]]
 type    = "host"
 key     = "office-nas"
 address = "10.0.0.5"
-daemon  = "office"
+agent  = "office"
 ```
 
-If omitted, `daemon` defaults to `"default"`. Tiles whose `daemon` does not match any `[daemons.<id>]` block will never be polled.
+If omitted, `agent` defaults to `"default"`. Tiles whose `agent` does not match any `[agents.<id>]` block will never be polled.
 
 ### Per-tile poll interval
 
@@ -74,26 +74,26 @@ interval_seconds = 60
 
 ### GitHub tokens
 
-`github` tiles accept a per-tile `github_token` (a GitHub PAT) used to call the Check Runs API. The daemon does **not** fall back to an environment variable, so if a `github` tile needs auth, set `github_token` on the tile.
+`github` tiles accept a per-tile `github_token` (a GitHub PAT) used to call the Check Runs API. The agent does **not** fall back to an environment variable, so if a `github` tile needs auth, set `github_token` on the tile.
 
-### Fetching jobs from the daemon side
+### Fetching jobs from the agent side
 
-A daemon polls the website to learn its job list:
+A agent polls the website to learn its job list:
 
 ```bash
-curl -H "Authorization: Bearer $DAEMON_TOKEN" \
-  https://mon.example.com/api/daemon/jobs
+curl -H "Authorization: Bearer $AGENT_TOKEN" \
+  https://mon.example.com/api/agent/jobs
 ```
 
-The response is a JSON array of tiles assigned to the daemon identified by the token.
+The response is a JSON array of tiles assigned to the agent identified by the token.
 
 ### Migration checklist
 
-Moving an existing single-daemon setup to the distributed model:
+Moving an existing single-agent setup to the distributed model:
 
-1. Pick a daemon id (start with `default`).
+1. Pick a agent id (start with `default`).
 2. Generate a token (`openssl rand -hex 32`).
-3. Hash it (`echo -n "$token" | sha256sum`) and add `[daemons.default]` with the hash.
-4. Add `daemon = "default"` to each existing monitor tile, or leave it off since the default is `"default"`.
-5. Set `DAEMON_TOKEN=<plaintext>` and `DAEMON_ID=default` in the daemon's environment, and point it at the website URL instead of `CONFIG_PATH`.
-6. Restart the daemon. It will fetch its job list over HTTP and start posting pings.
+3. Hash it (`echo -n "$token" | sha256sum`) and add `[agents.default]` with the hash.
+4. Add `agent = "default"` to each existing monitor tile, or leave it off since the default is `"default"`.
+5. Set `AGENT_TOKEN=<plaintext>` and `AGENT_ID=default` in the agent's environment, and point it at the website URL instead of `CONFIG_PATH`.
+6. Restart the agent. It will fetch its job list over HTTP and start posting pings.

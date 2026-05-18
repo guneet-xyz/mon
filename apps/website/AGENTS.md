@@ -1,6 +1,6 @@
 # apps/website
 
-Next.js 14 App Router status board. Reads the same TOML config the daemon polls from, queries ping data from Postgres via server actions, and renders a responsive grid of tiles client-side.
+Next.js 14 App Router status board. Reads the same TOML config the agent polls from, queries ping data from Postgres via server actions, and renders a responsive grid of tiles client-side.
 
 ## STRUCTURE
 

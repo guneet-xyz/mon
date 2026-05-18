@@ -1,8 +1,8 @@
 import {
   type Config,
   ConfigSchema,
-  getDaemonAssignments,
-  verifyDaemonToken,
+  getAgentAssignments,
+  verifyAgentToken,
 } from "./schema"
 
 import { describe, expect, test } from "bun:test"
@@ -12,46 +12,46 @@ const sha256 = (s: string) => createHash("sha256").update(s).digest("hex")
 
 const baseConfig = (overrides: Partial<Config> = {}): Config =>
   ConfigSchema.parse({
-    daemons: {
+    agents: {
       default: { token_hash: sha256("hello") },
     },
     tiles: [],
     ...overrides,
   })
 
-describe("ConfigSchema — daemons", () => {
-  test("parses a config with a [daemons.default] block", () => {
+describe("ConfigSchema — agents", () => {
+  test("parses a config with a [agents.default] block", () => {
     const config = ConfigSchema.parse({
-      daemons: {
+      agents: {
         default: {
           token_hash: sha256("hello"),
-          description: "Primary daemon",
+          description: "Primary agent",
         },
       },
       tiles: [],
     })
 
-    expect(config.daemons["default"]?.token_hash).toBe(sha256("hello"))
-    expect(config.daemons["default"]?.description).toBe("Primary daemon")
+    expect(config.agents["default"]?.token_hash).toBe(sha256("hello"))
+    expect(config.agents["default"]?.description).toBe("Primary agent")
   })
 
-  test("daemons defaults to an empty object when omitted", () => {
+  test("agents defaults to an empty object when omitted", () => {
     const config = ConfigSchema.parse({ tiles: [] })
-    expect(config.daemons).toEqual({})
+    expect(config.agents).toEqual({})
   })
 
-  test("rejects a daemon token_hash that is not 64 hex chars", () => {
+  test("rejects a agent token_hash that is not 64 hex chars", () => {
     expect(() =>
       ConfigSchema.parse({
-        daemons: { default: { token_hash: "not-a-hash" } },
+        agents: { default: { token_hash: "not-a-hash" } },
         tiles: [],
       }),
     ).toThrow()
   })
 })
 
-describe("MonitorSchema — daemon + interval_seconds", () => {
-  test("daemon defaults to 'default' on every monitor variant", () => {
+describe("MonitorSchema — agent + interval_seconds", () => {
+  test("agent defaults to 'default' on every monitor variant", () => {
     const config = ConfigSchema.parse({
       tiles: [
         { type: "host", key: "h", address: "1.1.1.1" },
@@ -68,18 +68,18 @@ describe("MonitorSchema — daemon + interval_seconds", () => {
         tile.type === "container" ||
         tile.type === "github"
       ) {
-        expect(tile.daemon).toBe("default")
+        expect(tile.agent).toBe("default")
       }
     }
   })
 
-  test("daemon can be set to a custom value", () => {
+  test("agent can be set to a custom value", () => {
     const config = ConfigSchema.parse({
-      tiles: [{ type: "host", key: "h", address: "1.1.1.1", daemon: "edge-1" }],
+      tiles: [{ type: "host", key: "h", address: "1.1.1.1", agent: "edge-1" }],
     })
     const tile = config.tiles[0]!
     if (tile.type !== "host") throw new Error("expected host")
-    expect(tile.daemon).toBe("edge-1")
+    expect(tile.agent).toBe("edge-1")
   })
 
   test("interval_seconds is optional and passes through when set", () => {
@@ -145,13 +145,13 @@ describe("github_token", () => {
   })
 })
 
-describe("getDaemonAssignments", () => {
+describe("getAgentAssignments", () => {
   const config = ConfigSchema.parse({
-    daemons: { default: { token_hash: sha256("t") } },
+    agents: { default: { token_hash: sha256("t") } },
     tiles: [
       { type: "host", key: "h1", address: "1.1.1.1" },
-      { type: "host", key: "h2", address: "2.2.2.2", daemon: "edge" },
-      { type: "website", key: "w1", url: "https://a.com", daemon: "edge" },
+      { type: "host", key: "h2", address: "2.2.2.2", agent: "edge" },
+      { type: "website", key: "w1", url: "https://a.com", agent: "edge" },
       { type: "logo" },
       { type: "theme" },
       {
@@ -164,48 +164,48 @@ describe("getDaemonAssignments", () => {
     ],
   })
 
-  test("returns only monitor tiles assigned to the given daemon", () => {
-    const tiles = getDaemonAssignments(config, "default")
+  test("returns only monitor tiles assigned to the given agent", () => {
+    const tiles = getAgentAssignments(config, "default")
     expect(tiles).toHaveLength(1)
     expect(tiles[0]!.key).toBe("h1")
   })
 
   test("returns multiple tiles when several are assigned", () => {
-    const tiles = getDaemonAssignments(config, "edge")
+    const tiles = getAgentAssignments(config, "edge")
     expect(tiles).toHaveLength(2)
     expect(tiles.map((t) => t.key).sort()).toEqual(["h2", "w1"])
   })
 
-  test("returns an empty array for an unknown daemonId", () => {
-    expect(getDaemonAssignments(config, "nonexistent")).toEqual([])
+  test("returns an empty array for an unknown agentId", () => {
+    expect(getAgentAssignments(config, "nonexistent")).toEqual([])
   })
 
   test("excludes non-monitor tiles (logo, theme, empty, hidden)", () => {
-    const tiles = getDaemonAssignments(config, "default")
+    const tiles = getAgentAssignments(config, "default")
     for (const t of tiles) {
       expect(["host", "website", "container", "github"]).toContain(t.type)
     }
   })
 })
 
-describe("verifyDaemonToken", () => {
+describe("verifyAgentToken", () => {
   const config = baseConfig({
-    daemons: { default: { token_hash: sha256("correct-horse") } },
+    agents: { default: { token_hash: sha256("correct-horse") } },
   })
 
   test("returns true for the correct token", () => {
-    expect(verifyDaemonToken(config, "default", "correct-horse")).toBe(true)
+    expect(verifyAgentToken(config, "default", "correct-horse")).toBe(true)
   })
 
   test("returns false for the wrong token", () => {
-    expect(verifyDaemonToken(config, "default", "wrong-token")).toBe(false)
+    expect(verifyAgentToken(config, "default", "wrong-token")).toBe(false)
   })
 
-  test("returns false for an unknown daemonId", () => {
-    expect(verifyDaemonToken(config, "missing", "correct-horse")).toBe(false)
+  test("returns false for an unknown agentId", () => {
+    expect(verifyAgentToken(config, "missing", "correct-horse")).toBe(false)
   })
 
   test("returns false for an empty presented token", () => {
-    expect(verifyDaemonToken(config, "default", "")).toBe(false)
+    expect(verifyAgentToken(config, "default", "")).toBe(false)
   })
 })

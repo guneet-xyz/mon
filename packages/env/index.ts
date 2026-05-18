@@ -17,20 +17,16 @@ export const websiteEnv = createEnv({
   emptyStringAsUndefined: true,
 })
 
-// Daemon env: website URL + identity. No DB, no config file, no GitHub token.
-export const daemonEnv = createEnv({
+// Agent env: website URL + identity. No DB, no config file, no GitHub token.
+export const agentEnv = createEnv({
   server: {
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
     WEBSITE_URL: z.string().url(),
-    DAEMON_ID: z.string().min(1),
-    DAEMON_TOKEN: z.string().min(32), // high-entropy bearer token
-    DAEMON_POLL_INTERVAL_SECONDS: z.coerce
-      .number()
-      .int()
-      .positive()
-      .default(60),
+    AGENT_ID: z.string().min(1),
+    AGENT_TOKEN: z.string().min(32), // high-entropy bearer token
+    AGENT_POLL_INTERVAL_SECONDS: z.coerce.number().int().positive().default(60),
   },
   clientPrefix: "NEXT_PUBLIC_",
   client: {},
