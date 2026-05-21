@@ -1,0 +1,84 @@
+# Manual test stack for @mon.
+#
+# Usage (from repo root):
+#   docker compose -f test/compose.yml up --build
+#
+# Services:
+#   - postgres   : Postgres 16, data persisted to ./data/postgres
+#   - migrator   : runs `drizzle-kit migrate` against postgres, then exits
+#   - website    : Next.js status board on http://localhost:3000
+#   - agent      : Bun cron poller that talks to website
+#
+# Bind mounts (all under test/data, gitignored):
+#   ./data/postgres   -> /var/lib/postgresql/data
+#   ./data/config.toml -> /etc/mon/config.toml  (auto-created empty by website on first run)
+#
+# AGENT_TOKEN below is a dev-only token. Its sha256 must match the
+# `token_hash` of the `default` agent in config.toml when you add tiles.
+# Generate a fresh pair with:
+#   TOKEN=$(openssl rand -hex 32); echo "token=$TOKEN"; echo -n "$TOKEN" | sha256sum
+
+name: mon-test
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mon
+      POSTGRES_PASSWORD: mon
+      POSTGRES_DB: mon
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mon -d mon"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+  migrator:
+    build:
+      context: ..
+      dockerfile: packages/db/Dockerfile
+    environment:
+      DATABASE_URL: postgres://mon:mon@postgres:5432/mon
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  website:
+    build:
+      context: ..
+      dockerfile: apps/website/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://mon:mon@postgres:5432/mon
+      CONFIG_PATH: /etc/mon/config.toml
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    ports:
+      - "5000:3000"
+    volumes:
+      - ./data/config:/etc/mon
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+
+  agent:
+    build:
+      context: ..
+      dockerfile: apps/agent/Dockerfile
+    environment:
+      NODE_ENV: production
+      WEBSITE_URL: http://website:3000
+      AGENT_ID: default
+      AGENT_TOKEN: devdevdevdevdevdevdevdevdevdevdevdev
+      AGENT_POLL_INTERVAL_SECONDS: "60"
+    volumes:
+      # mount docker socket so container tiles can be polled from host
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - website

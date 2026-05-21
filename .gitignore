@@ -14,3 +14,5 @@ config.dev.toml
 .sisyphus/
 apps/website/playwright-report/
 apps/website/test-results/
+
+test/data/

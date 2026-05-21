@@ -1,0 +1,25 @@
+# Sample config for manual testing. Edit freely.
+#
+# The `token_hash` below is the sha256 of "devdevdevdevdevdevdevdevdevdevdevdev"
+# (the AGENT_TOKEN in compose.yml). Regenerate if you change the token:
+#   echo -n "$AGENT_TOKEN" | sha256sum
+
+[options]
+ping_interval_ms = 6000
+
+[agents.default]
+token_hash = "ad23a228cee323b7b24febea015ffd74d33a72d9f1a2073b409e2d71c287669b"
+description = "local test agent (sha256 of dev AGENT_TOKEN in compose.yml)"
+
+# Example tiles — uncomment to test
+[[tiles]]
+type = "website"
+key = "example"
+name = "Example"
+url = "https://example.com"
+
+# [[tiles]]
+# type = "host"
+# key = "localhost"
+# name = "Localhost"
+# address = "127.0.0.1"

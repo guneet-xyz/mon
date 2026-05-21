@@ -1,0 +1,14 @@
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+tsconfig.tsbuildinfo
+
+apps/website/playwright-report
+apps/website/test-results
+
+.git
+.github
+.sisyphus
+
+test/data
