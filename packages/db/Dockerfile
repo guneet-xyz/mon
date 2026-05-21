@@ -11,7 +11,6 @@ COPY apps/docs/package.json /src/apps/docs/package.json
 COPY packages/config/package.json /src/packages/config/package.json
 COPY packages/contracts/package.json /src/packages/contracts/package.json
 COPY packages/db/package.json /src/packages/db/package.json
-COPY packages/env/package.json /src/packages/env/package.json
 COPY packages/test-utils/package.json /src/packages/test-utils/package.json
 COPY patches /src/patches
 
@@ -19,7 +18,6 @@ WORKDIR /src
 RUN bun install --frozen-lockfile
 
 COPY packages/db /src/packages/db
-COPY packages/env /src/packages/env
 
 FROM oven/bun:1-alpine AS base
 WORKDIR /app

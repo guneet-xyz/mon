@@ -1,5 +1,5 @@
 import type { ContainerPingDTO } from "@mon/contracts"
-import { db } from "@mon/db"
+import { db } from "@/lib/server/db"
 import { containerPings } from "@mon/db/schema"
 
 export async function insertContainerPing(

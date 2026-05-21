@@ -38,7 +38,7 @@ mon/
 ## CONVENTIONS
 
 - **Package manager: Bun**, version pinned in CI to `1.2.15`. Use `bun i`, `bunx`, never `npm`/`pnpm`.
-- **Workspace imports**: `@mon/config`, `@mon/db`, `@mon/db/schema`, `@mon/db/drizzle`, `@mon/env`. The `@/*` alias is **website-only** and points at `apps/website/src/*` (see root [tsconfig.json](file:///Users/guneet/projects/mon/tsconfig.json#L29-L31)).
+- **Workspace imports**: `@mon/config`, `@mon/db`, `@mon/db/schema`, `@mon/db/drizzle`, `@mon/contracts`. Each app owns its own `src/env.ts` (no shared env package). The `@/*` alias is **website-only** and points at `apps/website/src/*` (see root [tsconfig.json](file:///Users/guneet/projects/mon/tsconfig.json#L29-L31)).
 - **Prettier** is repo-wide and opinionated: `semi: false`, import order `@mon → @/ → relative`. Tailwind class sort + package.json sort plugins are active. Run via `bun run format:write`.
 - **Lint = website + docs + repo-wide `tsc --noEmit`**. Root `tsc` config **excludes** `apps/website` and `apps/docs` (they have their own `tsconfig.json` driven by Next).
 - **Discriminated unions on `type`** (zod `discriminatedUnion`) are the canonical pattern for tile/monitor variants — both schema and runtime dispatch use this.

@@ -1,12 +1,12 @@
 import type { ContainerJobTile, ContainerPingDTO } from "@mon/contracts"
-import { agentEnv } from "@mon/env"
+import { env } from "../env"
 
 export async function pingContainer(
   tile: ContainerJobTile,
   deps?: { fetch?: typeof globalThis.fetch; agentId?: string },
 ): Promise<ContainerPingDTO> {
   const pingId = crypto.randomUUID()
-  const agentId = deps?.agentId ?? agentEnv.AGENT_ID
+  const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
   const key = `container:${tile.container_name}`
 

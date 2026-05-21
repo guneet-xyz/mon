@@ -85,7 +85,7 @@ async function waitForPostgres(url: string, timeoutMs: number): Promise<void> {
 }
 
 function applySchema(url: string): void {
-  // packages/db expects DATABASE_URL via @mon/env. We invoke drizzle-kit push
+  // drizzle-kit reads DATABASE_URL from process.env; point it at the ephemeral container.
   // with DATABASE_URL pointed at the ephemeral container.
   const here = path.dirname(fileURLToPath(import.meta.url))
   const dbPackage = path.resolve(here, "..", "db")

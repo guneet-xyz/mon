@@ -1,5 +1,5 @@
 import type { GithubCheckRunDTO, GithubPingDTO } from "@mon/contracts"
-import { db } from "@mon/db"
+import { db } from "@/lib/server/db"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
 
 export async function insertGithubCheckRun(

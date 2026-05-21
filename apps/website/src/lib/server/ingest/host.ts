@@ -1,5 +1,5 @@
 import type { HostPingDTO } from "@mon/contracts"
-import { db } from "@mon/db"
+import { db } from "@/lib/server/db"
 import { hostPings } from "@mon/db/schema"
 
 export async function insertHostPing(

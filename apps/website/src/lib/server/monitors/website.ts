@@ -1,4 +1,4 @@
-import { db } from "@mon/db"
+import { db } from "@/lib/server/db"
 import { and, asc, desc, eq, gte, isNotNull } from "@mon/db/drizzle"
 import { websitePings } from "@mon/db/schema"
 

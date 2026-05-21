@@ -3,7 +3,7 @@ import type {
   GithubJobTile,
   GithubPingDTO,
 } from "@mon/contracts"
-import { agentEnv } from "@mon/env"
+import { env } from "../env"
 
 import { z } from "zod"
 
@@ -43,7 +43,7 @@ export async function pingGithub(
   tile: GithubJobTile,
   deps?: { fetch?: typeof globalThis.fetch; agentId?: string },
 ): Promise<{ ping: GithubPingDTO; checkRuns: GithubCheckRunDTO[] }> {
-  const agentId = deps?.agentId ?? agentEnv.AGENT_ID
+  const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
   const key = `github:${tile.repo}`
   const token = tile.github_token

@@ -10,7 +10,6 @@
     "packages/db",
     "packages/config",
     "packages/contracts",
-    "packages/env",
     "packages/test-utils"
   ],
   "scripts": {

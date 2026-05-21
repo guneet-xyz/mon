@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename)
 const config = {
   output: "standalone",
   outputFileTracingRoot: path.join(__dirname, "../../"),
-  transpilePackages: ["@mon/config", "@mon/contracts", "@mon/db", "@mon/env"],
+  transpilePackages: ["@mon/config", "@mon/contracts", "@mon/db"],
 }
 
 export default config

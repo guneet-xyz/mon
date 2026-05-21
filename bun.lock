@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "@mon",
@@ -18,7 +19,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@mon/contracts": "workspace:*",
-        "@mon/env": "workspace:*",
+        "@t3-oss/env-core": "^0.12.0",
         "execa": "^9.6.0",
         "node-schedule": "^2.1.1",
         "zod": "^3.24.2",
@@ -72,7 +73,6 @@
         "@mon/config": "0.1.0",
         "@mon/contracts": "workspace:*",
         "@mon/db": "0.1.0",
-        "@mon/env": "0.1.0",
         "@radix-ui/react-dialog": "^1.1.14",
         "@radix-ui/react-select": "^2.2.5",
         "@radix-ui/react-slot": "^1.2.3",
@@ -117,7 +117,6 @@
       "name": "@mon/config",
       "version": "0.1.0",
       "dependencies": {
-        "@mon/env": "workspace:*",
         "smol-toml": "^1.3.4",
         "zod": "^3.25.41",
       },
@@ -134,20 +133,11 @@
       "version": "0.1.0",
       "dependencies": {
         "@auth/drizzle-adapter": "^1.7.4",
-        "@mon/env": "workspace:*",
         "drizzle-orm": "^0.44.2",
         "postgres": "^3.4.4",
       },
       "devDependencies": {
         "drizzle-kit": "^0.31.10",
-      },
-    },
-    "packages/env": {
-      "name": "@mon/env",
-      "version": "0.1.0",
-      "dependencies": {
-        "@t3-oss/env-core": "^0.12.0",
-        "zod": "^3.24.2",
       },
     },
     "packages/test-utils": {
@@ -425,8 +415,6 @@
     "@mon/db": ["@mon/db@workspace:packages/db"],
 
     "@mon/docs": ["@mon/docs@workspace:apps/docs"],
-
-    "@mon/env": ["@mon/env@workspace:packages/env"],
 
     "@mon/test-utils": ["@mon/test-utils@workspace:packages/test-utils"],
 

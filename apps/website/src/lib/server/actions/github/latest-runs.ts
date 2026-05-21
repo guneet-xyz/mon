@@ -1,6 +1,6 @@
 "use server"
 
-import { db } from "@mon/db"
+import { db } from "@/lib/server/db"
 import { and, desc, eq } from "@mon/db/drizzle"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
 

@@ -1,5 +1,3 @@
-import { env } from "@mon/env"
-
 import { type Config, ConfigSchema, type MonitorTile } from "./schema"
 
 import { existsSync } from "fs"
@@ -19,29 +17,29 @@ export type {
 } from "./schema"
 export { getAgentAssignments, verifyAgentToken } from "./schema"
 
-export async function getConfig() {
-  if (existsSync(env.CONFIG_PATH) === false) {
-    await mkdir(env.CONFIG_PATH.replace(/\/[^/]+$/, ""), { recursive: true })
-    await writeFile(env.CONFIG_PATH, "", "utf-8")
+export async function getConfig(path: string): Promise<Config> {
+  if (existsSync(path) === false) {
+    await mkdir(path.replace(/\/[^/]+$/, ""), { recursive: true })
+    await writeFile(path, "", "utf-8")
   }
-  const text = await readFile(env.CONFIG_PATH, "utf-8")
+  const text = await readFile(path, "utf-8")
   const parsed = parse(text)
-  const zodParsed = ConfigSchema.parse(parsed)
-  return zodParsed
+  return ConfigSchema.parse(parsed)
 }
 
 export async function getMonitorConfig<T extends MonitorTile["type"]>(
+  path: string,
   type: T,
   key: string,
 ): Promise<Extract<MonitorTile, { type: T }> | undefined> {
-  const config = await getMonitors()
-  return config.find((tile) => tile.type === type && tile.key === key) as
+  const monitors = await getMonitors(path)
+  return monitors.find((tile) => tile.type === type && tile.key === key) as
     | Extract<MonitorTile, { type: T }>
     | undefined
 }
 
-export async function getMonitors(): Promise<MonitorTile[]> {
-  const config = await getConfig()
+export async function getMonitors(path: string): Promise<MonitorTile[]> {
+  const config = await getConfig(path)
   return config.tiles.filter(
     (tile) =>
       tile.type !== "empty" &&

@@ -1,5 +1,5 @@
 import type { HostJobTile, HostPingDTO } from "@mon/contracts"
-import { agentEnv } from "@mon/env"
+import { env } from "../env"
 
 import { execa } from "execa"
 
@@ -8,7 +8,7 @@ export async function pingHost(
   deps?: { execa?: typeof execa; agentId?: string },
 ): Promise<HostPingDTO> {
   const pingId = crypto.randomUUID()
-  const agentId = deps?.agentId ?? agentEnv.AGENT_ID
+  const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
   const key = `host:${tile.address}`
 

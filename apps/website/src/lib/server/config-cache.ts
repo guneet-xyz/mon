@@ -1,5 +1,7 @@
 import { type Config, getConfig } from "@mon/config"
 
+import { env } from "@/env"
+
 import { statSync } from "fs"
 
 const TTL_MS = 5000
@@ -12,9 +14,8 @@ export async function getCachedConfig(): Promise<Config> {
   const now = Date.now()
   if (cached && now - cachedAt < TTL_MS) return cached
 
-  // Check mtime to detect file changes even within TTL window
   try {
-    const stat = statSync(process.env.CONFIG_PATH ?? "/etc/mon/config.toml")
+    const stat = statSync(env.CONFIG_PATH)
     const mtime = stat.mtimeMs
     if (cached && mtime === cachedMtime) {
       cachedAt = now
@@ -22,10 +23,10 @@ export async function getCachedConfig(): Promise<Config> {
     }
     cachedMtime = mtime
   } catch {
-    // File may not exist yet; getConfig() handles creation
+    // file not created yet — getConfig handles first-run creation
   }
 
-  cached = await getConfig()
+  cached = await getConfig(env.CONFIG_PATH)
   cachedAt = now
   return cached
 }

@@ -28,7 +28,7 @@ src/
 ## ANTI-PATTERNS
 
 - **No `@/*` alias here.** Docs uses its own `tsconfig.json`; if you need internal imports, configure them per-app.
-- **Do not import workspace `@mon/db` or `@mon/env`** — docs is a pure static site, must build without a Postgres connection or env secrets.
+- **Do not import workspace `@mon/db`** — docs is a pure static site, must build without a Postgres connection or env secrets.
 - **Do not put product code under `src/content/`** — Nextra will try to render it as MDX.
 
 ## NOTES

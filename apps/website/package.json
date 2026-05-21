@@ -15,7 +15,6 @@
     "@mon/config": "0.1.0",
     "@mon/contracts": "workspace:*",
     "@mon/db": "0.1.0",
-    "@mon/env": "0.1.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.3",

@@ -1,5 +1,5 @@
 import type { JobTile } from "@mon/contracts"
-import { agentEnv } from "@mon/env"
+import { env } from "./env"
 
 import { WebsiteApiClient } from "./client/api-client"
 import { startPullLoop } from "./client/pull-loop"
@@ -9,9 +9,9 @@ import { pingHost } from "./jobs/host"
 import { pingWebsite } from "./jobs/website"
 
 const client = new WebsiteApiClient(
-  agentEnv.WEBSITE_URL,
-  agentEnv.AGENT_ID,
-  agentEnv.AGENT_TOKEN,
+  env.WEBSITE_URL,
+  env.AGENT_ID,
+  env.AGENT_TOKEN,
 )
 
 async function executeJob(tile: JobTile): Promise<void> {
@@ -58,12 +58,12 @@ process.on("SIGTERM", () => gracefulShutdown("SIGTERM"))
 process.on("SIGINT", () => gracefulShutdown("SIGINT"))
 
 console.log(
-  `[agent] Starting — id=${agentEnv.AGENT_ID}, website=${agentEnv.WEBSITE_URL}`,
+  `[agent] Starting — id=${env.AGENT_ID}, website=${env.WEBSITE_URL}`,
 )
 
 startPullLoop({
   client,
-  intervalSeconds: agentEnv.AGENT_POLL_INTERVAL_SECONDS,
+  intervalSeconds: env.AGENT_POLL_INTERVAL_SECONDS,
   onJobsUpdated: (tiles) => {
     for (const tile of tiles) {
       executeJob(tile).catch((e) =>
