@@ -1,0 +1,146 @@
+name: push
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Docker image tag to push (only used on manual dispatch)"
+        required: false
+        default: "latest"
+
+env:
+  REGISTRY: cr.guneet.xyz
+  IMAGE_NAME: mon
+
+concurrency:
+  group: push-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  format-check:
+    name: Prettier Format Check
+    runs-on: ubuntu-latest
+    environment: linting
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun i --frozen-lockfile
+      - run: bun run format:check
+
+  release:
+    name: Tag Release
+    needs: format-check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.semrel.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: semrel
+        uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-initial-development-versions: true
+
+  build-and-push:
+    name: Build & Push ${{ matrix.component }}
+    needs: [format-check, release]
+    if: |
+      always() && needs.format-check.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' || needs.release.outputs.version != '')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: website
+            dockerfile: apps/website/Dockerfile
+          - component: agent
+            dockerfile: apps/agent/Dockerfile
+          - component: docs
+            dockerfile: apps/docs/Dockerfile
+          - component: migrator
+            dockerfile: packages/db/Dockerfile
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.version && format('v{0}', needs.release.outputs.version) || github.ref }}
+
+      - name: Fetch secrets from Infisical
+        uses: Infisical/secrets-action@v1.0.10
+        with:
+          method: oidc
+          domain: https://infisical.guneet.dev
+          identity-id: c12c57ca-86b4-47d4-89e7-be7e5a8801c1
+          project-slug: mon-o8-sa
+          env-slug: deployment
+          secret-path: /
+          export-type: env
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ env.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ env.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          version: latest
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to custom registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
+          flavor: |
+            latest=${{ github.event_name == 'workflow_dispatch' }}
+          tags: |
+            type=semver,pattern={{version}},value=v${{ needs.release.outputs.version }},enable=${{ needs.release.outputs.version != '' }}
+            type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release.outputs.version }},enable=${{ needs.release.outputs.version != '' }}
+            type=semver,pattern={{major}},value=v${{ needs.release.outputs.version }},enable=${{ needs.release.outputs.version != '' }}
+            type=raw,value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.title=mon-${{ matrix.component }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+          provenance: true
+          sbom: true
+
+      - uses: actions/attest-build-provenance@v2
+        if: github.event.repository.visibility == 'public'
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true

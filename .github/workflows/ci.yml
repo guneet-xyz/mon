@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    environment: linting
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun i --frozen-lockfile
+      - run: bun run format:check
+
+  linting:
+    runs-on: ubuntu-latest
+    environment: linting
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
+      - run: bun i --frozen-lockfile
+      - run: bun run lint
+
+  test-docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: website
+            dockerfile: apps/website/Dockerfile
+          - name: agent
+            dockerfile: apps/agent/Dockerfile
+          - name: docs
+            dockerfile: apps/docs/Dockerfile
+          - name: migrator
+            dockerfile: packages/db/Dockerfile
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: build
+        run: docker build -t ${{ matrix.name }} -f ${{ matrix.dockerfile }} .
