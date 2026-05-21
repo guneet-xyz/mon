@@ -13,6 +13,7 @@
   "dependencies": {
     "@iconify/react": "^6.0.0",
     "@mon/config": "0.1.0",
+    "@mon/contracts": "workspace:*",
     "@mon/db": "0.1.0",
     "@mon/env": "0.1.0",
     "@radix-ui/react-dialog": "^1.1.14",
@@ -25,31 +26,33 @@
     "dayjs": "^1.11.13",
     "geist": "^1.4.2",
     "lucide-react": "^0.511.0",
-    "next": "14.2.29",
+    "next": "16.2.6",
     "next-themes": "^0.4.6",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "recharts": "2.15.3",
     "tailwind-merge": "^3.3.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@mon/test-utils": "workspace:*",
     "@playwright/test": "^1.40.0",
     "@tailwindcss/postcss": "^4.0.15",
     "@types/eslint": "^8.56.12",
     "@types/node": "ts5.8",
-    "@types/react": "18.3.1",
-    "@types/react-dom": "18.3.1",
-    "eslint-config-next": "14.2.29",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
+    "eslint-config-next": "16.2.6",
     "eslint-plugin-drizzle": "^0.2.3",
     "postcss": "^8.5.3",
+    "postgres": "^3.4.4",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.0.15",
     "tw-animate-css": "^1.3.2",
     "typescript": "^5.8.2",
-    "typescript-eslint": "^8.27.0"
+    "typescript-eslint": "^8.59.4"
   },
   "ct3aMetadata": {
     "initVersion": "7.39.3"

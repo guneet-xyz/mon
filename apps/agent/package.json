@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@mon/contracts": "workspace:*",
+    "@mon/env": "workspace:*",
     "execa": "^9.6.0",
-    "node-schedule": "^2.1.1"
+    "node-schedule": "^2.1.1",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node-schedule": "^2.1.7"

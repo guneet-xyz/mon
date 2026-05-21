@@ -7,9 +7,8 @@ const __dirname = path.dirname(__filename)
 /** @type {import("next").NextConfig} */
 const config = {
   output: "standalone",
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, "../../"),
-  },
+  outputFileTracingRoot: path.join(__dirname, "../../"),
+  transpilePackages: ["@mon/config", "@mon/contracts", "@mon/db", "@mon/env"],
 }
 
 export default config

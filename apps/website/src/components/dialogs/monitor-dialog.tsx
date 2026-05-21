@@ -53,11 +53,11 @@ export function MonitorDialog({
           ) : null}
         </DialogHeader>
         <div>
-          <div className="mt-4 mb-2 font-medium">Latency</div>
+          <div className="mb-2 mt-4 font-medium">Latency</div>
           <div className="rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500">
             <LatencyChart type={type} dbKey={dbKey} />
           </div>
-          <div className="mt-4 mb-2 font-medium">Incidents</div>
+          <div className="mb-2 mt-4 font-medium">Incidents</div>
           <div className="max-h-64 overflow-y-scroll rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500">
             <Incidents type={type} dbKey={dbKey} />
           </div>
