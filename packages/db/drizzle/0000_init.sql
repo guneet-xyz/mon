@@ -2,7 +2,7 @@ CREATE TYPE "public"."gh_check_run_conclusion" AS ENUM('success', 'failure', 'ne
 CREATE TYPE "public"."gh_check_run_status" AS ENUM('queued', 'in_progress', 'completed', 'waiting', 'requested', 'pending');--> statement-breakpoint
 CREATE TABLE "mon_container_ping" (
 	"ping_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"daemon_id" text,
+	"agent_id" text,
 	"key" varchar(64) NOT NULL,
 	"timestamp" timestamp with time zone NOT NULL,
 	"error" varchar(256)
@@ -11,7 +11,7 @@ CREATE TABLE "mon_container_ping" (
 CREATE TABLE "mon_github_check_run" (
 	"_id" serial PRIMARY KEY NOT NULL,
 	"ping_id" uuid DEFAULT gen_random_uuid() NOT NULL,
-	"daemon_id" text,
+	"agent_id" text,
 	"id" bigint NOT NULL,
 	"name" varchar(256) NOT NULL,
 	"status" "gh_check_run_status" NOT NULL,
@@ -19,12 +19,13 @@ CREATE TABLE "mon_github_check_run" (
 	"details_url" text,
 	"started_at" timestamp with time zone,
 	"completed_at" timestamp with time zone,
-	CONSTRAINT "mon_github_check_run_ping_id_unique" UNIQUE("ping_id")
+	CONSTRAINT "mon_github_check_run_ping_id_unique" UNIQUE("ping_id"),
+	CONSTRAINT "mon_github_check_run_id_unique" UNIQUE("id")
 );
 --> statement-breakpoint
 CREATE TABLE "mon_github_ping" (
 	"ping_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"daemon_id" text,
+	"agent_id" text,
 	"key" varchar(64) NOT NULL,
 	"timestamp" timestamp with time zone NOT NULL,
 	"commit_hash" varchar(40),
@@ -35,7 +36,7 @@ CREATE TABLE "mon_github_ping" (
 --> statement-breakpoint
 CREATE TABLE "mon_host_ping" (
 	"ping_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"daemon_id" text,
+	"agent_id" text,
 	"key" varchar(64) NOT NULL,
 	"timestamp" timestamp with time zone NOT NULL,
 	"latency" real,
@@ -44,7 +45,7 @@ CREATE TABLE "mon_host_ping" (
 --> statement-breakpoint
 CREATE TABLE "mon_website_ping" (
 	"ping_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"daemon_id" text,
+	"agent_id" text,
 	"key" varchar(64) NOT NULL,
 	"timestamp" timestamp with time zone NOT NULL,
 	"latency" real,

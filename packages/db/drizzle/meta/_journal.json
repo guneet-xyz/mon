@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1779107351799,
-      "tag": "0000_strong_bullseye",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1779112995370,
-      "tag": "0001_rename_daemon_id_to_agent_id",
+      "when": 1779365289551,
+      "tag": "0000_init",
       "breakpoints": true
     }
   ]

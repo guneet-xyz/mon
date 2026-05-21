@@ -1,5 +1,5 @@
 {
-  "id": "f6f960e2-d5a5-4695-b07b-2ae356e259e2",
+  "id": "1113296f-e2fb-427e-a456-fe5815ee94b1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -15,8 +15,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "daemon_id": {
-          "name": "daemon_id",
+        "agent_id": {
+          "name": "agent_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -81,8 +81,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "daemon_id": {
-          "name": "daemon_id",
+        "agent_id": {
+          "name": "agent_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -155,7 +155,16 @@
         "mon_github_check_run_ping_id_unique": {
           "name": "mon_github_check_run_ping_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["ping_id"]
+          "columns": [
+            "ping_id"
+          ]
+        },
+        "mon_github_check_run_id_unique": {
+          "name": "mon_github_check_run_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id"
+          ]
         }
       },
       "policies": {},
@@ -173,8 +182,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "daemon_id": {
-          "name": "daemon_id",
+        "agent_id": {
+          "name": "agent_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -247,8 +256,12 @@
           "name": "mon_github_ping_check_run_id_mon_github_check_run_id_fk",
           "tableFrom": "mon_github_ping",
           "tableTo": "mon_github_check_run",
-          "columnsFrom": ["check_run_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "check_run_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -275,8 +288,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "daemon_id": {
-          "name": "daemon_id",
+        "agent_id": {
+          "name": "agent_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -341,8 +354,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "daemon_id": {
-          "name": "daemon_id",
+        "agent_id": {
+          "name": "agent_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false

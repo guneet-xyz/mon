@@ -88,7 +88,7 @@ export const githubCheckRun = createTable(
     _id: serial("_id").primaryKey(),
     pingId: uuid("ping_id").notNull().unique().defaultRandom(),
     agentId: text("agent_id"),
-    id: bigint("id", { mode: "number" }).notNull(),
+    id: bigint("id", { mode: "number" }).notNull().unique(),
     name: varchar("name", { length: 256 }).notNull(),
     status: ghCheckRunStatusEnum().notNull(),
     conclusion: ghCheckRunConclusionEnum(),
