@@ -35,7 +35,9 @@ test.beforeAll(async () => {
   const createTestDb = mod.createTestDb ?? mod.default?.createTestDb
   if (!createTestDb) throw new Error("createTestDb export missing")
   testDb = await createTestDb()
-  sql = postgres(testDb.url, { onnotice: () => {} })
+  sql = postgres(testDb.url, {
+    onnotice: () => undefined,
+  })
 
   const tmpDir = mkdtempSync(join(tmpdir(), "mon-e2e-"))
   tmpConfigPath = join(tmpDir, "config.toml")

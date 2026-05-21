@@ -15,18 +15,18 @@ import {
 export default function HomePage() {
   return (
     <div className="relative flex min-h-[calc(100vh-180px)] flex-col items-center justify-center">
-      <div className="bg-radial absolute inset-0 from-green-500 to-neutral-100 opacity-20 blur-3xl dark:from-green-500 dark:to-neutral-950"></div>
-      <h1 className="font-display z-10 pt-10 text-4xl font-black md:pt-20 md:text-6xl lg:text-8xl">
+      <div className="absolute inset-0 bg-radial from-green-500 to-neutral-100 opacity-20 blur-3xl dark:from-green-500 dark:to-neutral-950"></div>
+      <h1 className="z-10 pt-10 font-display text-4xl font-black md:pt-20 md:text-6xl lg:text-8xl">
         MON
       </h1>
       <h2 className="px-8 py-4 text-center text-xl font-bold md:text-2xl lg:px-16 lg:text-3xl">
         A monitor wall thats straight to the point.
       </h2>
-      <div className="z-10 flex flex-wrap items-center justify-center gap-4 pb-8 pt-4 md:gap-8">
+      <div className="z-10 flex flex-wrap items-center justify-center gap-4 pt-4 pb-8 md:gap-8">
         <Link href="https://demo.mon.guneet.dev" target="_blank">
           <Button className="group cursor-pointer">
             <DuotoneHoverIcon
-              className="ml-1 mr-2"
+              className="mr-2 ml-1"
               regular={<PiPlay />}
               hover={<PiPlayDuotone />}
             />
@@ -36,7 +36,7 @@ export default function HomePage() {
         <Link href="https://github.com/guneet-xyz/mon">
           <Button className="group cursor-pointer">
             <DuotoneHoverIcon
-              className="ml-1 mr-2"
+              className="mr-2 ml-1"
               regular={<PiBracketsAngle />}
               hover={<PiBracketsAngleDuotone />}
             />
@@ -46,7 +46,7 @@ export default function HomePage() {
         <Link href="/docs">
           <Button className="group cursor-pointer">
             <DuotoneHoverIcon
-              className="ml-1 mr-2"
+              className="mr-2 ml-1"
               regular={<PiBook />}
               hover={<PiBookDuotone />}
             />

@@ -23,7 +23,7 @@ export function Incidents({
 
   if (isLoading) {
     return (
-      <div className="font-display p-4 text-neutral-500">
+      <div className="p-4 font-display text-neutral-500">
         Loading incidents...
       </div>
     )
@@ -50,16 +50,16 @@ export function Incidents({
           key={index}
           className="mb-2 flex flex-col rounded-xl border border-red-700/50 bg-red-900/30 p-4"
         >
-          <div className="font-display flex flex-col flex-nowrap items-center justify-between text-sm text-neutral-500 sm:flex-row sm:gap-4">
-            <div className="whitespace-nowrap text-left text-xs">
+          <div className="flex flex-col flex-nowrap items-center justify-between font-display text-sm text-neutral-500 sm:flex-row sm:gap-4">
+            <div className="text-left text-xs whitespace-nowrap">
               {`Started ${dayjs(incident.start).fromNow()} and lasted ${dayjs(incident.start).to(incident.end, true)}`}
             </div>
-            <div className="whitespace-nowrap text-right text-xs">
+            <div className="text-right text-xs whitespace-nowrap">
               {dayjs(incident.start).format("YYYY-MM-DD HH:mm:ss")} -{" "}
               {dayjs(incident.end).format("YYYY-MM-DD HH:mm:ss")}
             </div>
           </div>
-          <div className="font-display text-center sm:text-left dark:text-red-300">
+          <div className="text-center font-display sm:text-left dark:text-red-300">
             {incident.error}
           </div>
         </div>

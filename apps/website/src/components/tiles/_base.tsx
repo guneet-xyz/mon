@@ -45,13 +45,13 @@ export function BaseTile({
       onClick={onClick}
     >
       {top_text ? (
-        <div className="font-display absolute left-1/2 top-1.5 -translate-x-1/2 text-xs font-semibold text-emerald-500 md:text-sm dark:text-emerald-800">
+        <div className="absolute top-1.5 left-1/2 -translate-x-1/2 font-display text-xs font-semibold text-emerald-500 md:text-sm dark:text-emerald-800">
           {top_text}
         </div>
       ) : null}
 
       {status ? (
-        <StatusDot status={status} className="absolute right-2 top-2" />
+        <StatusDot status={status} className="absolute top-2 right-2" />
       ) : null}
 
       {icon && showIconOnly ? (
@@ -62,7 +62,7 @@ export function BaseTile({
       ) : (
         <div
           className={cn(
-            "font-display text-center text-emerald-900 md:text-xl dark:text-emerald-100",
+            "text-center font-display text-emerald-900 md:text-xl dark:text-emerald-100",
             {
               "rotate-90": orientation === "vertical",
             },
@@ -75,7 +75,7 @@ export function BaseTile({
       {top_right_icon ? (
         <DynamicIcon
           icon={top_right_icon}
-          className="absolute left-2 top-2 size-4 text-emerald-700 md:size-4"
+          className="absolute top-2 left-2 size-4 text-emerald-700 md:size-4"
         />
       ) : null}
 

@@ -7,7 +7,7 @@
     "build": "next build",
     "dev": "next dev",
     "e2e": "playwright test",
-    "lint": "next lint",
+    "lint": "eslint .",
     "start": "next start"
   },
   "dependencies": {
@@ -43,6 +43,7 @@
     "@types/node": "ts5.8",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
+    "eslint": "^9.27.0",
     "eslint-config-next": "16.2.6",
     "eslint-plugin-drizzle": "^0.2.3",
     "postcss": "^8.5.3",

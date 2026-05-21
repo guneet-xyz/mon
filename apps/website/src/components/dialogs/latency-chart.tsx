@@ -29,7 +29,7 @@ export function LatencyChart({
   })
 
   if (isLoading) {
-    return <div className="font-display p-4 text-neutral-500">Loading...</div>
+    return <div className="p-4 font-display text-neutral-500">Loading...</div>
   }
 
   if (isError) {

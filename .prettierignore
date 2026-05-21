@@ -1,3 +1,5 @@
 **/node_modules
 **/.next
 **/.vercel
+**/next-env.d.ts
+apps/docs/public/_pagefind
