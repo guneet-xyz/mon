@@ -1,2 +1,7 @@
+# Test configuration
+# Note: Bun has no `ignore` glob like Jest. Test discovery is controlled by explicit
+# path scoping in test scripts (see apps/website/package.json test field).
+# This prevents .next/ build artifacts from being discovered as test files.
 [test]
 preload = ["./apps/website/test-setup.ts"]
+coverage = false
