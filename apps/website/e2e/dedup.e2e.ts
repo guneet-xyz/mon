@@ -4,25 +4,16 @@ import { getRuntime } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { writeFileSync } from "fs"
-import { dirname, join, resolve } from "path"
 import postgres from "postgres"
-import { fileURLToPath } from "url"
 import { randomUUID } from "crypto"
 
 const E2E_TOKEN = "e2e-test-token-32-bytes-long-here"
 const E2E_TOKEN_HASH = hashToken(E2E_TOKEN)
 const AGENT_ID = "e2e-dedup"
-
-const REPO_ROOT = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "..",
-  "..",
-)
 const E2E_PORT = process.env.E2E_PORT ?? "3055"
 const WEBSITE_URL = `http://localhost:${E2E_PORT}`
 
-let sql: ReturnType<typeof postgres>
+let sql: ReturnType<typeof postgres> | null = null
 let runtimeConfigPath: string
 let databaseUrl: string
 
@@ -51,7 +42,7 @@ interval_seconds = 5
 
 test.afterAll(async () => {
   try {
-    await sql?.end({ timeout: 2 })
+    if (sql) await sql.end({ timeout: 2 })
   } catch {
     // best-effort
   }
@@ -106,9 +97,12 @@ test("deduplication — same ping_id returns deduplicated: true on second POST, 
   expect(secondBody).toEqual({ ok: true, deduplicated: true })
 
   // Verify DB has exactly 1 row with this ping_id
+  if (!sql) throw new Error("Database connection not initialized")
   const rows = await sql`
     SELECT ping_id FROM mon_host_ping WHERE ping_id = ${pingId}
   `
   expect(rows).toHaveLength(1)
-  expect(rows[0].ping_id).toBe(pingId)
+  if (rows[0]) {
+    expect(rows[0].ping_id).toBe(pingId)
+  }
 })
