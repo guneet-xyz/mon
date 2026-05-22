@@ -1,0 +1,10 @@
+# Single container tile fixture
+[agents.default]
+token_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+[[tiles]]
+type = "container"
+key = "redis"
+name = "Redis"
+container_name = "redis-container"
+docker_socket = "unix:///var/run/docker.sock"

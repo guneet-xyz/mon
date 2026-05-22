@@ -1,0 +1,5 @@
+# Minimal fixture: empty agents, zero tiles
+[options]
+ping_interval_ms = 6000
+
+tiles = []

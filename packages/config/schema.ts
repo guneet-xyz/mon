@@ -40,54 +40,56 @@ const MonitorSchema = TileSchema.extend({
 export const ConfigSchema = z.object({
   options: OptionsSchema,
   agents: z.record(z.string(), AgentSchema).optional().default({}),
-  tiles: z.array(
-    z.discriminatedUnion("type", [
-      MonitorSchema.extend({
-        type: z.literal("host"),
-        address: z.string(),
-      }),
-      MonitorSchema.extend({
-        type: z.literal("website"),
-        url: z.string(),
-      }),
-      MonitorSchema.extend({
-        type: z.literal("container"),
-        container_name: z.string(),
-        docker_socket: z.string().default("unix:///var/run/docker.sock"),
-      }),
-      MonitorSchema.extend({
-        type: z.literal("github"),
-        repo: z.string().regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/),
-        github_token: z.string().optional(), // per-tile GitHub PAT; agent must not use env.GITHUB_TOKEN
-      }),
-      TileSchema.extend({
-        type: z.literal("empty"),
-        row_start: z.number(),
-        row_span: z.number(),
-        col_start: z.number(),
-        col_span: z.number(),
-      }),
-      TileSchema.extend({
-        type: z.literal("hidden"),
-        row_start: z.number(),
-        row_span: z.number(),
-        col_start: z.number(),
-        col_span: z.number(),
-      }),
-      TileSchema.extend({
-        type: z.literal("logo"),
-        col_start: z.number().default(1),
-        row_start: z.number().default(1),
-      }),
-      TileSchema.extend({
-        type: z.literal("theme"),
-        col_start: z.number().default(-1),
-        row_start: z.number().default(1),
-        row_span: z.literal(1).default(1),
-        col_span: z.literal(1).default(1),
-      }),
-    ]),
-  ),
+  tiles: z
+    .array(
+      z.discriminatedUnion("type", [
+        MonitorSchema.extend({
+          type: z.literal("host"),
+          address: z.string(),
+        }),
+        MonitorSchema.extend({
+          type: z.literal("website"),
+          url: z.string(),
+        }),
+        MonitorSchema.extend({
+          type: z.literal("container"),
+          container_name: z.string(),
+          docker_socket: z.string().default("unix:///var/run/docker.sock"),
+        }),
+        MonitorSchema.extend({
+          type: z.literal("github"),
+          repo: z.string().regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/),
+          github_token: z.string().optional(), // per-tile GitHub PAT; agent must not use env.GITHUB_TOKEN
+        }),
+        TileSchema.extend({
+          type: z.literal("empty"),
+          row_start: z.number(),
+          row_span: z.number(),
+          col_start: z.number(),
+          col_span: z.number(),
+        }),
+        TileSchema.extend({
+          type: z.literal("hidden"),
+          row_start: z.number(),
+          row_span: z.number(),
+          col_start: z.number(),
+          col_span: z.number(),
+        }),
+        TileSchema.extend({
+          type: z.literal("logo"),
+          col_start: z.number().default(1),
+          row_start: z.number().default(1),
+        }),
+        TileSchema.extend({
+          type: z.literal("theme"),
+          col_start: z.number().default(-1),
+          row_start: z.number().default(1),
+          row_span: z.literal(1).default(1),
+          col_span: z.literal(1).default(1),
+        }),
+      ]),
+    )
+    .default([]),
 })
 
 export type Config = z.infer<typeof ConfigSchema>

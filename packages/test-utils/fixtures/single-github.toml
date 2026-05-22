@@ -1,0 +1,10 @@
+# Single GitHub tile fixture
+[agents.default]
+token_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+[[tiles]]
+type = "github"
+key = "hello-world"
+name = "Hello World"
+repo = "octocat/hello-world"
+github_token = "ghp_fixture"

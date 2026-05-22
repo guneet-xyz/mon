@@ -1,0 +1,35 @@
+# Multi-agent fixture: two agents, four tiles (one per type) split across agents
+[agents.agent1]
+token_hash = "1111111111111111111111111111111111111111111111111111111111111111"
+
+[agents.agent2]
+token_hash = "2222222222222222222222222222222222222222222222222222222222222222"
+
+[[tiles]]
+type = "host"
+key = "host1"
+name = "Host 1"
+address = "192.168.1.1"
+agent = "agent1"
+
+[[tiles]]
+type = "website"
+key = "site1"
+name = "Site 1"
+url = "https://site1.example.com"
+agent = "agent1"
+
+[[tiles]]
+type = "container"
+key = "container1"
+name = "Container 1"
+container_name = "app-container"
+agent = "agent2"
+
+[[tiles]]
+type = "github"
+key = "repo1"
+name = "Repo 1"
+repo = "user/repo"
+github_token = "ghp_fixture"
+agent = "agent2"

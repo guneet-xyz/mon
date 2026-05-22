@@ -1,0 +1,15 @@
+# Unreachable fixture: one agent, TWO tiles (host + website) for T13 Playwright tests
+[agents.default]
+token_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+[[tiles]]
+type = "host"
+key = "unreachable-host"
+name = "Unreachable Host"
+address = "192.0.2.1"
+
+[[tiles]]
+type = "website"
+key = "unreachable-website"
+name = "Unreachable Website"
+url = "http://127.0.0.1:39080/unreachable"

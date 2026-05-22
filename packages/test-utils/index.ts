@@ -1,6 +1,7 @@
 import * as schema from "@mon/db/schema"
 
 import { execSync } from "child_process"
+export { fixturePath } from "./fixtures/index"
 import { drizzle } from "drizzle-orm/postgres-js"
 import net from "net"
 import path from "path"

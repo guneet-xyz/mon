@@ -1,0 +1,9 @@
+# Single host tile fixture
+[agents.default]
+token_hash = "0000000000000000000000000000000000000000000000000000000000000000"
+
+[[tiles]]
+type = "host"
+key = "localhost"
+name = "Localhost"
+address = "127.0.0.1"
