@@ -6,7 +6,8 @@
   "scripts": {
     "build": "bunx esbuild src/index.ts --bundle --platform=node --outfile=dist/agent.cjs",
     "dev": "bun src/index.ts",
-    "start": "bun dist/agent.cjs"
+    "start": "bun dist/agent.cjs",
+    "test": "bun test src"
   },
   "dependencies": {
     "@mon/contracts": "workspace:*",
@@ -16,6 +17,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@mon/test-utils": "workspace:*",
     "@types/node-schedule": "^2.1.7"
   }
 }

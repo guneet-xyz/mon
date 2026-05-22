@@ -8,7 +8,8 @@
     "dev": "next dev",
     "e2e": "playwright test",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "test": "bun test src"
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",

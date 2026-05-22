@@ -18,7 +18,11 @@
     "lint": "bun run lint:tsc && bun run lint:website && bun run lint:docs",
     "lint:docs": "cd apps/docs && bun run lint",
     "lint:tsc": "bunx tsc --noEmit",
-    "lint:website": "cd apps/website && bun run lint"
+    "lint:website": "cd apps/website && bun run lint",
+    "test": "bun test apps/agent/src apps/website/src packages/config packages/test-utils --coverage",
+    "test:e2e": "cd apps/agent && bun run build && cd ../website && bun run e2e",
+    "test:integration": "bun test packages/test-utils/__tests__",
+    "test:unit": "bun test apps/agent/src apps/website/src packages/config packages/test-utils --coverage"
   },
   "overrides": {
     "@xmldom/xmldom": ">=0.9.9",
