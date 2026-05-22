@@ -2,6 +2,7 @@ import * as schema from "@mon/db/schema"
 
 import { execSync } from "child_process"
 import { drizzle } from "drizzle-orm/postgres-js"
+import http from "http"
 import net from "net"
 import path from "path"
 import postgres from "postgres"
@@ -389,48 +390,65 @@ export async function createMockGithubServer(opts?: {
   const requests: MockServerRequest[] = []
   let scenario: GithubScenario = { kind: "empty" }
 
-  const server = Bun.serve({
-    port,
-    async fetch(req) {
-      const url = new URL(req.url)
-      const headers: Record<string, string> = {}
-      req.headers.forEach((value, key) => {
-        headers[key] = value
-      })
-      requests.push({
-        method: req.method,
-        path: url.pathname,
-        headers,
-      })
+  const server = http.createServer((req, res) => {
+    const reqUrl = new URL(req.url ?? "/", `http://localhost:${port}`)
+    const headers: Record<string, string> = {}
+    for (const [k, v] of Object.entries(req.headers)) {
+      if (typeof v === "string") headers[k] = v
+      else if (Array.isArray(v)) headers[k] = v.join(",")
+    }
+    requests.push({
+      method: req.method ?? "GET",
+      path: reqUrl.pathname,
+      headers,
+    })
 
-      const match = url.pathname.match(
-        /^\/repos\/[^/]+\/[^/]+\/commits\/HEAD\/check-runs$/,
-      )
-      if (!match || req.method !== "GET") {
-        return new Response("Not Found", { status: 404 })
-      }
+    const match = reqUrl.pathname.match(
+      /^\/repos\/[^/]+\/[^/]+\/commits\/HEAD\/check-runs$/,
+    )
+    if (!match || req.method !== "GET") {
+      res.writeHead(404, { "content-type": "text/plain" })
+      res.end("Not Found")
+      return
+    }
 
-      const current: GithubScenario = scenario
-      switch (current.kind) {
-        case "success":
-          return Response.json({ check_runs: current.checkRuns })
-        case "empty":
-          return Response.json({ check_runs: [] })
-        case "http_error":
-          return new Response(`error ${current.status}`, {
-            status: current.status,
-          })
-        case "slow": {
-          await new Promise((r) => setTimeout(r, current.delayMs))
-          return Response.json({ check_runs: [] })
-        }
-        case "malformed":
-          return new Response("not json {{{", {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          })
+    const current: GithubScenario = scenario
+    switch (current.kind) {
+      case "success": {
+        const body = JSON.stringify({ check_runs: current.checkRuns })
+        res.writeHead(200, { "content-type": "application/json" })
+        res.end(body)
+        return
       }
-    },
+      case "empty": {
+        res.writeHead(200, { "content-type": "application/json" })
+        res.end(JSON.stringify({ check_runs: [] }))
+        return
+      }
+      case "http_error": {
+        res.writeHead(current.status, { "content-type": "text/plain" })
+        res.end(`error ${current.status}`)
+        return
+      }
+      case "slow": {
+        setTimeout(() => {
+          if (res.writableEnded) return
+          res.writeHead(200, { "content-type": "application/json" })
+          res.end(JSON.stringify({ check_runs: [] }))
+        }, current.delayMs)
+        return
+      }
+      case "malformed": {
+        res.writeHead(200, { "content-type": "application/json" })
+        res.end("not json {{{")
+        return
+      }
+    }
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject)
+    server.listen(port, "127.0.0.1", () => resolve())
   })
 
   let stopped = false
@@ -438,11 +456,10 @@ export async function createMockGithubServer(opts?: {
     stop: async () => {
       if (stopped) return
       stopped = true
-      try {
-        await server.stop(true)
-      } catch {
-        // best-effort
-      }
+      await new Promise<void>((resolve) => {
+        server.closeAllConnections?.()
+        server.close(() => resolve())
+      })
       activeServers.delete(entry)
     },
   }

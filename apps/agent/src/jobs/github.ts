@@ -50,7 +50,8 @@ export async function pingGithub(
 
   try {
     const fetchFn = deps?.fetch ?? globalThis.fetch
-    const url = `https://api.github.com/repos/${tile.repo}/commits/HEAD/check-runs`
+    const baseUrl = env.GITHUB_API_BASE_URL ?? "https://api.github.com"
+    const url = `${baseUrl}/repos/${tile.repo}/commits/HEAD/check-runs`
     const headers: Record<string, string> = {
       Accept: "application/vnd.github.v3+json",
       "X-Github-Api-Version": "2022-11-28",

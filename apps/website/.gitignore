@@ -44,3 +44,7 @@ yarn-error.log*
 
 # idea files
 .idea
+
+# e2e wrapper runtime artifacts
+.env.test.local
+.e2e-runtime.json

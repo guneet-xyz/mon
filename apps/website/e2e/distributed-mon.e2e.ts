@@ -1,11 +1,10 @@
-import type { createTestDb as CreateTestDb } from "@mon/test-utils"
-
 import { hashToken } from "@/lib/server/agent-auth"
+
+import { getRuntime } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { spawn } from "child_process"
-import { mkdtempSync, writeFileSync } from "fs"
-import { tmpdir } from "os"
+import { writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import postgres from "postgres"
 import { fileURLToPath } from "url"
@@ -21,28 +20,24 @@ const REPO_ROOT = resolve(
   "..",
 )
 const AGENT_BUNDLE = join(REPO_ROOT, "apps", "agent", "dist", "agent.cjs")
+const E2E_PORT = process.env.E2E_PORT ?? "3055"
+const WEBSITE_URL = `http://localhost:${E2E_PORT}`
 
-let testDb: Awaited<ReturnType<typeof CreateTestDb>>
 let sql: ReturnType<typeof postgres>
-let tmpConfigPath: string
+let runtimeConfigPath: string
+let databaseUrl: string
 let agentProcess: ReturnType<typeof spawn> | null = null
 
 test.beforeAll(async () => {
-  const mod = (await import("@mon/test-utils")) as {
-    createTestDb: typeof CreateTestDb
-    default?: { createTestDb: typeof CreateTestDb }
-  }
-  const createTestDb = mod.createTestDb ?? mod.default?.createTestDb
-  if (!createTestDb) throw new Error("createTestDb export missing")
-  testDb = await createTestDb()
-  sql = postgres(testDb.url, {
+  const runtime = getRuntime()
+  databaseUrl = runtime.databaseUrl
+  runtimeConfigPath = runtime.configPath
+  sql = postgres(databaseUrl, {
     onnotice: () => undefined,
   })
 
-  const tmpDir = mkdtempSync(join(tmpdir(), "mon-e2e-"))
-  tmpConfigPath = join(tmpDir, "config.toml")
   writeFileSync(
-    tmpConfigPath,
+    runtimeConfigPath,
     `
 [agents.${AGENT_ID}]
 token_hash = "${E2E_TOKEN_HASH}"
@@ -66,18 +61,17 @@ test.afterAll(async () => {
   try {
     await sql?.end({ timeout: 2 })
   } catch {
-    // best-effort cleanup; container teardown below is authoritative
+    // best-effort
   }
-  testDb?.stop()
 })
 
 test("happy path — agent pings, row appears, UI renders", async ({ page }) => {
   agentProcess = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
-      DATABASE_URL: testDb.url,
-      CONFIG_PATH: tmpConfigPath,
-      WEBSITE_URL: "http://localhost:3000",
+      DATABASE_URL: databaseUrl,
+      CONFIG_PATH: runtimeConfigPath,
+      WEBSITE_URL,
       AGENT_ID,
       AGENT_TOKEN: E2E_TOKEN,
       AGENT_POLL_INTERVAL_SECONDS: "5",
@@ -86,7 +80,6 @@ test("happy path — agent pings, row appears, UI renders", async ({ page }) => 
     cwd: REPO_ROOT,
   })
 
-  // Allow up to 90s: agent boot + jobs fetch + first cron tick (5s interval)
   let rowFound = false
   const deadline = Date.now() + 90_000
   while (Date.now() < deadline) {
@@ -116,9 +109,9 @@ test("bad token — agent exits with code 78", async () => {
   const proc = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
-      DATABASE_URL: testDb.url,
-      CONFIG_PATH: tmpConfigPath,
-      WEBSITE_URL: "http://localhost:3000",
+      DATABASE_URL: databaseUrl,
+      CONFIG_PATH: runtimeConfigPath,
+      WEBSITE_URL,
       AGENT_ID,
       AGENT_TOKEN: "wrong-token",
       AGENT_POLL_INTERVAL_SECONDS: "5",
@@ -145,9 +138,9 @@ test("ghost agent — no jobs assigned, no ping rows", async () => {
   const proc = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
-      DATABASE_URL: testDb.url,
-      CONFIG_PATH: tmpConfigPath,
-      WEBSITE_URL: "http://localhost:3000",
+      DATABASE_URL: databaseUrl,
+      CONFIG_PATH: runtimeConfigPath,
+      WEBSITE_URL,
       AGENT_ID: "ghost",
       AGENT_TOKEN: E2E_TOKEN,
       AGENT_POLL_INTERVAL_SECONDS: "5",
@@ -157,7 +150,6 @@ test("ghost agent — no jobs assigned, no ping rows", async () => {
   })
 
   try {
-    // 30s window covers several poll intervals (5s); ensures no jobs are ever assigned
     await new Promise((r) => setTimeout(r, 30_000))
     const rows =
       await sql`SELECT * FROM mon_host_ping WHERE agent_id = 'ghost' LIMIT 1`

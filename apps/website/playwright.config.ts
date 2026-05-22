@@ -1,4 +1,26 @@
 import { defineConfig, devices } from "@playwright/test"
+import { readFileSync } from "fs"
+import { dirname, join } from "path"
+import { fileURLToPath } from "url"
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const RUNTIME_FILE = join(HERE, ".e2e-runtime.json")
+
+const E2E_PORT = process.env.E2E_PORT ?? "3055"
+const BASE_URL = `http://localhost:${E2E_PORT}`
+
+const runtimeEnv: Record<string, string> = {}
+try {
+  const raw = readFileSync(RUNTIME_FILE, "utf8")
+  const runtime = JSON.parse(raw) as {
+    databaseUrl?: string
+    configPath?: string
+  }
+  if (runtime.databaseUrl) runtimeEnv.DATABASE_URL = runtime.databaseUrl
+  if (runtime.configPath) runtimeEnv.CONFIG_PATH = runtime.configPath
+} catch {
+  // .e2e-runtime.json absent → invoked outside `bun run e2e`
+}
 
 export default defineConfig({
   testDir: "./e2e",
@@ -9,7 +31,7 @@ export default defineConfig({
   workers: 1,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: BASE_URL,
     trace: "on-first-retry",
   },
   projects: [
@@ -19,15 +41,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bun run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    command: `bun run dev -- --port ${E2E_PORT}`,
+    url: BASE_URL,
+    reuseExistingServer: false,
     env: {
-      CONFIG_PATH: process.env.TEST_CONFIG_PATH ?? "/tmp/mon-test-config.toml",
-      DATABASE_URL:
-        process.env.TEST_DATABASE_URL ??
-        "postgres://postgres:test@localhost:5432/mon_test",
+      NODE_ENV: "test",
       SKIP_ENV_VALIDATION: "1",
+      ...runtimeEnv,
     },
   },
 })
