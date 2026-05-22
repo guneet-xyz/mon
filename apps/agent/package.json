@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bunx esbuild src/index.ts --bundle --platform=node --outfile=dist/agent.cjs",
-    "dev": "bun src/index.ts",
+    "build": "bunx esbuild src/main.ts --bundle --platform=node --outfile=dist/agent.cjs",
+    "dev": "bun src/main.ts",
     "start": "bun dist/agent.cjs",
     "test": "bun test src"
   },
