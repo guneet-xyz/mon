@@ -80,7 +80,7 @@ test("deduplication — same ping_id returns deduplicated: true on second POST, 
   )
 
   expect(firstResponse.status()).toBe(200)
-  const firstBody = await firstResponse.json()
+  const firstBody = (await firstResponse.json()) as { ok: boolean; deduplicated: boolean }
   expect(firstBody).toEqual({ ok: true, deduplicated: false })
 
   // Second POST with same ping_id — should return deduplicated: true
@@ -93,7 +93,7 @@ test("deduplication — same ping_id returns deduplicated: true on second POST, 
   )
 
   expect(secondResponse.status()).toBe(200)
-  const secondBody = await secondResponse.json()
+  const secondBody = (await secondResponse.json()) as { ok: boolean; deduplicated: boolean }
   expect(secondBody).toEqual({ ok: true, deduplicated: true })
 
   // Verify DB has exactly 1 row with this ping_id

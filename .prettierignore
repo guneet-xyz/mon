@@ -3,3 +3,4 @@
 **/.vercel
 **/next-env.d.ts
 apps/docs/public/_pagefind
+test/data/postgres

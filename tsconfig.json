@@ -36,6 +36,7 @@
     "apps/agent/dist",
     "apps/agent/agent.cjs",
     "apps/website",
-    "apps/docs"
+    "apps/docs",
+    "packages/test-utils/dist"
   ]
 }

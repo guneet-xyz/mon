@@ -4,7 +4,7 @@ import { describe, expect, it } from "bun:test"
 
 function makeTile(overrides: Partial<Tile> & { type: string }): Tile {
   return {
-    type: overrides.type as any,
+    type: overrides.type,
     row_start: overrides.row_start,
     row_span: overrides.row_span,
     col_start: overrides.col_start,
