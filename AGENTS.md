@@ -45,6 +45,7 @@ mon/
 - **Result-style returns** for fallible ops: `{ success: true, ... } | { success: false, error: string }` (see [host.ts pingHost](file:///Users/guneet/projects/mon/apps/agent/src/jobs/host.ts#L31-L56)). No throwing for expected failure modes.
 - **DB table naming**: every table goes through `pgTableCreator((name) => \`mon\_${name}\`)`— never declare a raw`pgTable`.
 - **No barrel `src/`**: most apps/packages put source at workspace root (`packages/db/index.ts`, `packages/config/index.ts`) — only `apps/*/src/` is nested.
+- **TESTING**: unit + integration via `bun:test` (`bun run test`), E2E via Playwright (`bun run test:e2e`, which wraps `cd apps/website && bun run e2e` — do NOT call `bunx playwright test` directly). Mock servers (`createMockGithubServer`, `createMockHttpHost`) live in [packages/test-utils/index.ts](file:///Users/guneet/projects/mon/packages/test-utils/index.ts) and run in-process (not Docker). Full reference: [TESTING.md](file:///Users/guneet/projects/mon/TESTING.md).
 
 ## ANTI-PATTERNS (THIS PROJECT)
 
