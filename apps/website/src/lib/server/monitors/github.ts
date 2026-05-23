@@ -1,6 +1,7 @@
-import { db } from "@/lib/server/db"
 import { and, desc, eq, gte, isNotNull, isNull } from "@mon/db/drizzle"
 import { type DbSelectGithubPing, githubPings } from "@mon/db/schema"
+
+import { db } from "@/lib/server/db"
 
 import type { IncidentPing } from "."
 

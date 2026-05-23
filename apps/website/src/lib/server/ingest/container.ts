@@ -1,10 +1,14 @@
 import type { ContainerPingDTO } from "@mon/contracts"
-import { db } from "@/lib/server/db"
+import type { Db } from "@mon/db"
 import { containerPings } from "@mon/db/schema"
+
+import { db as defaultDb } from "@/lib/server/db"
 
 export async function insertContainerPing(
   dto: ContainerPingDTO,
+  deps: { db?: Db } = {},
 ): Promise<{ ok: true; deduplicated: boolean }> {
+  const db = deps.db ?? defaultDb
   const rows = await db
     .insert(containerPings)
     .values({

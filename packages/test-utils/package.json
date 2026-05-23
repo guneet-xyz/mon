@@ -2,16 +2,16 @@
   "name": "@mon/test-utils",
   "version": "0.1.0",
   "private": true,
-  "main": "./dist/index.cjs",
-  "types": "./index.ts",
   "exports": {
     ".": {
-      "bun": "./index.ts",
       "types": "./index.ts",
+      "bun": "./index.ts",
       "require": "./dist/index.cjs",
       "default": "./dist/index.cjs"
     }
   },
+  "main": "./dist/index.cjs",
+  "types": "./index.ts",
   "scripts": {
     "build": "bunx esbuild index.ts --bundle --platform=node --outfile=dist/index.cjs --external:postgres --external:drizzle-orm",
     "test": "bun test __tests__"

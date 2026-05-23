@@ -68,8 +68,7 @@ test.beforeAll(async () => {
       ?.createMockHttpHost
   if (!createMockGithubServer)
     throw new Error("createMockGithubServer export missing")
-  if (!createMockHttpHost)
-    throw new Error("createMockHttpHost export missing")
+  if (!createMockHttpHost) throw new Error("createMockHttpHost export missing")
 
   mockGithub = await createMockGithubServer()
   mockGithub.setScenario({ kind: "success", checkRuns: [] })
@@ -190,12 +189,8 @@ function spawnAgent(
     cwd: REPO_ROOT,
     stdio: ["ignore", "pipe", "pipe"],
   })
-  proc.stdout?.on("data", (d) =>
-    process.stdout.write(`[${label}:out] ${d}`),
-  )
-  proc.stderr?.on("data", (d) =>
-    process.stderr.write(`[${label}:err] ${d}`),
-  )
+  proc.stdout?.on("data", (d) => process.stdout.write(`[${label}:out] ${d}`))
+  proc.stderr?.on("data", (d) => process.stderr.write(`[${label}:err] ${d}`))
   return proc
 }
 

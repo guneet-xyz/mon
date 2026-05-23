@@ -13,7 +13,7 @@
  */
 import { createTestDb, fixturePath } from "@mon/test-utils"
 
-import { existsSync, rmSync, writeFileSync, copyFileSync } from "fs"
+import { copyFileSync, existsSync, rmSync, writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import { fileURLToPath } from "url"
 
@@ -29,10 +29,11 @@ const REPO_ROOT = resolve(
 const TEST_UTILS_DIR = join(REPO_ROOT, "packages", "test-utils")
 const TEST_UTILS_BUNDLE = join(TEST_UTILS_DIR, "dist", "index.cjs")
 
-const buildBundle = Bun.spawnSync(
-  ["bun", "run", "build"],
-  { cwd: TEST_UTILS_DIR, stdout: "pipe", stderr: "pipe" },
-)
+const buildBundle = Bun.spawnSync(["bun", "run", "build"], {
+  cwd: TEST_UTILS_DIR,
+  stdout: "pipe",
+  stderr: "pipe",
+})
 if (buildBundle.exitCode !== 0 || !existsSync(TEST_UTILS_BUNDLE)) {
   console.error("[run-e2e] failed to build @mon/test-utils CJS bundle")
   console.error(buildBundle.stderr?.toString())

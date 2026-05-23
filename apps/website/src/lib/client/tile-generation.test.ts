@@ -22,7 +22,16 @@ function placeTileHelper(
   grid: Array<Array<boolean>>,
   tile: Tile,
   tileIndex: number,
-): { success: boolean; location?: { row_start: number; col_start: number; row_span: number; col_span: number }; error?: string } {
+): {
+  success: boolean
+  location?: {
+    row_start: number
+    col_start: number
+    row_span: number
+    col_span: number
+  }
+  error?: string
+} {
   const r_max = grid.length
   const c_max = grid[0]!.length
 

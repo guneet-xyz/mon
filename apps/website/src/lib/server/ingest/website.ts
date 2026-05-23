@@ -1,10 +1,14 @@
 import type { WebsitePingDTO } from "@mon/contracts"
-import { db } from "@/lib/server/db"
+import type { Db } from "@mon/db"
 import { websitePings } from "@mon/db/schema"
+
+import { db as defaultDb } from "@/lib/server/db"
 
 export async function insertWebsitePing(
   dto: WebsitePingDTO,
+  deps: { db?: Db } = {},
 ): Promise<{ ok: true; deduplicated: boolean }> {
+  const db = deps.db ?? defaultDb
   const rows = await db
     .insert(websitePings)
     .values({

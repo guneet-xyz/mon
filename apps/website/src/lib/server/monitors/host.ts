@@ -1,6 +1,7 @@
-import { db } from "@/lib/server/db"
 import { and, asc, eq, gte, isNotNull } from "@mon/db/drizzle"
 import { hostPings } from "@mon/db/schema"
+
+import { db } from "@/lib/server/db"
 
 import type { IncidentPing } from "."
 

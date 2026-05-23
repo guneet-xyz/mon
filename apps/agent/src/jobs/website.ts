@@ -1,4 +1,5 @@
 import type { WebsiteJobTile, WebsitePingDTO } from "@mon/contracts"
+
 import { env } from "../env"
 
 export async function pingWebsite(

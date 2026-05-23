@@ -1,15 +1,28 @@
 import type { JobTile } from "@mon/contracts"
 
 import { WebsiteApiClient } from "./client/api-client"
-import { pingContainer } from "./jobs/container"
-import { pingGithub } from "./jobs/github"
-import { pingHost } from "./jobs/host"
-import { pingWebsite } from "./jobs/website"
+import { pingContainer as defaultPingContainer } from "./jobs/container"
+import { pingGithub as defaultPingGithub } from "./jobs/github"
+import { pingHost as defaultPingHost } from "./jobs/host"
+import { pingWebsite as defaultPingWebsite } from "./jobs/website"
+
+export interface ExecuteJobDeps {
+  pingHost?: typeof defaultPingHost
+  pingWebsite?: typeof defaultPingWebsite
+  pingContainer?: typeof defaultPingContainer
+  pingGithub?: typeof defaultPingGithub
+}
 
 export async function executeJob(
   tile: JobTile,
   client: WebsiteApiClient,
+  deps: ExecuteJobDeps = {},
 ): Promise<void> {
+  const pingHost = deps.pingHost ?? defaultPingHost
+  const pingWebsite = deps.pingWebsite ?? defaultPingWebsite
+  const pingContainer = deps.pingContainer ?? defaultPingContainer
+  const pingGithub = deps.pingGithub ?? defaultPingGithub
+
   try {
     switch (tile.kind) {
       case "host": {

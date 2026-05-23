@@ -7,44 +7,35 @@ import { join } from "path"
 
 let tmpDir: string
 let configPath: string
-let originalConfigPath: string | undefined
 
 beforeEach(() => {
   tmpDir = mkdtempSync(join(tmpdir(), "mon-config-cache-test-"))
   configPath = join(tmpDir, "config.toml")
   writeFileSync(configPath, "tiles = []\n", "utf-8")
-  originalConfigPath = process.env.CONFIG_PATH
-  process.env.CONFIG_PATH = configPath
-  process.env.SKIP_ENV_VALIDATION = "1"
   _resetCache()
 })
 
 afterEach(() => {
   _resetCache()
-  if (originalConfigPath === undefined) {
-    delete process.env.CONFIG_PATH
-  } else {
-    process.env.CONFIG_PATH = originalConfigPath
-  }
   rmSync(tmpDir, { recursive: true, force: true })
 })
 
 describe("getCachedConfig", () => {
   it("returns the same object reference on a second call within TTL", async () => {
-    const first = await getCachedConfig()
-    const second = await getCachedConfig()
+    const first = await getCachedConfig(configPath)
+    const second = await getCachedConfig(configPath)
     expect(second).toBe(first)
   })
 
   it("returns a fresh object after _resetCache()", async () => {
-    const first = await getCachedConfig()
+    const first = await getCachedConfig(configPath)
     _resetCache()
-    const second = await getCachedConfig()
+    const second = await getCachedConfig(configPath)
     expect(second).not.toBe(first)
   })
 
   it("returns equivalent config shape", async () => {
-    const cfg = await getCachedConfig()
+    const cfg = await getCachedConfig(configPath)
     expect(cfg).toHaveProperty("options")
     expect(cfg).toHaveProperty("tiles")
     expect(Array.isArray(cfg.tiles)).toBe(true)

@@ -1,8 +1,9 @@
 "use server"
 
-import { db } from "@/lib/server/db"
 import { and, desc, eq } from "@mon/db/drizzle"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
+
+import { db } from "@/lib/server/db"
 
 export async function getLatestRuns(key: string) {
   const latestPing = db.$with("latest_ping").as(

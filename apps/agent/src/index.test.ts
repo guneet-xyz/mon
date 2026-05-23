@@ -75,14 +75,10 @@ const pingGithub = mock(async (_tile: GithubJobTile) => ({
   checkRuns: [githubCheckRun] as GithubCheckRunDTO[],
 }))
 
-mock.module("./jobs/host", () => ({ pingHost }))
-mock.module("./jobs/website", () => ({ pingWebsite }))
-mock.module("./jobs/container", () => ({ pingContainer }))
-mock.module("./jobs/github", () => ({ pingGithub }))
-
 process.env.SKIP_ENV_VALIDATION = "1"
 
 const { executeJob } = await import("./index")
+const deps = { pingHost, pingWebsite, pingContainer, pingGithub }
 
 function makeClient() {
   return {
@@ -112,7 +108,7 @@ describe("executeJob", () => {
       cron: "* * * * * *",
       address: "1.1.1.1",
     }
-    await executeJob(tile, client)
+    await executeJob(tile, client, deps)
     expect(pingHost).toHaveBeenCalledTimes(1)
     expect(pingHost).toHaveBeenCalledWith(tile)
     expect(client.pushHostPing).toHaveBeenCalledTimes(1)
@@ -128,7 +124,7 @@ describe("executeJob", () => {
       cron: "* * * * * *",
       url: "https://example.com",
     }
-    await executeJob(tile, client)
+    await executeJob(tile, client, deps)
     expect(pingWebsite).toHaveBeenCalledTimes(1)
     expect(pingWebsite).toHaveBeenCalledWith(tile)
     expect(client.pushWebsitePing).toHaveBeenCalledTimes(1)
@@ -144,7 +140,7 @@ describe("executeJob", () => {
       cron: "* * * * * *",
       container_name: "nginx",
     }
-    await executeJob(tile, client)
+    await executeJob(tile, client, deps)
     expect(pingContainer).toHaveBeenCalledTimes(1)
     expect(pingContainer).toHaveBeenCalledWith(tile)
     expect(client.pushContainerPing).toHaveBeenCalledTimes(1)
@@ -160,7 +156,7 @@ describe("executeJob", () => {
       cron: "* * * * * *",
       repo: "owner/repo",
     }
-    await executeJob(tile, client)
+    await executeJob(tile, client, deps)
     expect(pingGithub).toHaveBeenCalledTimes(1)
     expect(pingGithub).toHaveBeenCalledWith(tile)
     expect(client.pushGithubPing).toHaveBeenCalledTimes(2)
@@ -186,7 +182,7 @@ describe("executeJob", () => {
         cron: "* * * * * *",
         address: "1.1.1.1",
       }
-      await expect(executeJob(tile, client)).resolves.toBeUndefined()
+      await expect(executeJob(tile, client, deps)).resolves.toBeUndefined()
       expect(client.pushHostPing).not.toHaveBeenCalled()
       expect(
         errors.some((args) =>

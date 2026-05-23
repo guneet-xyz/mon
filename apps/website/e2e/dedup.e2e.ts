@@ -3,9 +3,9 @@ import { hashToken } from "@/lib/server/agent-auth"
 import { getRuntime } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
+import { randomUUID } from "crypto"
 import { writeFileSync } from "fs"
 import postgres from "postgres"
-import { randomUUID } from "crypto"
 
 const E2E_TOKEN = "e2e-test-token-32-bytes-long-here"
 const E2E_TOKEN_HASH = hashToken(E2E_TOKEN)
@@ -80,7 +80,10 @@ test("deduplication — same ping_id returns deduplicated: true on second POST, 
   )
 
   expect(firstResponse.status()).toBe(200)
-  const firstBody = (await firstResponse.json()) as { ok: boolean; deduplicated: boolean }
+  const firstBody = (await firstResponse.json()) as {
+    ok: boolean
+    deduplicated: boolean
+  }
   expect(firstBody).toEqual({ ok: true, deduplicated: false })
 
   // Second POST with same ping_id — should return deduplicated: true
@@ -93,7 +96,10 @@ test("deduplication — same ping_id returns deduplicated: true on second POST, 
   )
 
   expect(secondResponse.status()).toBe(200)
-  const secondBody = (await secondResponse.json()) as { ok: boolean; deduplicated: boolean }
+  const secondBody = (await secondResponse.json()) as {
+    ok: boolean
+    deduplicated: boolean
+  }
   expect(secondBody).toEqual({ ok: true, deduplicated: true })
 
   // Verify DB has exactly 1 row with this ping_id

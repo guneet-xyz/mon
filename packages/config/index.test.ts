@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test"
+import { getConfig, getMonitorConfig, getMonitors } from "./index"
+
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { mkdtempSync, rmSync } from "fs"
+import { writeFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
-import { writeFileSync } from "fs"
-import { getConfig, getMonitors, getMonitorConfig } from "./index"
 
 describe("config", () => {
   let tmpDir: string
@@ -137,7 +138,11 @@ col_span = 1
 
     expect(monitors).toHaveLength(2)
     const hasOnlyMonitors = monitors.every(
-      (m) => m.type === "host" || m.type === "website" || m.type === "container" || m.type === "github",
+      (m) =>
+        m.type === "host" ||
+        m.type === "website" ||
+        m.type === "container" ||
+        m.type === "github",
     )
     expect(hasOnlyMonitors).toBe(true)
     expect(monitors.map((m) => m.type)).toEqual(["host", "website"])

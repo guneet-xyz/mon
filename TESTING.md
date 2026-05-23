@@ -6,11 +6,11 @@ Reference for running, writing, and debugging tests in `@mon`.
 
 Two layers of tests cover the monorepo:
 
-| Layer            | Runner       | Lives in                                                                                                                | Touches                |
-| ---------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| Unit             | `bun:test`   | `apps/agent/src/jobs/*.test.ts`, `apps/website/src/**/*.test.ts`, `packages/config/*.test.ts`                           | Mocked deps only       |
-| Integration      | `bun:test`   | `packages/test-utils/__tests__/*.test.ts`                                                                               | Docker Postgres + HTTP |
-| End-to-end (E2E) | Playwright   | `apps/website/e2e/*.e2e.ts`                                                                                             | Real agent + website   |
+| Layer            | Runner     | Lives in                                                                                      | Touches                |
+| ---------------- | ---------- | --------------------------------------------------------------------------------------------- | ---------------------- |
+| Unit             | `bun:test` | `apps/agent/src/jobs/*.test.ts`, `apps/website/src/**/*.test.ts`, `packages/config/*.test.ts` | Mocked deps only       |
+| Integration      | `bun:test` | `packages/test-utils/__tests__/*.test.ts`                                                     | Docker Postgres + HTTP |
+| End-to-end (E2E) | Playwright | `apps/website/e2e/*.e2e.ts`                                                                   | Real agent + website   |
 
 Mock backends for E2E (GitHub API, host pings) run as in-process Bun HTTP servers, not Docker. See section 6.
 
@@ -62,13 +62,13 @@ packages/
 Use `bun:test` with `mock()` / `mock.module()`. Mock `@mon/db` to avoid touching Postgres in unit scope.
 
 ```ts
+import { pingHost } from "./host"
+
 import { describe, expect, mock, test } from "bun:test"
 
 mock.module("@mon/db", () => ({
   db: { insert: () => ({ values: () => Promise.resolve() }) },
 }))
-
-import { pingHost } from "./host"
 
 test("pingHost returns success on reachable address", async () => {
   const result = await pingHost({ address: "127.0.0.1" })
@@ -144,13 +144,13 @@ Both helpers register exit handlers so a `Ctrl-C` during a test doesn't leak lis
 
 ## 8. Debugging flakes
 
-| Symptom                                | Try                                                                                                            |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| E2E intermittently fails               | `cd apps/website && bun run e2e -- --retries=2`                                                                |
-| Need to see what the browser did       | `bunx playwright show-trace apps/website/playwright-report/trace.zip`                                          |
-| "port in use" / agent won't start      | `lsof -iTCP -sTCP:LISTEN -P -n | grep 3055` then `kill -9 <pid>`                                               |
-| Stray Postgres containers              | `docker ps --filter "name=mon-test-" -q | xargs -r docker rm -f`                                               |
-| Unit test hangs                        | Check for an un-mocked `@mon/db` import; add `mock.module("@mon/db", ...)`                                     |
+| Symptom                           | Try                                                                        |
+| --------------------------------- | -------------------------------------------------------------------------- | ----------------------------- |
+| E2E intermittently fails          | `cd apps/website && bun run e2e -- --retries=2`                            |
+| Need to see what the browser did  | `bunx playwright show-trace apps/website/playwright-report/trace.zip`      |
+| "port in use" / agent won't start | `lsof -iTCP -sTCP:LISTEN -P -n                                             | grep 3055`then`kill -9 <pid>` |
+| Stray Postgres containers         | `docker ps --filter "name=mon-test-" -q                                    | xargs -r docker rm -f`        |
+| Unit test hangs                   | Check for an un-mocked `@mon/db` import; add `mock.module("@mon/db", ...)` |
 
 CI uploads the Playwright HTML report as `playwright-report` artifact for 14 days; download it from the failed run's Summary page.
 
@@ -158,10 +158,10 @@ CI uploads the Playwright HTML report as `playwright-report` artifact for 14 day
 
 Defined in [.github/workflows/ci.yml](.github/workflows/ci.yml). Three test-related jobs:
 
-| Job              | Triggers                | What it runs                                                  | Artifact            |
-| ---------------- | ----------------------- | ------------------------------------------------------------- | ------------------- |
-| `test`           | every push, every PR    | `bun run test` (unit + integration, Docker Postgres)          | `coverage/`         |
-| `e2e`            | after `test` passes     | builds agent bundle, installs chromium, runs `bun run e2e`    | `playwright-report` |
-| `test-docker-build` | every push, every PR | builds each app's Dockerfile (smoke test)                     | (none)              |
+| Job                 | Triggers             | What it runs                                               | Artifact            |
+| ------------------- | -------------------- | ---------------------------------------------------------- | ------------------- |
+| `test`              | every push, every PR | `bun run test` (unit + integration, Docker Postgres)       | `coverage/`         |
+| `e2e`               | after `test` passes  | builds agent bundle, installs chromium, runs `bun run e2e` | `playwright-report` |
+| `test-docker-build` | every push, every PR | builds each app's Dockerfile (smoke test)                  | (none)              |
 
 `formatting` and `linting` run in parallel with `test`. A failed `test` job blocks `e2e`.

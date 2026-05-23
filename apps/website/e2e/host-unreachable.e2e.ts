@@ -18,9 +18,7 @@ interface MockHttpHost {
   requests: Array<{ method: string; path: string }>
   stop: () => Promise<void>
 }
-type CreateMockHttpHost = (opts?: {
-  port?: number
-}) => Promise<MockHttpHost>
+type CreateMockHttpHost = (opts?: { port?: number }) => Promise<MockHttpHost>
 
 const AGENT_ID = "default"
 const REPO_ROOT = resolve(
@@ -105,12 +103,8 @@ interval_seconds = 5
       cwd: REPO_ROOT,
       stdio: ["ignore", "pipe", "pipe"],
     })
-    proc.stdout?.on("data", (d) =>
-      process.stdout.write(`[agent:out] ${d}`),
-    )
-    proc.stderr?.on("data", (d) =>
-      process.stderr.write(`[agent:err] ${d}`),
-    )
+    proc.stdout?.on("data", (d) => process.stdout.write(`[agent:out] ${d}`))
+    proc.stderr?.on("data", (d) => process.stderr.write(`[agent:err] ${d}`))
     return proc
   }
 
@@ -121,10 +115,9 @@ interval_seconds = 5
 
     const mod = await import("@mon/test-utils")
     const createMockHttpHost =
-      (mod as { createMockHttpHost?: CreateMockHttpHost })
-        .createMockHttpHost ??
-      (mod as { default?: { createMockHttpHost?: CreateMockHttpHost } })
-        .default?.createMockHttpHost
+      (mod as { createMockHttpHost?: CreateMockHttpHost }).createMockHttpHost ??
+      (mod as { default?: { createMockHttpHost?: CreateMockHttpHost } }).default
+        ?.createMockHttpHost
     if (!createMockHttpHost)
       throw new Error("createMockHttpHost export missing")
 
@@ -194,17 +187,14 @@ interval_seconds = 5
       await new Promise((r) => setTimeout(r, 500))
     }
 
-    expect(
-      errorRow,
-      "Expected a host_ping error row within 45s",
-    ).toBeDefined()
+    expect(errorRow, "Expected a host_ping error row within 45s").toBeDefined()
     expect(errorRow?.error).toMatch(/timeout|unreachable|ping failed/i)
 
     await page.goto("/")
     await page.waitForLoadState("networkidle")
-    await expect(
-      page.getByText("192.0.2.1").first(),
-    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText("192.0.2.1").first()).toBeVisible({
+      timeout: 20_000,
+    })
 
     agentProcess.kill("SIGTERM")
     agentProcess = null

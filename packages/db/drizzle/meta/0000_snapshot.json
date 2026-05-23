@@ -155,16 +155,12 @@
         "mon_github_check_run_ping_id_unique": {
           "name": "mon_github_check_run_ping_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ping_id"
-          ]
+          "columns": ["ping_id"]
         },
         "mon_github_check_run_id_unique": {
           "name": "mon_github_check_run_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "policies": {},
@@ -256,12 +252,8 @@
           "name": "mon_github_ping_check_run_id_mon_github_check_run_id_fk",
           "tableFrom": "mon_github_ping",
           "tableTo": "mon_github_check_run",
-          "columnsFrom": [
-            "check_run_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["check_run_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

@@ -1,10 +1,14 @@
 import type { GithubCheckRunDTO, GithubPingDTO } from "@mon/contracts"
-import { db } from "@/lib/server/db"
+import type { Db } from "@mon/db"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
+
+import { db as defaultDb } from "@/lib/server/db"
 
 export async function insertGithubCheckRun(
   dto: GithubCheckRunDTO,
+  deps: { db?: Db } = {},
 ): Promise<{ ok: true; deduplicated: boolean }> {
+  const db = deps.db ?? defaultDb
   const rows = await db
     .insert(githubCheckRun)
     .values({
@@ -25,7 +29,9 @@ export async function insertGithubCheckRun(
 
 export async function insertGithubPing(
   dto: GithubPingDTO,
+  deps: { db?: Db } = {},
 ): Promise<{ ok: true; deduplicated: boolean }> {
+  const db = deps.db ?? defaultDb
   const rows = await db
     .insert(githubPings)
     .values({
