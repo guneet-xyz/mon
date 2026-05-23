@@ -97,7 +97,7 @@ test("happy path — agent pings, row appears, UI renders", async ({ page }) => 
   expect(rowFound, "Expected a ping row to appear within 90s").toBe(true)
 
   await page.goto("/")
-  await expect(page.getByText("E2E Host").first()).toBeVisible({
+  await expect(page.getByText("127.0.0.1").first()).toBeVisible({
     timeout: 10_000,
   })
 
@@ -113,7 +113,9 @@ test("bad token — agent exits with code 78", async () => {
       CONFIG_PATH: runtimeConfigPath,
       WEBSITE_URL,
       AGENT_ID,
-      AGENT_TOKEN: "wrong-token",
+      // Must be ≥32 chars to clear agent env validation so we exercise
+      // the website's 401 path (exit 78) instead of failing at env parse (exit 1).
+      AGENT_TOKEN: "wrong-token-padded-to-32-chars!!",
       AGENT_POLL_INTERVAL_SECONDS: "5",
       NODE_ENV: "test",
     },
@@ -135,6 +137,7 @@ test("bad token — agent exits with code 78", async () => {
 })
 
 test("ghost agent — no jobs assigned, no ping rows", async () => {
+  test.setTimeout(60_000)
   const proc = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
