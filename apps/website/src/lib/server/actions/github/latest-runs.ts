@@ -37,7 +37,7 @@ export async function getLatestRuns(key: string) {
     .with(latestCheckRunIds)
     .select()
     .from(githubCheckRun)
-    .innerJoin(latestCheckRunIds, eq(githubCheckRun._id, latestCheckRunIds.id))
+    .innerJoin(latestCheckRunIds, eq(githubCheckRun.id, latestCheckRunIds.id))
 
   const runs = latestCheckRuns.map((run) => run.github_check_run)
 

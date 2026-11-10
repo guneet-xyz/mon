@@ -43,15 +43,27 @@ const pingDto: GithubPingDTO = {
   error: null,
 }
 
+function makeUpsertDb(storedPingId: string): Db {
+  return {
+    insert: mock(() => ({
+      values: mock(() => ({
+        onConflictDoUpdate: mock(() => ({
+          returning: mock(async () => [{ pingId: storedPingId }]),
+        })),
+      })),
+    })),
+  } as unknown as Db
+}
+
 describe("insertGithubCheckRun", () => {
-  it("returns deduplicated: false on first insert", async () => {
-    const db = makeMockDb(async () => [{ pingId: "test-id" }])
+  it("returns deduplicated: false when the run is new", async () => {
+    const db = makeUpsertDb(checkRunDto.ping_id)
     const result = await insertGithubCheckRun(checkRunDto, { db })
     expect(result).toEqual({ ok: true, deduplicated: false })
   })
 
-  it("returns deduplicated: true on duplicate insert", async () => {
-    const db = makeMockDb(async () => [])
+  it("returns deduplicated: true when the run was already stored", async () => {
+    const db = makeUpsertDb("earlier-ping-id")
     const result = await insertGithubCheckRun(checkRunDto, { db })
     expect(result).toEqual({ ok: true, deduplicated: true })
   })

@@ -17,7 +17,7 @@ const hostDto: HostPingDTO = {
   ping_id: "00000000-0000-0000-0000-000000000001",
   agent_id: "agent-test",
   recorded_at: "2024-01-01T00:00:00.000Z",
-  key: "host:1.1.1.1",
+  key: "h1",
   latency_ms: 12,
   error: null,
 }
@@ -27,7 +27,7 @@ const websiteDto: WebsitePingDTO = {
   ping_id: "00000000-0000-0000-0000-000000000002",
   agent_id: "agent-test",
   recorded_at: "2024-01-01T00:00:00.000Z",
-  key: "website:https://example.com",
+  key: "w1",
   latency_ms: 50,
   error: null,
 }
@@ -37,7 +37,7 @@ const containerDto: ContainerPingDTO = {
   ping_id: "00000000-0000-0000-0000-000000000003",
   agent_id: "agent-test",
   recorded_at: "2024-01-01T00:00:00.000Z",
-  key: "container:nginx",
+  key: "c1",
   error: null,
 }
 
@@ -46,9 +46,9 @@ const githubPing: GithubPingDTO = {
   ping_id: "00000000-0000-0000-0000-000000000004",
   agent_id: "agent-test",
   recorded_at: "2024-01-01T00:00:00.000Z",
-  key: "github:owner/repo",
+  key: "g1",
   commit_hash: "abc123",
-  check_run_id: null,
+  check_run_id: 1,
   error: null,
 }
 
@@ -57,7 +57,7 @@ const githubCheckRun: GithubCheckRunDTO = {
   ping_id: "00000000-0000-0000-0000-000000000005",
   agent_id: "agent-test",
   recorded_at: "2024-01-01T00:00:00.000Z",
-  key: "github:owner/repo:check:1",
+  key: "g1",
   id: 1,
   name: "ci",
   status: "completed",
@@ -71,7 +71,7 @@ const pingHost = mock(async (_tile: HostJobTile) => hostDto)
 const pingWebsite = mock(async (_tile: WebsiteJobTile) => websiteDto)
 const pingContainer = mock(async (_tile: ContainerJobTile) => containerDto)
 const pingGithub = mock(async (_tile: GithubJobTile) => ({
-  ping: githubPing,
+  pings: [githubPing] as GithubPingDTO[],
   checkRuns: [githubCheckRun] as GithubCheckRunDTO[],
 }))
 
@@ -147,7 +147,7 @@ describe("executeJob", () => {
     expect(client.pushContainerPing).toHaveBeenCalledWith(containerDto)
   })
 
-  it("github tile → pingGithub + pushGithubPing for ping and each check run", async () => {
+  it("github tile → pushes check runs before the pings that reference them", async () => {
     pingGithub.mockClear()
     const client = makeClient()
     const tile: GithubJobTile = {
@@ -160,8 +160,8 @@ describe("executeJob", () => {
     expect(pingGithub).toHaveBeenCalledTimes(1)
     expect(pingGithub).toHaveBeenCalledWith(tile)
     expect(client.pushGithubPing).toHaveBeenCalledTimes(2)
-    expect(client.pushGithubPing).toHaveBeenNthCalledWith(1, githubPing)
-    expect(client.pushGithubPing).toHaveBeenNthCalledWith(2, githubCheckRun)
+    expect(client.pushGithubPing).toHaveBeenNthCalledWith(1, githubCheckRun)
+    expect(client.pushGithubPing).toHaveBeenNthCalledWith(2, githubPing)
   })
 
   it("swallows ping errors (logs, never throws)", async () => {

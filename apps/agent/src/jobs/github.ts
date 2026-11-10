@@ -40,14 +40,36 @@ const ResponseSchema = z.object({
   ),
 })
 
+export type GithubJobResult = {
+  // One ping per check run (each referencing it), or a single error ping.
+  pings: GithubPingDTO[]
+  checkRuns: GithubCheckRunDTO[]
+}
+
 export async function pingGithub(
   tile: GithubJobTile,
   deps?: { fetch?: typeof globalThis.fetch; agentId?: string },
-): Promise<{ ping: GithubPingDTO; checkRuns: GithubCheckRunDTO[] }> {
+): Promise<GithubJobResult> {
   const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
   const key = tile.id
   const token = tile.github_token
+
+  const failure = (error: string): GithubJobResult => ({
+    pings: [
+      {
+        kind: "github_ping",
+        ping_id: crypto.randomUUID(),
+        agent_id: agentId,
+        recorded_at: recordedAt,
+        key,
+        commit_hash: null,
+        check_run_id: null,
+        error,
+      },
+    ],
+    checkRuns: [],
+  })
 
   try {
     const fetchFn = deps?.fetch ?? globalThis.fetch
@@ -66,130 +88,46 @@ export async function pingGithub(
     try {
       resp = await fetchFn(url, { headers })
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: errorMsg,
-        },
-        checkRuns: [],
-      }
+      return failure(error instanceof Error ? error.message : String(error))
     }
 
     if (!resp.ok) {
-      const errorMsg = `GitHub API request failed with status ${resp.status}: ${resp.statusText}`
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: errorMsg,
-        },
-        checkRuns: [],
-      }
+      return failure(
+        `GitHub API request failed with status ${resp.status}: ${resp.statusText}`,
+      )
     }
 
     let json: unknown
     try {
       json = await resp.json()
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error)
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: errorMsg,
-        },
-        checkRuns: [],
-      }
+      return failure(error instanceof Error ? error.message : String(error))
     }
 
     const { data, success, error } = ResponseSchema.safeParse(json)
     if (!success) {
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: `couldn't parse output: ${error}`,
-        },
-        checkRuns: [],
-      }
+      return failure(`couldn't parse output: ${error}`)
     }
 
     if (data.check_runs.length === 0) {
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: "no check runs",
-        },
-        checkRuns: [],
-      }
+      return failure("no check runs")
     }
 
-    const _commit_hash = new Set(data.check_runs.map((run) => run.head_sha))
-    if (_commit_hash.size !== 1) {
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: "multiple commit hashes found",
-        },
-        checkRuns: [],
-      }
+    const commitHashes = new Set(data.check_runs.map((run) => run.head_sha))
+    if (commitHashes.size !== 1) {
+      return failure("multiple commit hashes found")
     }
 
-    const commit_hash = _commit_hash.values().next().value
+    const commit_hash = commitHashes.values().next().value
     if (!commit_hash) {
-      return {
-        ping: {
-          kind: "github_ping",
-          ping_id: crypto.randomUUID(),
-          agent_id: agentId,
-          recorded_at: recordedAt,
-          key,
-          commit_hash: null,
-          check_run_id: null,
-          error: "no commit hash found in response",
-        },
-        checkRuns: [],
-      }
+      return failure("no commit hash found in response")
     }
 
-    const pingId = crypto.randomUUID()
+    // The website stores check runs by GitHub id and links each ping row to
+    // one of them, so check runs must be pushed before the pings.
     const checkRuns: GithubCheckRunDTO[] = data.check_runs.map((run) => ({
       kind: "github_check_run",
-      ping_id: pingId,
+      ping_id: crypto.randomUUID(),
       agent_id: agentId,
       recorded_at: recordedAt,
       key,
@@ -202,33 +140,19 @@ export async function pingGithub(
       completed_at: run.completed_at?.toISOString() ?? null,
     }))
 
-    return {
-      ping: {
-        kind: "github_ping",
-        ping_id: pingId,
-        agent_id: agentId,
-        recorded_at: recordedAt,
-        key,
-        commit_hash,
-        check_run_id: data.check_runs[0]!.id,
-        error: null,
-      },
-      checkRuns,
-    }
+    const pings: GithubPingDTO[] = data.check_runs.map((run) => ({
+      kind: "github_ping",
+      ping_id: crypto.randomUUID(),
+      agent_id: agentId,
+      recorded_at: recordedAt,
+      key,
+      commit_hash,
+      check_run_id: run.id,
+      error: null,
+    }))
+
+    return { pings, checkRuns }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error)
-    return {
-      ping: {
-        kind: "github_ping",
-        ping_id: crypto.randomUUID(),
-        agent_id: agentId,
-        recorded_at: recordedAt,
-        key,
-        commit_hash: null,
-        check_run_id: null,
-        error: errorMsg,
-      },
-      checkRuns: [],
-    }
+    return failure(error instanceof Error ? error.message : String(error))
   }
 }
