@@ -1,9 +1,10 @@
-import { and, asc, eq, gte, isNotNull } from "@mon/db/drizzle"
+import { and, asc, desc, eq, gte, isNotNull } from "@mon/db/drizzle"
 import { containerPings } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
 import type { IncidentPing } from "."
+import { statusFromLatestPing } from "./status"
 
 import dayjs from "dayjs"
 
@@ -36,13 +37,8 @@ export async function getContainerStatus(dbKey: string) {
     .select()
     .from(containerPings)
     .where(and(eq(containerPings.key, dbKey)))
-    .orderBy(asc(containerPings.timestamp))
+    .orderBy(desc(containerPings.timestamp))
     .limit(1)
 
-  const ping = pings[0]
-  if (!ping) return "unknown" as const
-  if (dayjs(ping.timestamp).diff(dayjs(), "minute") > 2)
-    return "unknown" as const
-  if (ping.error) return "offline" as const
-  return "online" as const
+  return statusFromLatestPing(pings[0])
 }

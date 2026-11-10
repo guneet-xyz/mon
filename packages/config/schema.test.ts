@@ -2,6 +2,8 @@ import {
   type Config,
   ConfigSchema,
   getAgentAssignments,
+  toPublicConfig,
+  toPublicTile,
   verifyAgentToken,
 } from "./schema"
 
@@ -207,5 +209,57 @@ describe("verifyAgentToken", () => {
 
   test("returns false for an empty presented token", () => {
     expect(verifyAgentToken(config, "default", "")).toBe(false)
+  })
+})
+
+describe("toPublicConfig", () => {
+  const config = ConfigSchema.parse({
+    agents: { default: { token_hash: sha256("secret") } },
+    tiles: [
+      {
+        type: "github",
+        key: "repo",
+        repo: "owner/repo",
+        github_token: "ghp_secret",
+        agent: "anzen",
+        interval_seconds: 30,
+      },
+      { type: "container", key: "db", container_name: "postgres" },
+      { type: "host", key: "router", address: "192.168.1.1", name: "Router" },
+      { type: "logo" },
+    ],
+  })
+
+  test("drops agents and every server-only tile field", () => {
+    const serialized = JSON.stringify(toPublicConfig(config))
+    expect(serialized).not.toContain("ghp_secret")
+    expect(serialized).not.toContain(sha256("secret"))
+    expect(serialized).not.toContain("token_hash")
+    expect(serialized).not.toContain("anzen")
+    expect(serialized).not.toContain("docker_socket")
+    expect(serialized).not.toContain("interval_seconds")
+  })
+
+  test("keeps display and layout fields", () => {
+    const pub = toPublicConfig(config)
+    expect(pub.options).toEqual(config.options)
+    expect(pub.tiles).toHaveLength(4)
+    expect(pub.tiles[0]).toEqual({
+      type: "github",
+      key: "repo",
+      repo: "owner/repo",
+    })
+    expect(pub.tiles[2]).toEqual({
+      type: "host",
+      key: "router",
+      address: "192.168.1.1",
+      name: "Router",
+    })
+  })
+
+  test("toPublicTile does not mutate the source tile", () => {
+    const tile = config.tiles[0]!
+    toPublicTile(tile)
+    expect(tile).toHaveProperty("github_token", "ghp_secret")
   })
 })

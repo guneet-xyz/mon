@@ -1,12 +1,12 @@
 "use client"
 
-import type { Config } from "@mon/config/schema"
+import type { PublicConfig } from "@mon/config/schema"
 
 import { Tile } from "@/components/tiles"
 import useWindowDimensions from "@/lib/client/hooks/dimensions"
 import { generateTiles } from "@/lib/client/tile-generation"
 
-export function TileGrid({ config }: { config: Config }) {
+export function TileGrid({ config }: { config: PublicConfig }) {
   const { width, height } = useWindowDimensions()
   const data = generateTiles(config, width, height)
   if (!data.success) {

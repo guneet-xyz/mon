@@ -4,6 +4,7 @@ import { websitePings } from "@mon/db/schema"
 import { db } from "@/lib/server/db"
 
 import type { IncidentPing } from "."
+import { statusFromLatestPing } from "./status"
 
 import dayjs from "dayjs"
 
@@ -39,12 +40,7 @@ export async function getWebsiteStatus(dbKey: string) {
     .orderBy(desc(websitePings.timestamp))
     .limit(1)
 
-  const ping = pings[0]
-  if (!ping) return "unknown" as const
-  if (dayjs(ping.timestamp).diff(dayjs(), "minute") > 2)
-    return "unknown" as const
-  if (ping.error) return "offline" as const
-  return "online" as const
+  return statusFromLatestPing(pings[0])
 }
 
 export async function getWebsitePings(

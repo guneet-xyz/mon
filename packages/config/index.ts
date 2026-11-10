@@ -14,8 +14,16 @@ export type {
   Container,
   Website,
   Github,
+  PublicConfig,
+  PublicTile,
+  PublicMonitorTile,
 } from "./schema"
-export { getAgentAssignments, verifyAgentToken } from "./schema"
+export {
+  getAgentAssignments,
+  toPublicConfig,
+  toPublicTile,
+  verifyAgentToken,
+} from "./schema"
 
 export async function getConfig(path: string): Promise<Config> {
   if (existsSync(path) === false) {
