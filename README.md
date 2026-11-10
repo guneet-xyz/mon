@@ -150,7 +150,7 @@ This touches five files; the path is documented in [`AGENTS.md` → WHERE TO LOO
 
 ## Production
 
-Each app builds to its own Docker image. There is no PaaS; CI pushes images to a private registry over Tailscale and runs them via SSH on a single host. The compose file is yours to write — the apps don't care, they only need env vars and a config file.
+Each app builds to its own Docker image. There is no PaaS. When a push to `main` produces a release (via conventional commits), CI builds multi-arch (`linux/amd64`, `linux/arm64`) images and pushes them to `cr.guneet.dev/mon/{website,agent,docs,migrator}`, tagged with the version and the commit SHA. A manual `workflow_dispatch` of the `push` workflow builds the current branch (tagged `latest` by default). Registry credentials are a Dockyard automation key stored as the `DOCKER_USERNAME` / `DOCKER_PASSWORD` secrets of the `release` GitHub environment. CI does not deploy anything. The compose file is yours to write — the apps don't care, they only need env vars and a config file.
 
 ### Build images
 
