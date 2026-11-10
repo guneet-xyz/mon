@@ -1,4 +1,4 @@
-import { STALE_AFTER_MINUTES, statusFromLatestPing } from "./status"
+import { STALE_AFTER_MS, statusFromLatestPing } from "./status"
 
 import { describe, expect, it } from "bun:test"
 
@@ -16,6 +16,13 @@ describe("statusFromLatestPing", () => {
     ).toBe("online")
   })
 
+  it("stays known right up to the threshold", () => {
+    const edge = new Date(now.getTime() - STALE_AFTER_MS)
+    expect(statusFromLatestPing({ timestamp: edge, error: null }, now)).toBe(
+      "online",
+    )
+  })
+
   it("is offline for a recent failed ping", () => {
     expect(
       statusFromLatestPing({ timestamp: minutesAgo(1), error: "timeout" }, now),
@@ -23,7 +30,7 @@ describe("statusFromLatestPing", () => {
   })
 
   it("is unknown once the latest ping is stale", () => {
-    const stale = minutesAgo(STALE_AFTER_MINUTES + 1)
+    const stale = new Date(now.getTime() - STALE_AFTER_MS - 1)
     expect(statusFromLatestPing({ timestamp: stale, error: null }, now)).toBe(
       "unknown",
     )

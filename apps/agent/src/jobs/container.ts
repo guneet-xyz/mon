@@ -12,10 +12,10 @@ export function dockerRequest(tile: ContainerJobTile): {
   const socket = tile.docker_socket || DEFAULT_DOCKER_SOCKET
   const path = `/v1.41/containers/${encodeURIComponent(tile.container_name)}/json`
 
-  if (socket.startsWith("unix://")) {
+  if (socket.startsWith("unix://") || socket.startsWith("/")) {
     return {
       url: `http://localhost${path}`,
-      init: { unix: socket.slice("unix://".length) },
+      init: { unix: socket.replace(/^unix:\/\//, "") },
     }
   }
 

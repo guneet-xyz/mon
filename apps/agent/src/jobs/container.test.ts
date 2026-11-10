@@ -123,6 +123,16 @@ describe("pingContainer", () => {
     )
   })
 
+  it("treats a bare path as a unix socket", () => {
+    const { url, init } = dockerRequest({
+      ...tile,
+      docker_socket: "/run/docker.sock",
+    })
+
+    expect(url).toBe("http://localhost/v1.41/containers/my-app/json")
+    expect(init).toEqual({ unix: "/run/docker.sock" })
+  })
+
   it("rewrites tcp:// sockets to http://", () => {
     const { url, init } = dockerRequest({
       ...tile,

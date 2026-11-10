@@ -263,3 +263,19 @@ describe("toPublicConfig", () => {
     expect(tile).toHaveProperty("github_token", "ghp_secret")
   })
 })
+
+describe("ConfigSchema — monitor keys", () => {
+  test("rejects keys longer than the 64-character DB column", () => {
+    const result = ConfigSchema.safeParse({
+      tiles: [{ type: "host", key: "k".repeat(65), address: "127.0.0.1" }],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects empty keys", () => {
+    const result = ConfigSchema.safeParse({
+      tiles: [{ type: "host", key: "", address: "127.0.0.1" }],
+    })
+    expect(result.success).toBe(false)
+  })
+})

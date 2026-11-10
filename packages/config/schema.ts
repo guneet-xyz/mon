@@ -29,7 +29,7 @@ const TileSchema = z.object({
 })
 
 const MonitorSchema = TileSchema.extend({
-  key: z.string(),
+  key: z.string().min(1).max(64), // stored in varchar(64) ping key columns
   name: z.string().optional(),
   icon: z.string().optional(),
   short_name: z.string().optional(),
