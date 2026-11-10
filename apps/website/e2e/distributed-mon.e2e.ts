@@ -1,10 +1,9 @@
 import { hashToken } from "@/lib/server/agent-auth"
 
-import { getRuntime } from "./_runtime"
+import { getRuntime, writeRuntimeConfig } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { spawn } from "child_process"
-import { writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import postgres from "postgres"
 import { fileURLToPath } from "url"
@@ -36,7 +35,7 @@ test.beforeAll(async () => {
     onnotice: () => undefined,
   })
 
-  writeFileSync(
+  await writeRuntimeConfig(
     runtimeConfigPath,
     `
 [agents.${AGENT_ID}]
@@ -66,6 +65,7 @@ test.afterAll(async () => {
 })
 
 test("happy path — agent pings, row appears, UI renders", async ({ page }) => {
+  test.setTimeout(120_000)
   agentProcess = spawn("bun", [AGENT_BUNDLE], {
     env: {
       ...process.env,
@@ -84,7 +84,8 @@ test("happy path — agent pings, row appears, UI renders", async ({ page }) => 
   const deadline = Date.now() + 90_000
   while (Date.now() < deadline) {
     try {
-      const rows = await sql`SELECT * FROM mon_host_ping LIMIT 1`
+      const rows =
+        await sql`SELECT * FROM mon_host_ping WHERE key = 'e2e-host' LIMIT 1`
       if (rows.length > 0) {
         rowFound = true
         break
@@ -98,6 +99,11 @@ test("happy path — agent pings, row appears, UI renders", async ({ page }) => 
 
   await page.goto("/")
   await expect(page.getByText("127.0.0.1").first()).toBeVisible({
+    timeout: 10_000,
+  })
+  // The status dot is driven by the stored pings, so this proves the website
+  // reads the rows the agent wrote.
+  await expect(page.locator('[data-status="online"]').first()).toBeVisible({
     timeout: 10_000,
   })
 

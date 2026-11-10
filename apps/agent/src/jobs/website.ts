@@ -9,7 +9,7 @@ export async function pingWebsite(
   const pingId = crypto.randomUUID()
   const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
-  const key = `website:${tile.url}`
+  const key = tile.id
   const start = Date.now()
 
   try {

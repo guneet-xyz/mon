@@ -1,10 +1,9 @@
 import { hashToken } from "@/lib/server/agent-auth"
 
-import { getRuntime } from "./_runtime"
+import { getRuntime, writeRuntimeConfig } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { spawn } from "child_process"
-import { writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import postgres from "postgres"
 import { fileURLToPath } from "url"
@@ -56,7 +55,7 @@ test.beforeAll(async () => {
   mockServer = await createMockGithubServer()
   mockServer.setScenario({ kind: "http_error", status: 503 })
 
-  writeFileSync(
+  await writeRuntimeConfig(
     runtimeConfigPath,
     `
 [agents.${AGENT_ID}]
@@ -123,7 +122,7 @@ test("github API 5xx — error row in DB, UI renders tile, mock received request
     try {
       const rows = await sql<
         { error: string | null }[]
-      >`SELECT error FROM mon_github_ping WHERE key = 'github:octocat/hello-world' AND error IS NOT NULL LIMIT 1`
+      >`SELECT error FROM mon_github_ping WHERE key = 'hello-world' AND error IS NOT NULL LIMIT 1`
       if (rows.length > 0) {
         errorRow = rows[0]
         break
@@ -137,11 +136,24 @@ test("github API 5xx — error row in DB, UI renders tile, mock received request
   expect(errorRow, "Expected a github_ping error row within 90s").toBeDefined()
   expect(errorRow?.error).toContain("503")
 
+  const responseBodies: Promise<string>[] = []
+  page.on("response", (res) => {
+    responseBodies.push(res.text().catch(() => ""))
+  })
+
   await page.goto("/")
   await page.waitForLoadState("networkidle")
   await expect(page.getByText("octocat/hello-world").first()).toBeVisible({
     timeout: 30_000,
   })
+  await expect(page.locator('[data-status="offline"]').first()).toBeVisible({
+    timeout: 10_000,
+  })
+  // Neither the page payload nor the tile server actions may expose secrets.
+  const bodies = (await Promise.all(responseBodies)).join("\n")
+  expect(bodies).toContain("octocat/hello-world")
+  expect(bodies).not.toContain("ghp_fixture")
+  expect(bodies).not.toContain(E2E_TOKEN_HASH)
 
   expect(mockServer.requests.length).toBeGreaterThanOrEqual(1)
 

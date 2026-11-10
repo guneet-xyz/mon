@@ -41,10 +41,12 @@ export async function executeJob(
         break
       }
       case "github": {
-        const { ping, checkRuns } = await pingGithub(tile)
-        await client.pushGithubPing(ping)
+        const { pings, checkRuns } = await pingGithub(tile)
         for (const checkRun of checkRuns) {
           await client.pushGithubPing(checkRun)
+        }
+        for (const ping of pings) {
+          await client.pushGithubPing(ping)
         }
         break
       }

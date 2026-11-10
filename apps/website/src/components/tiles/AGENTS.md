@@ -7,6 +7,8 @@ One file per tile variant from the Zod discriminated union in `@mon/config/schem
 - **File name = tile type** (`host.tsx`, `website.tsx`, `container.tsx`, `github.tsx`, `empty.tsx`, `hidden.tsx`, `logo.tsx`, `theme.tsx`). Underscore-prefixed `_base.tsx` is the **shared visual primitive**, not "private/draft".
 - **Monitor tile contract**: every monitor tile (host/website/container/github) is a `"use client"` component accepting `{ dbKey: string; r_span: number; c_span: number }`. It calls `useQuery({ queryKey: ["monitor-config", "<type>", dbKey], queryFn: () => getMonitorTileInfo("<type>", dbKey) })`, renders `<LoadingTile>` while unfetched, then renders `<MonitorDialog>` wrapping a `<BaseTile>`.
 - **Non-monitor tiles** (empty/hidden/logo/theme) don't fetch and don't open dialogs.
+- **`dbKey` is the tile's configured `key`.** Agents store every ping under the tile key, so the same value identifies the tile in config and its rows in the DB.
+- **`getMonitorTileInfo` returns a `PublicTile`** (no `github_token`, `agent`, `interval_seconds`, `docker_socket`). Render only from that.
 - **Adding a new tile type** = 5 edits:
   1. add variant in [packages/config/schema.ts](file:///Users/guneet/projects/mon/packages/config/schema.ts) discriminated union,
   2. add DB table in [packages/db/schema.ts](file:///Users/guneet/projects/mon/packages/db/schema.ts) via `createTable("…")`,

@@ -1,6 +1,6 @@
 "use server"
 
-import { and, desc, eq } from "@mon/db/drizzle"
+import { and, asc, desc, eq } from "@mon/db/drizzle"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
@@ -37,7 +37,8 @@ export async function getLatestRuns(key: string) {
     .with(latestCheckRunIds)
     .select()
     .from(githubCheckRun)
-    .innerJoin(latestCheckRunIds, eq(githubCheckRun._id, latestCheckRunIds.id))
+    .innerJoin(latestCheckRunIds, eq(githubCheckRun.id, latestCheckRunIds.id))
+    .orderBy(asc(githubCheckRun.name), asc(githubCheckRun.id))
 
   const runs = latestCheckRuns.map((run) => run.github_check_run)
 

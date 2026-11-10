@@ -1,10 +1,9 @@
 import { hashToken } from "@/lib/server/agent-auth"
 
-import { getRuntime } from "./_runtime"
+import { getRuntime, writeRuntimeConfig } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { spawn } from "child_process"
-import { writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import postgres from "postgres"
 import { fileURLToPath } from "url"
@@ -77,7 +76,7 @@ test.beforeAll(async () => {
 
   const mockHttpUrl = new URL(mockHttp.url)
 
-  writeFileSync(
+  await writeRuntimeConfig(
     runtimeConfigPath,
     `
 [agents.${AGENT1_ID}]

@@ -35,7 +35,7 @@ describe("pingHost", () => {
     expect(result.ping_id).toMatch(/^[0-9a-f-]{36}$/)
     expect(result.agent_id).toBe("test-agent")
     expect(result.recorded_at).toBeDefined()
-    expect(result.key).toBe("host:example.com")
+    expect(result.key).toBe("test-host")
   })
 
   it("returns DTO with error on unreachable host (exit code 2)", async () => {

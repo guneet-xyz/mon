@@ -29,7 +29,7 @@ const TileSchema = z.object({
 })
 
 const MonitorSchema = TileSchema.extend({
-  key: z.string(),
+  key: z.string().min(1).max(64), // stored in varchar(64) ping key columns
   name: z.string().optional(),
   icon: z.string().optional(),
   short_name: z.string().optional(),
@@ -112,6 +112,48 @@ export type Host = ExtractTileType<"host">
 export type Container = ExtractTileType<"container">
 export type Website = ExtractTileType<"website">
 export type Github = ExtractTileType<"github">
+
+// Fields that only the server and agents need. They must never reach the
+// browser: github_token is a credential, the rest describe internal wiring.
+const SERVER_ONLY_TILE_FIELDS = [
+  "agent",
+  "interval_seconds",
+  "github_token",
+  "docker_socket",
+] as const
+
+type ServerOnlyTileField = (typeof SERVER_ONLY_TILE_FIELDS)[number]
+
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never
+
+export type PublicTile = DistributiveOmit<Tile, ServerOnlyTileField>
+export type PublicMonitorTile = DistributiveOmit<
+  MonitorTile,
+  ServerOnlyTileField
+>
+export type PublicConfig = {
+  options: Config["options"]
+  tiles: PublicTile[]
+}
+
+export function toPublicTile<T extends Tile>(
+  tile: T,
+): DistributiveOmit<T, ServerOnlyTileField> {
+  const copy: Record<string, unknown> = { ...tile }
+  for (const field of SERVER_ONLY_TILE_FIELDS) delete copy[field]
+  return copy as DistributiveOmit<T, ServerOnlyTileField>
+}
+
+// Strips agents (token hashes) and server-only tile fields before a config
+// is serialized to the client.
+export function toPublicConfig(config: Config): PublicConfig {
+  return {
+    options: config.options,
+    tiles: config.tiles.map((tile) => toPublicTile(tile)),
+  }
+}
 
 export function getAgentAssignments(
   config: Config,

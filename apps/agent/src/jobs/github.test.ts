@@ -42,11 +42,15 @@ describe("pingGithub", () => {
       agentId: "test-agent",
     })
 
-    expect(result.ping.kind).toBe("github_ping")
-    expect(result.ping.error).toBeNull()
-    expect(result.ping.commit_hash).toBe("abc123def456")
-    expect(result.ping.check_run_id).toBe(123456)
+    expect(result.pings[0]!.kind).toBe("github_ping")
+    expect(result.pings[0]!.error).toBeNull()
+    expect(result.pings[0]!.commit_hash).toBe("abc123def456")
+    expect(result.pings[0]!.check_run_id).toBe(123456)
+    expect(result.pings[0]!.key).toBe("test-github")
+    expect(result.pings).toHaveLength(1)
+    expect(result.pings[0]!.ping_id).not.toBe(result.checkRuns[0]!.ping_id)
     expect(result.checkRuns).toHaveLength(1)
+    expect(result.checkRuns[0]!.key).toBe("test-github")
     expect(result.checkRuns[0]!.kind).toBe("github_check_run")
     expect(result.checkRuns[0]!.id).toBe(123456)
     expect(result.checkRuns[0]!.name).toBe("test-run")
@@ -65,10 +69,10 @@ describe("pingGithub", () => {
       agentId: "test-agent",
     })
 
-    expect(result.ping.kind).toBe("github_ping")
-    expect(result.ping.error).toBe("no check runs")
-    expect(result.ping.commit_hash).toBeNull()
-    expect(result.ping.check_run_id).toBeNull()
+    expect(result.pings[0]!.kind).toBe("github_ping")
+    expect(result.pings[0]!.error).toBe("no check runs")
+    expect(result.pings[0]!.commit_hash).toBeNull()
+    expect(result.pings[0]!.check_run_id).toBeNull()
     expect(result.checkRuns).toHaveLength(0)
   })
 
@@ -84,10 +88,10 @@ describe("pingGithub", () => {
       agentId: "test-agent",
     })
 
-    expect(result.ping.kind).toBe("github_ping")
-    expect(result.ping.error).toContain("401")
-    expect(result.ping.commit_hash).toBeNull()
-    expect(result.ping.check_run_id).toBeNull()
+    expect(result.pings[0]!.kind).toBe("github_ping")
+    expect(result.pings[0]!.error).toContain("401")
+    expect(result.pings[0]!.commit_hash).toBeNull()
+    expect(result.pings[0]!.check_run_id).toBeNull()
     expect(result.checkRuns).toHaveLength(0)
   })
 
@@ -101,10 +105,10 @@ describe("pingGithub", () => {
       agentId: "test-agent",
     })
 
-    expect(result.ping.kind).toBe("github_ping")
-    expect(result.ping.error).toContain("network error")
-    expect(result.ping.commit_hash).toBeNull()
-    expect(result.ping.check_run_id).toBeNull()
+    expect(result.pings[0]!.kind).toBe("github_ping")
+    expect(result.pings[0]!.error).toContain("network error")
+    expect(result.pings[0]!.commit_hash).toBeNull()
+    expect(result.pings[0]!.check_run_id).toBeNull()
     expect(result.checkRuns).toHaveLength(0)
   })
 
@@ -121,10 +125,10 @@ describe("pingGithub", () => {
       agentId: "test-agent",
     })
 
-    expect(result.ping.kind).toBe("github_ping")
-    expect(result.ping.error).toContain("invalid json")
-    expect(result.ping.commit_hash).toBeNull()
-    expect(result.ping.check_run_id).toBeNull()
+    expect(result.pings[0]!.kind).toBe("github_ping")
+    expect(result.pings[0]!.error).toContain("invalid json")
+    expect(result.pings[0]!.commit_hash).toBeNull()
+    expect(result.pings[0]!.check_run_id).toBeNull()
     expect(result.checkRuns).toHaveLength(0)
   })
 
@@ -162,10 +166,10 @@ describe("pingGithub", () => {
       agentId: "test-agent",
     })
 
-    expect(result.ping.kind).toBe("github_ping")
-    expect(result.ping.error).toContain("multiple commit hashes")
-    expect(result.ping.commit_hash).toBeNull()
-    expect(result.ping.check_run_id).toBeNull()
+    expect(result.pings[0]!.kind).toBe("github_ping")
+    expect(result.pings[0]!.error).toContain("multiple commit hashes")
+    expect(result.pings[0]!.commit_hash).toBeNull()
+    expect(result.pings[0]!.check_run_id).toBeNull()
     expect(result.checkRuns).toHaveLength(0)
   })
 

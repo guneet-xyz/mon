@@ -1,4 +1,4 @@
-import { getConfig } from "@mon/config"
+import { getConfig, toPublicConfig } from "@mon/config"
 
 import { ClientOnly } from "@/components/client-only"
 import { env } from "@/env"
@@ -12,7 +12,7 @@ export default async function HomePage() {
 
   return (
     <ClientOnly>
-      <TileGrid config={config} />
+      <TileGrid config={toPublicConfig(config)} />
     </ClientOnly>
   )
 }

@@ -9,6 +9,7 @@ export function StatusDot({
 }) {
   return (
     <div
+      data-status={status}
       className={cn(
         "h-2.5 w-2.5 rounded-full border-2 shadow-xl",
         {

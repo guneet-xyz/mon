@@ -1,6 +1,6 @@
 "use server"
 
-import { getMonitorConfig } from "@mon/config"
+import { getMonitorConfig, toPublicTile } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
 import { env } from "@/env"
@@ -18,6 +18,6 @@ export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
   const status = await getStatus(type, dbKey)
   return {
     status,
-    config,
+    config: toPublicTile(config),
   }
 }

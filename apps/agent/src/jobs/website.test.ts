@@ -34,7 +34,7 @@ describe("pingWebsite", () => {
     expect(result.ping_id).toMatch(/^[0-9a-f-]{36}$/)
     expect(result.agent_id).toBe("test-agent")
     expect(result.recorded_at).toBeDefined()
-    expect(result.key).toBe("website:https://example.com")
+    expect(result.key).toBe("test-website")
   })
 
   it("returns DTO with latency_ms on redirect response (3xx)", async () => {

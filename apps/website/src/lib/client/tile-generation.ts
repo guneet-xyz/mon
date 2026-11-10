@@ -1,8 +1,8 @@
 import type {
-  Config,
   MonitorTile,
   NonMonitorTile,
-  Tile,
+  PublicConfig,
+  PublicTile,
 } from "@mon/config/schema"
 
 const MAX_RATIO = 1.25
@@ -54,7 +54,7 @@ function canTileFit({
 
 type IndexedTile = {
   index: number
-  tile: Tile
+  tile: PublicTile
 }
 
 function placeTile({
@@ -213,7 +213,7 @@ function attemptLayout({
 }
 
 export function generateTiles(
-  config: Config,
+  config: PublicConfig,
   clientWidth: number,
   clientHeight: number,
 ):
