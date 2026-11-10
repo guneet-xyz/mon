@@ -69,7 +69,7 @@ describe("github ingest against Postgres", () => {
     const { getLatestRuns } = await import("../actions/github/latest-runs")
     const runs = await getLatestRuns("repo")
 
-    expect(runs.map((r) => r.id).sort()).toEqual([9001, 9002])
+    expect(runs.map((r) => r.name)).toEqual(["build", "test"])
     for (const run of runs) {
       expect(run.status).toBe("completed")
       expect(run.conclusion).toBe("failure")
