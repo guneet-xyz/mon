@@ -11,7 +11,7 @@ export async function pingHost(
   const pingId = crypto.randomUUID()
   const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
-  const key = `host:${tile.address}`
+  const key = tile.id
 
   try {
     const execaFn = deps?.execa ?? execa

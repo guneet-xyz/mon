@@ -2,6 +2,27 @@ import type { ContainerJobTile, ContainerPingDTO } from "@mon/contracts"
 
 import { env } from "../env"
 
+const DEFAULT_DOCKER_SOCKET = "unix:///var/run/docker.sock"
+
+// Bun's fetch accepts `unix` to send the request over a Unix domain socket.
+export function dockerRequest(tile: ContainerJobTile): {
+  url: string
+  init: RequestInit & { unix?: string }
+} {
+  const socket = tile.docker_socket || DEFAULT_DOCKER_SOCKET
+  const path = `/v1.41/containers/${encodeURIComponent(tile.container_name)}/json`
+
+  if (socket.startsWith("unix://")) {
+    return {
+      url: `http://localhost${path}`,
+      init: { unix: socket.slice("unix://".length) },
+    }
+  }
+
+  const base = socket.replace(/^tcp:\/\//, "http://").replace(/\/+$/, "")
+  return { url: `${base}${path}`, init: {} }
+}
+
 export async function pingContainer(
   tile: ContainerJobTile,
   deps?: { fetch?: typeof globalThis.fetch; agentId?: string },
@@ -9,19 +30,12 @@ export async function pingContainer(
   const pingId = crypto.randomUUID()
   const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
-  const key = `container:${tile.container_name}`
+  const key = tile.id
 
   try {
     const fetchFn = deps?.fetch ?? globalThis.fetch
-    const unixSocket = tile.docker_socket?.startsWith("unix://")
-      ? tile.docker_socket.slice(7)
-      : null
-
-    const url = unixSocket
-      ? `http://localhost/v1.41/containers/${tile.container_name}/json`
-      : `${tile.docker_socket || "unix:///var/run/docker.sock"}/v1.41/containers/${tile.container_name}/json`
-
-    const res = await fetchFn(url)
+    const { url, init } = dockerRequest(tile)
+    const res = await fetchFn(url, init)
 
     if (!res.ok) {
       return {

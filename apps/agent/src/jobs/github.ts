@@ -46,7 +46,7 @@ export async function pingGithub(
 ): Promise<{ ping: GithubPingDTO; checkRuns: GithubCheckRunDTO[] }> {
   const agentId = deps?.agentId ?? env.AGENT_ID
   const recordedAt = new Date().toISOString()
-  const key = `github:${tile.repo}`
+  const key = tile.id
   const token = tile.github_token
 
   try {
