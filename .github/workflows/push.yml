@@ -12,7 +12,7 @@ on:
         default: "latest"
 
 env:
-  REGISTRY: cr.guneet.xyz
+  REGISTRY: cr.guneet.dev
   IMAGE_NAME: mon
 
 concurrency:
@@ -58,6 +58,9 @@ jobs:
       always() && needs.format-check.result == 'success' &&
       (github.event_name == 'workflow_dispatch' || needs.release.outputs.version != '')
     runs-on: ubuntu-latest
+    # Registry credentials (a Dockyard automation key with pull + push on the
+    # `mon` project) live only in this environment's secrets.
+    environment: release
     strategy:
       fail-fast: false
       matrix:
@@ -79,25 +82,6 @@ jobs:
         with:
           ref: ${{ needs.release.outputs.version && format('v{0}', needs.release.outputs.version) || github.ref }}
 
-      - name: Fetch secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.10
-        with:
-          method: oidc
-          domain: https://infisical.guneet.dev
-          identity-id: c12c57ca-86b4-47d4-89e7-be7e5a8801c1
-          project-slug: mon-o8-sa
-          env-slug: deployment
-          secret-path: /
-          export-type: env
-
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ env.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ env.TS_OAUTH_SECRET }}
-          tags: tag:ci
-          version: latest
-
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
 
@@ -105,8 +89,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - id: meta
         uses: docker/metadata-action@v5
@@ -143,4 +127,4 @@ jobs:
         with:
           subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.component }}
           subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
+          push-to-registry: false
