@@ -1,10 +1,9 @@
 import { hashToken } from "@/lib/server/agent-auth"
 
-import { getRuntime } from "./_runtime"
+import { getRuntime, writeRuntimeConfig } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { spawn } from "child_process"
-import { writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import postgres from "postgres"
 import { fileURLToPath } from "url"
@@ -46,7 +45,7 @@ test.describe("host + website unreachable failure modes", () => {
     runtimeConfigPath = runtime.configPath
     sql = postgres(databaseUrl, { onnotice: () => undefined })
 
-    writeFileSync(
+    await writeRuntimeConfig(
       runtimeConfigPath,
       `
 [agents.${AGENT_ID}]
@@ -132,7 +131,7 @@ interval_seconds = 5
       try {
         const rows = await sql<
           { error: string | null }[]
-        >`SELECT error FROM mon_website_ping WHERE key = 'website:http://127.0.0.1:39080/unreachable' AND error IS NOT NULL LIMIT 1`
+        >`SELECT error FROM mon_website_ping WHERE key = 'unreachable-website' AND error IS NOT NULL LIMIT 1`
         if (rows.length > 0) {
           errorRow = rows[0]
           break
@@ -176,7 +175,7 @@ interval_seconds = 5
       try {
         const rows = await sql<
           { error: string | null }[]
-        >`SELECT error FROM mon_host_ping WHERE key = 'host:192.0.2.1' AND error IS NOT NULL LIMIT 1`
+        >`SELECT error FROM mon_host_ping WHERE key = 'unreachable-host' AND error IS NOT NULL LIMIT 1`
         if (rows.length > 0) {
           errorRow = rows[0]
           break

@@ -1,10 +1,9 @@
 import { hashToken } from "@/lib/server/agent-auth"
 
-import { getRuntime } from "./_runtime"
+import { getRuntime, writeRuntimeConfig } from "./_runtime"
 
 import { expect, test } from "@playwright/test"
 import { randomUUID } from "crypto"
-import { writeFileSync } from "fs"
 import postgres from "postgres"
 
 const E2E_TOKEN = "e2e-test-token-32-bytes-long-here"
@@ -23,7 +22,7 @@ test.beforeAll(async () => {
   runtimeConfigPath = runtime.configPath
   sql = postgres(databaseUrl, { onnotice: () => undefined })
 
-  writeFileSync(
+  await writeRuntimeConfig(
     runtimeConfigPath,
     `
 [agents.${AGENT_ID}]
