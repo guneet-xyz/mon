@@ -16,9 +16,10 @@ arch=${1:?usage: smoke-test-images.sh <amd64|arm64>}
 : "${WEBSITE_IMAGE:?}" "${AGENT_IMAGE:?}" "${DOCS_IMAGE:?}" "${MIGRATOR_IMAGE:?}"
 
 POSTGRES_IMAGE=postgres:18-alpine
-DB_PORT=55432
-WEBSITE_PORT=53000
-DOCS_PORT=53001
+# Below the Linux ephemeral port range (32768+), so no client socket holds them.
+DB_PORT=15432
+WEBSITE_PORT=13000
+DOCS_PORT=13001
 DATABASE_URL="postgres://mon:mon@127.0.0.1:${DB_PORT}/mon"
 WEBSITE_URL="http://127.0.0.1:${WEBSITE_PORT}"
 DOCS_URL="http://127.0.0.1:${DOCS_PORT}"
@@ -82,7 +83,7 @@ echo "--- PostgreSQL"
 docker run --detach --name mon-smoke-db --network host \
   --env POSTGRES_USER=mon --env POSTGRES_PASSWORD=mon --env POSTGRES_DB=mon \
   --env PGPORT="$DB_PORT" \
-  "$POSTGRES_IMAGE" >/dev/null
+  "$POSTGRES_IMAGE" -c listen_addresses=127.0.0.1 >/dev/null
 # Probe over TCP: during initialisation PostgreSQL only listens on its socket.
 wait_for "PostgreSQL" 60 docker exec mon-smoke-db pg_isready -h 127.0.0.1 -U mon -d mon
 
@@ -142,12 +143,11 @@ docker run --detach --name mon-smoke-agent --network host \
   --env AGENT_POLL_INTERVAL_SECONDS=5 \
   "$AGENT_IMAGE" >/dev/null
 ping_recorded() {
-  [ "$(sql "SELECT count(*) FROM mon_website_ping WHERE key = 'smoke-website' AND agent_id = '$agent_id'")" -gt 0 ]
+  [ "$(sql "SELECT count(*) FROM mon_website_ping WHERE key = 'smoke-website' AND agent_id = '$agent_id' AND error IS NULL")" -gt 0 ]
 }
-wait_for "agent ping stored through the website" 90 ping_recorded
+wait_for "successful agent ping stored through the website" 90 ping_recorded
 is_running mon-smoke-agent || fail "agent exited"
 echo "ok: agent is still running"
-sql "SELECT key, agent_id, latency, error FROM mon_website_ping WHERE key = 'smoke-website' LIMIT 1"
 
 echo "--- docs"
 docker run --detach --name mon-smoke-docs --network host \
