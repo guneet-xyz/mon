@@ -166,15 +166,14 @@ Releases are managed by [release-please](https://github.com/googleapis/release-p
 
 For release `vX.Y.Z` each image gets these tags:
 
-| Tag                | Meaning                                                 |
-| ------------------ | ------------------------------------------------------- |
-| `vX.Y.Z`           | The release. Pin this, ideally with its digest.         |
-| `vX.Y`             | Newest release in that minor line.                      |
-| `vX`               | Newest release in that major line (only from `v1.0.0`). |
-| `latest`           | Newest release.                                         |
-| `sha-<commit sha>` | Full 40-character release commit, for traceability.     |
+| Tag      | Meaning                                                 |
+| -------- | ------------------------------------------------------- |
+| `vX.Y.Z` | The release. Pin this, ideally with its digest.         |
+| `vX.Y`   | Newest release in that minor line.                      |
+| `vX`     | Newest release in that major line (only from `v1.0.0`). |
+| `latest` | Newest release.                                         |
 
-`vX.Y`, `vX` and `latest` only move when the release is the repository's latest GitHub Release. Nothing is published from ordinary pushes, pull requests or other branches, and no workflow can publish manually. If publishing fails after the release was created, fix the cause and use **Re-run failed jobs** on that `release` run. Images published before release-please (`0.2.1`, `0.2`, `0`, `sha-…`) stay in the registry; new releases only get `v`-prefixed version tags.
+`vX.Y`, `vX` and `latest` only move when the release is the repository's latest GitHub Release. Nothing is published from ordinary pushes, pull requests or other branches, and no workflow can publish manually. If publishing fails after the release was created, fix the cause and use **Re-run failed jobs** on that `release` run. There are no `edge` or `sha-…` tags. Tags published before release-please (unprefixed `0.2.1`, `0.2`, `0` and `sha-<commit sha>`) stay in the registry and are not moved or deleted; new releases only get the `v`-prefixed tags above and `latest`.
 
 Registry credentials are a Dockyard automation key (pull + push on the `mon` project) stored as the `DOCKER_USERNAME` / `DOCKER_PASSWORD` secrets of the `release` GitHub environment; only the build, smoke-test and tagging jobs use them, and they are never passed into image builds. Publishing a release doesn't change any deployment: deployments pin `vX.Y.Z@sha256:…` and are upgraded separately.
 

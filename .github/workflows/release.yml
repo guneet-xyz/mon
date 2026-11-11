@@ -103,7 +103,7 @@ jobs:
             exit 1
           fi
 
-          tags="v$version sha-$RELEASE_SHA"
+          tags="v$version"
           latest=$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)
           if [ "$latest" = "$RELEASE_TAG" ]; then
             tags="$tags v$major.$minor latest"
