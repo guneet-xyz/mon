@@ -1,0 +1,298 @@
+name: release
+
+# Release Please keeps one release PR up to date from the Conventional Commits
+# on main. Merging that PR creates the vX.Y.Z tag and GitHub Release; this
+# workflow then runs the full CI suite on that exact commit, builds all four
+# images for linux/amd64 and linux/arm64, pushes them by digest only,
+# smoke-tests those digests on native runners and only then tags them.
+#
+# There is deliberately no manual trigger. Recover a failed publication with
+# "Re-run failed jobs" on the release run.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Never cancel a publication halfway through.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  IMAGE_PREFIX: cr.guneet.dev/mon
+
+jobs:
+  release-please:
+    name: Update release PR or create release
+    if: github.repository == 'guneet-xyz/mon'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      sha: ${{ steps.release.outputs.sha }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      # PRs and pushes made with GITHUB_TOKEN don't trigger push/pull_request
+      # workflows, but an explicit workflow_dispatch does.
+      - name: Dispatch CI for the release PR
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          jq -r '.[].headBranchName' <<<"$RELEASE_PRS" | while read -r branch; do
+            echo "Dispatching ci.yml on $branch"
+            gh workflow run ci.yml --ref "$branch"
+          done
+
+  prepare:
+    name: Resolve release source and image tags
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      version: ${{ steps.resolve.outputs.version }}
+      tags: ${{ steps.resolve.outputs.tags }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.release-please.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.release-please.outputs.tag }}
+          RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Expected a stable vX.Y.Z release tag, got '$RELEASE_TAG'"
+            exit 1
+          fi
+          major=${BASH_REMATCH[1]}
+          minor=${BASH_REMATCH[2]}
+          version=${RELEASE_TAG#v}
+          tagged_sha=$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")
+          if [ "$tagged_sha" != "$RELEASE_SHA" ]; then
+            echo "::error::$RELEASE_TAG points at $tagged_sha, but Release Please reported $RELEASE_SHA"
+            exit 1
+          fi
+          git merge-base --is-ancestor "$RELEASE_SHA" origin/main
+          if [ "$(jq -r .version package.json)" != "$version" ]; then
+            echo "::error::package.json version does not match $RELEASE_TAG"
+            exit 1
+          fi
+
+          tags="v$version sha-$RELEASE_SHA"
+          latest=$(gh api "repos/$GH_REPO/releases/latest" --jq .tag_name)
+          if [ "$latest" = "$RELEASE_TAG" ]; then
+            tags="$tags v$major.$minor latest"
+            if [ "$major" -ge 1 ]; then tags="$tags v$major"; fi
+          else
+            echo "::warning::$RELEASE_TAG is not the latest release ($latest); not moving latest or alias tags"
+          fi
+          {
+            echo "sha=$RELEASE_SHA"
+            echo "version=$version"
+            echo "tags=$tags"
+          } >> "$GITHUB_OUTPUT"
+          echo "Release $RELEASE_TAG at $RELEASE_SHA; image tags: $tags"
+
+  checks:
+    name: Full CI on the release commit
+    needs: prepare
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+
+  build:
+    name: Build ${{ matrix.component }} (${{ matrix.platform }})
+    needs: [prepare, checks]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    # Registry credentials (a Dockyard automation key with pull + push on the
+    # `mon` project) live only in this environment's secrets.
+    environment: release
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [website, agent, docs, migrator]
+        platform: [amd64, arm64]
+        include:
+          - component: website
+            dockerfile: apps/website/Dockerfile
+          - component: agent
+            dockerfile: apps/agent/Dockerfile
+          - component: docs
+            dockerfile: apps/docs/Dockerfile
+          - component: migrator
+            dockerfile: packages/db/Dockerfile
+          - platform: amd64
+            runner: ubuntu-24.04
+          - platform: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: cr.guneet.dev
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      # Pushed by digest only: no tag exists until the smoke tests pass.
+      - id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/${{ matrix.platform }}
+          labels: |
+            org.opencontainers.image.title=mon-${{ matrix.component }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=v${{ needs.prepare.outputs.version }}
+            org.opencontainers.image.revision=${{ needs.prepare.outputs.sha }}
+          outputs: type=image,name=${{ env.IMAGE_PREFIX }}/${{ matrix.component }},push-by-digest=true,name-canonical=true,push=true
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.component }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}-${{ matrix.platform }}
+      - name: Record digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          COMPONENT: ${{ matrix.component }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::Unexpected digest '$DIGEST'"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/digests"
+          echo "$DIGEST" > "$RUNNER_TEMP/digests/$COMPONENT-$PLATFORM"
+          echo "linux/$PLATFORM: \`$IMAGE_PREFIX/$COMPONENT@$DIGEST\`" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digest-${{ matrix.component }}-${{ matrix.platform }}
+          path: ${{ runner.temp }}/digests/${{ matrix.component }}-${{ matrix.platform }}
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke:
+    name: Smoke test (${{ matrix.platform }})
+    needs: [prepare, build]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    environment: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: amd64
+            runner: ubuntu-24.04
+          - platform: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: digest-*-${{ matrix.platform }}
+          path: ${{ runner.temp }}/digests
+          merge-multiple: true
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: cr.guneet.dev
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Pull the exact digests
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          for component in website agent docs migrator; do
+            ref="$IMAGE_PREFIX/$component@$(cat "$RUNNER_TEMP/digests/$component-$PLATFORM")"
+            docker pull "$ref"
+            echo "$(echo "$component" | tr '[:lower:]' '[:upper:]')_IMAGE=$ref" >> "$GITHUB_ENV"
+          done
+      - name: Smoke test
+        run: .github/scripts/smoke-test-images.sh ${{ matrix.platform }}
+
+  publish:
+    name: Tag ${{ matrix.component }}
+    needs: [prepare, smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [website, agent, docs, migrator]
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: digest-${{ matrix.component }}-*
+          path: ${{ runner.temp }}/digests
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: cr.guneet.dev
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Create the multi-arch index and tags
+        id: index
+        env:
+          COMPONENT: ${{ matrix.component }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          TAGS: ${{ needs.prepare.outputs.tags }}
+        run: |
+          set -euo pipefail
+          image="$IMAGE_PREFIX/$COMPONENT"
+          args=()
+          for tag in $TAGS; do args+=(--tag "$image:$tag"); done
+          docker buildx imagetools create "${args[@]}" \
+            "$image@$(cat "$RUNNER_TEMP/digests/$COMPONENT-amd64")" \
+            "$image@$(cat "$RUNNER_TEMP/digests/$COMPONENT-arm64")"
+
+          docker buildx imagetools inspect "$image:v$VERSION" --raw > "$RUNNER_TEMP/index.json"
+          jq --exit-status '[.manifests[].platform | select(.os == "linux") | .architecture] | sort == ["amd64", "arm64"]' "$RUNNER_TEMP/index.json"
+          digest=$(docker buildx imagetools inspect "$image:v$VERSION" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          {
+            echo "### $image"
+            echo "Digest: \`$digest\`"
+            echo
+            for tag in $TAGS; do echo "- \`$image:$tag\`"; done
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        if: github.event.repository.visibility == 'public'
+        with:
+          subject-name: ${{ env.IMAGE_PREFIX }}/${{ matrix.component }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          push-to-registry: false
