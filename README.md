@@ -150,7 +150,34 @@ This touches five files; the path is documented in [`AGENTS.md` → WHERE TO LOO
 
 ## Production
 
-Each app builds to its own Docker image. There is no PaaS. When a push to `main` produces a release (via conventional commits), CI builds multi-arch (`linux/amd64`, `linux/arm64`) images and pushes them to `cr.guneet.dev/mon/{website,agent,docs,migrator}`, tagged with the version and the commit SHA. A manual `workflow_dispatch` of the `push` workflow builds the current branch (tagged `latest` by default). Registry credentials are a Dockyard automation key stored as the `DOCKER_USERNAME` / `DOCKER_PASSWORD` secrets of the `release` GitHub environment. CI does not deploy anything. The compose file is yours to write — the apps don't care, they only need env vars and a config file.
+Each app builds to its own Docker image. There is no PaaS. Releases publish multi-arch (`linux/amd64`, `linux/arm64`) images to `cr.guneet.dev/mon/{website,agent,docs,migrator}`; see [Releases and images](#releases-and-images). CI does not deploy anything. The compose file is yours to write — the apps don't care, they only need env vars and a config file.
+
+### Releases and images
+
+Releases are managed by [release-please](https://github.com/googleapis/release-please) ([`release-please-config.json`](./release-please-config.json), [`.release-please-manifest.json`](./.release-please-manifest.json)). The whole repository shares **one version**: the root `package.json` version, Git tag `vX.Y.Z` and all four image tags always match.
+
+1. Commits on `main` (squash-merge PR titles) follow [Conventional Commits](https://www.conventionalcommits.org/). `fix:` bumps the patch version, `feat:` the minor version, and `!` / `BREAKING CHANGE:` the major version, except that while the version is `0.x` a breaking change only bumps the minor version (`bump-minor-pre-major`). `1.0.0` is released deliberately, with a commit whose body has a `Release-As: 1.0.0` footer. `ci:`, `docs:`, `test:` and `chore:` don't cause a release on their own.
+2. On every push to `main`, the [`release`](./.github/workflows/release.yml) workflow updates a single release PR that bumps `package.json` and `.release-please-manifest.json` and updates the generated `CHANGELOG.md` (don't edit it by hand). Because the PR is opened with `GITHUB_TOKEN`, the workflow dispatches [`ci`](./.github/workflows/ci.yml) on the release-PR branch so the PR gets checks.
+3. **Merging the release PR is the release.** release-please creates the `vX.Y.Z` tag and GitHub Release. The workflow then:
+   - runs the full `ci` suite (format, lint, actionlint, unit/integration, E2E, image builds + smoke test) on the exact release commit;
+   - builds each image natively on `ubuntu-24.04` (amd64) and `ubuntu-24.04-arm` (arm64) with SBOM and provenance attestations and pushes it **by digest only**, without tags;
+   - pulls those digests and runs [`.github/scripts/smoke-test-images.sh`](./.github/scripts/smoke-test-images.sh) on each architecture: a throwaway PostgreSQL, the migrator (twice), the website, an agent whose ping must reach the database through the website, and the docs site;
+   - only then creates the multi-arch index for each image, tags it, and records a GitHub build-provenance attestation for the index digest.
+
+For release `vX.Y.Z` each image gets these tags:
+
+| Tag      | Meaning                                                 |
+| -------- | ------------------------------------------------------- |
+| `vX.Y.Z` | The release. Pin this, ideally with its digest.         |
+| `vX.Y`   | Newest release in that minor line.                      |
+| `vX`     | Newest release in that major line (only from `v1.0.0`). |
+| `latest` | Newest release.                                         |
+
+`vX.Y`, `vX` and `latest` only move when the release is the repository's latest GitHub Release. Nothing is published from ordinary pushes, pull requests or other branches, and no workflow can publish manually. If publishing fails after the release was created, fix the cause and use **Re-run failed jobs** on that `release` run. There are no `edge` or `sha-…` tags. Tags published before release-please (unprefixed `0.2.1`, `0.2`, `0` and `sha-<commit sha>`) stay in the registry and are not moved or deleted; new releases only get the `v`-prefixed tags above and `latest`.
+
+Registry credentials are a Dockyard automation key (pull + push on the `mon` project) stored as the `DOCKER_USERNAME` / `DOCKER_PASSWORD` secrets of the `release` GitHub environment; only the build, smoke-test and tagging jobs use them, and they are never passed into image builds. Publishing a release doesn't change any deployment: deployments pin `vX.Y.Z@sha256:…` and are upgraded separately.
+
+Owner setup: **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** must be enabled for release-please to open its PR.
 
 ### Build images
 
