@@ -38,6 +38,43 @@ const KeyedTileSchema = TileSchema.extend({
   short_name: z.string().optional(),
 })
 
+const SpanSchema = z.number().int().positive()
+
+// A member is a monitor key, optionally with its placement in the group's
+// expanded subgrid. Bare keys are normalized to `{ key }`.
+const GroupMemberSchema = z
+  .union([
+    z.string(),
+    z.object({
+      key: z.string(),
+      row_start: z.number().int().optional(),
+      row_span: SpanSchema.optional(),
+      col_start: z.number().int().optional(),
+      col_span: SpanSchema.optional(),
+    }),
+  ])
+  .transform(
+    (
+      member,
+    ): {
+      key: string
+      row_start?: number
+      row_span?: number
+      col_start?: number
+      col_span?: number
+    } => (typeof member === "string" ? { key: member } : member),
+  )
+
+// Size of an expanded group: row_span/col_span in parent-grid cells, and the
+// rows x cols subgrid its members are laid out in. Unset values are derived
+// from the members by the website.
+const GroupExpandedSchema = z.object({
+  row_span: SpanSchema.optional(),
+  col_span: SpanSchema.optional(),
+  rows: SpanSchema.optional(),
+  cols: SpanSchema.optional(),
+})
+
 const MonitorSchema = KeyedTileSchema.extend({
   hidden: z.boolean().optional(), // leave off the grid; still polled and listed in groups
   agent: z.string().default("default"), // which agent handles this tile
@@ -70,7 +107,8 @@ const _ConfigSchema = z.object({
         }),
         KeyedTileSchema.extend({
           type: z.literal("group"),
-          members: z.array(z.string()).min(1), // monitor keys
+          members: z.array(GroupMemberSchema).min(1),
+          expanded: GroupExpandedSchema.optional(),
         }),
         TileSchema.extend({
           type: z.literal("empty"),
@@ -126,27 +164,59 @@ export const ConfigSchema = _ConfigSchema.superRefine((config, ctx) => {
     groupKeys.add(tile.key)
 
     const seen = new Set<string>()
-    tile.members.forEach((member, memberIndex) => {
+    tile.members.forEach(({ key }, memberIndex) => {
       const path = ["tiles", index, "members", memberIndex]
-      const count = monitorCounts.get(member) ?? 0
+      const count = monitorCounts.get(key) ?? 0
       if (count !== 1) {
         ctx.addIssue({
           code: "custom",
           message:
             count === 0
-              ? `Group "${tile.key}" member "${member}" is not a monitor key`
-              : `Group "${tile.key}" member "${member}" matches ${count} monitors; give them unique keys`,
+              ? `Group "${tile.key}" member "${key}" is not a monitor key`
+              : `Group "${tile.key}" member "${key}" matches ${count} monitors; give them unique keys`,
           path,
         })
-      } else if (seen.has(member)) {
+      } else if (seen.has(key)) {
         ctx.addIssue({
           code: "custom",
-          message: `Group "${tile.key}" lists "${member}" more than once`,
+          message: `Group "${tile.key}" lists "${key}" more than once`,
           path,
         })
       }
-      seen.add(member)
+      seen.add(key)
     })
+
+    // An explicit subgrid dimension must hold every member placed along it.
+    const { rows, cols } = tile.expanded ?? {}
+    const fits = (start: number | undefined, span = 1, size?: number) =>
+      size === undefined ||
+      (span <= size &&
+        (start === undefined || Math.abs(start) + span - 1 <= size))
+    tile.members.forEach((member, memberIndex) => {
+      if (
+        !fits(member.row_start, member.row_span, rows) ||
+        !fits(member.col_start, member.col_span, cols)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Group "${tile.key}" member "${member.key}" does not fit its ${rows ?? "auto"} x ${cols ?? "auto"} subgrid`,
+          path: ["tiles", index, "members", memberIndex],
+        })
+      }
+    })
+    if (rows !== undefined && cols !== undefined) {
+      const area = tile.members.reduce(
+        (sum, member) => sum + (member.row_span ?? 1) * (member.col_span ?? 1),
+        0,
+      )
+      if (area > rows * cols) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Group "${tile.key}" members need ${area} cells but its subgrid has ${rows * cols}`,
+          path: ["tiles", index, "expanded"],
+        })
+      }
+    }
   })
 })
 
@@ -160,6 +230,7 @@ export type NonMonitorTile = Extract<
 >
 
 export type GroupTile = Extract<Config["tiles"][number], { type: "group" }>
+export type GroupMember = GroupTile["members"][number]
 
 export type MonitorTile = Exclude<
   Config["tiles"][number],
@@ -191,12 +262,18 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never
 
-export type PublicTile = DistributiveOmit<Tile, ServerOnlyTileField>
+export type PublicGroupMember = GroupMember & { type: MonitorTile["type"] }
+export type PublicGroupTile = Omit<
+  DistributiveOmit<GroupTile, ServerOnlyTileField>,
+  "members"
+> & { members: PublicGroupMember[] }
+export type PublicTile =
+  | DistributiveOmit<Exclude<Tile, GroupTile>, ServerOnlyTileField>
+  | PublicGroupTile
 export type PublicMonitorTile = DistributiveOmit<
   MonitorTile,
   ServerOnlyTileField
 >
-export type PublicGroupTile = DistributiveOmit<GroupTile, ServerOnlyTileField>
 export type PublicConfig = {
   options: Config["options"]
   tiles: PublicTile[]
@@ -211,13 +288,24 @@ export function toPublicTile<T extends Tile>(
 }
 
 // Strips agents (token hashes), server-only tile fields and monitors that are
-// not on the grid before a config is serialized to the client.
+// not on the grid before a config is serialized to the client. Group members
+// carry their monitor's type so the client can render them in a subgrid.
 export function toPublicConfig(config: Config): PublicConfig {
+  const types = new Map(getMonitorTiles(config).map((t) => [t.key, t.type]))
   return {
     options: config.options,
     tiles: config.tiles
       .filter((tile) => isTileOnGrid(config, tile))
-      .map((tile) => toPublicTile(tile)),
+      .map((tile): PublicTile => {
+        if (tile.type !== "group") return toPublicTile(tile)
+        return {
+          ...toPublicTile(tile),
+          members: tile.members.flatMap((member) => {
+            const type = types.get(member.key)
+            return type ? [{ ...member, type }] : []
+          }),
+        }
+      }),
   }
 }
 
@@ -241,7 +329,7 @@ export function getGroupMembers(
   const monitors = new Map(
     getMonitorTiles(config).map((tile) => [tile.key, tile]),
   )
-  return group.members.flatMap((key) => monitors.get(key) ?? [])
+  return group.members.flatMap(({ key }) => monitors.get(key) ?? [])
 }
 
 // A monitor's own `hidden` wins. Otherwise grouped monitors follow
@@ -251,7 +339,9 @@ export function isTileOnGrid(config: Config, tile: Tile): boolean {
   if (tile.hidden !== undefined) return !tile.hidden
   if (!config.options.hide_grouped_tiles) return true
   return !config.tiles.some(
-    (other) => other.type === "group" && other.members.includes(tile.key),
+    (other) =>
+      other.type === "group" &&
+      other.members.some((member) => member.key === tile.key),
   )
 }
 

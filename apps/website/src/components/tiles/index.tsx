@@ -3,14 +3,20 @@ import type { GeneratedTile } from "@/lib/client/tile-generation"
 import { ContainerTile } from "./container"
 import { EmptyTile } from "./empty"
 import { GithubTile } from "./github"
-import { GroupTile } from "./group"
+import { ExpandedGroupTile, GroupTile } from "./group"
 import { HiddenTile } from "./hidden"
 import { HostTile } from "./host"
 import { LogoTile } from "./logo"
 import { ThemeTile } from "./theme"
 import { WebsiteTile } from "./website"
 
-export function Tile({ tile }: { tile: GeneratedTile }) {
+export function Tile({
+  tile,
+  onToggleGroup,
+}: {
+  tile: GeneratedTile
+  onToggleGroup?: (key: string) => void
+}) {
   if (tile.type === "container") {
     return (
       <Container {...tile.location}>
@@ -60,13 +66,29 @@ export function Tile({ tile }: { tile: GeneratedTile }) {
   }
 
   if (tile.type === "group") {
+    const toggle = () => onToggleGroup?.(tile.key)
     return (
       <Container {...tile.location}>
-        <GroupTile
-          dbKey={tile.key}
-          r_span={tile.location.row_span}
-          c_span={tile.location.col_span}
-        />
+        {tile.subgrid ? (
+          <ExpandedGroupTile
+            dbKey={tile.key}
+            subgrid={tile.subgrid}
+            onCollapse={toggle}
+          >
+            {tile.subgrid.success
+              ? tile.subgrid.tiles.map((member, index) => (
+                  <Tile key={index} tile={member} />
+                ))
+              : null}
+          </ExpandedGroupTile>
+        ) : (
+          <GroupTile
+            dbKey={tile.key}
+            r_span={tile.location.row_span}
+            c_span={tile.location.col_span}
+            onExpand={toggle}
+          />
+        )}
       </Container>
     )
   }

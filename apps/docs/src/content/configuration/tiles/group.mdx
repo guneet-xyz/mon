@@ -2,21 +2,53 @@
 
 A group tile sums up several monitors in one tile. Use `type = "group"` to use this tile.
 
-The tile shows the group's name, how many of its members are up (for example `7/8 up`), the combined status and a status line with one segment per member. Clicking it lists every member with its status, and each member opens its own monitor dialog.
+Collapsed, the tile shows the group's name, how many of its members are up (for example `7/8 up`), the combined status and a status line with one segment per member.
+
+Clicking it expands the group in place: it grows to its expanded size, the rest of the board moves to make room, and the group becomes a subgrid of its member tiles. Each member opens its own monitor dialog. The header of an expanded group collapses it again. Any number of groups can be expanded at once, and the browser remembers which ones are expanded (as it does the theme) across reloads.
 
 ## Properties
 
 Groups accept the [common tile properties](/docs/configuration/tiles) and these:
 
-| Property     | Type     | Description                                                                                       | Required |
-| ------------ | -------- | ------------------------------------------------------------------------------------------------- | -------- |
-| `key`        | string   | Key to identify this group. Must be unique among groups.                                          | Yes      |
-| `members`    | string[] | `key`s of the monitors in this group, in display order. Each must match exactly one monitor tile. | Yes      |
-| `name`       | string   | Name of the group.                                                                                | No       |
-| `short_name` | string   | Short name of the group. Used when the tile size is 1x1.                                          | No       |
-| `icon`       | string   | Icon to use when the tile is `1x1` and `short_name` is not set.                                   | No       |
+| Property     | Type   | Description                                                                                                                               | Required |
+| ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `key`        | string | Key to identify this group. Must be unique among groups.                                                                                  | Yes      |
+| `members`    | array  | Monitors in this group, in placement order: a monitor `key`, or a [member table](#members). Each key must match exactly one monitor tile. | Yes      |
+| `name`       | string | Name of the group.                                                                                                                        | No       |
+| `short_name` | string | Short name of the group. Used when the tile size is 1x1.                                                                                  | No       |
+| `icon`       | string | Icon to use when the tile is `1x1` and `short_name` is not set.                                                                           | No       |
+| `expanded`   | table  | Size and subgrid of the expanded group. See [Expanded size](#expanded-size).                                                              | No       |
+
+The common `row_span` and `col_span` properties set the collapsed size.
 
 A monitor can belong to any number of groups. Groups cannot contain other groups.
+
+## Expanded size
+
+| Property            | Type   | Description                                       | Default                                                                        |
+| ------------------- | ------ | ------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `expanded.row_span` | number | Rows of the board the expanded group takes.       | Smallest near-square size that fits every member, at least the collapsed size. |
+| `expanded.col_span` | number | Columns of the board the expanded group takes.    | As above.                                                                      |
+| `expanded.rows`     | number | Rows of the subgrid inside the expanded group.    | See below.                                                                     |
+| `expanded.cols`     | number | Columns of the subgrid inside the expanded group. | See below.                                                                     |
+
+When neither `rows` nor `cols` is set, the subgrid is the grid closest to the number of cells the members need whose cells keep the expanded tile's proportions (`rows / cols` close to `row_span / col_span`). When only one is set, the other is derived from the members. A derived dimension grows if the members don't pack into it; explicit ones never change, and members that don't fit are reported in the group.
+
+If only one of `expanded.row_span` and `expanded.col_span` is set, the other is derived from the members.
+
+## Members
+
+A member is either a monitor key or a table with the key and its placement in the subgrid. Placement follows the [common tile properties](/docs/configuration/tiles), counted in subgrid cells:
+
+| Property    | Type   | Description                                               | Required |
+| ----------- | ------ | --------------------------------------------------------- | -------- |
+| `key`       | string | Key of the monitor.                                       | Yes      |
+| `row_start` | number | Subgrid row to start in. Negative counts from the end.    | No       |
+| `col_start` | number | Subgrid column to start in. Negative counts from the end. | No       |
+| `row_span`  | number | Subgrid rows the member spans.                            | No       |
+| `col_span`  | number | Subgrid columns the member spans.                         | No       |
+
+A monitor can have a different placement in each group it belongs to.
 
 ## Status
 
@@ -28,7 +60,7 @@ A monitor can belong to any number of groups. Groups cannot contain other groups
 
 ## Showing members on the board
 
-Monitors stay on the board by default, even when they belong to a group. Set `hidden = true` on a monitor to leave it off the board; it is still polled and listed in its groups.
+Monitors stay on the board by default, even when they belong to a group. Set `hidden = true` on a monitor to leave it off the board; it is still polled and shown in its expanded groups.
 
 To hide grouped monitors by default instead, set `hide_grouped_tiles` in `[options]`. A grouped monitor with `hidden = false` is then still shown:
 
@@ -62,5 +94,16 @@ hidden = true
 type = "group"
 key = "grp-immich"
 name = "Immich"
-members = ["site-immich", "ctr-immich-server"]
+col_span = 2 # collapsed: 1x2
+members = [
+  { key = "site-immich", col_span = 2 },
+  "ctr-immich-server",
+  "ctr-immich-postgres",
+]
+
+[tiles.expanded]
+row_span = 2 # expanded: 2x3 cells of the board
+col_span = 3
+rows = 2 # laid out as a 2x2 subgrid
+cols = 2
 ```

@@ -12,6 +12,9 @@ export function ThemeTile() {
       r_span={1}
       c_span={1}
       icon={theme === "dark" ? "pixelarticons:moon" : "solar:sun-bold-duotone"}
+      label={
+        theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
+      }
       onClick={() => {
         setTheme(theme === "dark" ? "light" : "dark")
       }}

@@ -15,6 +15,7 @@ export function BaseTile({
   children,
   onClick,
   statusLine,
+  label,
 }: {
   r_span: number
   c_span: number
@@ -28,6 +29,7 @@ export function BaseTile({
   children?: React.ReactNode
   onClick?: () => void
   statusLine?: Array<"online" | "offline" | "unknown">
+  label?: string // accessible name when the tile acts as a button
 }) {
   const showIconOnly = r_span === 1 && c_span === 1
   return (
@@ -43,6 +45,19 @@ export function BaseTile({
         className,
       )}
       onClick={onClick}
+      {...(label
+        ? {
+            role: "button",
+            tabIndex: 0,
+            "aria-label": label,
+            onKeyDown: (event: React.KeyboardEvent) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                onClick?.()
+              }
+            },
+          }
+        : {})}
     >
       {top_text ? (
         <div className="absolute top-1.5 left-1/2 -translate-x-1/2 font-display text-xs font-semibold text-emerald-500 md:text-sm dark:text-emerald-800">
