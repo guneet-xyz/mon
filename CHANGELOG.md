@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/guneet-xyz/mon/compare/v0.4.0...v0.5.0) (2026-11-12)
+
+
+### Features
+
+* expand groups in place with an animation ([#52](https://github.com/guneet-xyz/mon/issues/52)) ([d03fb8e](https://github.com/guneet-xyz/mon/commit/d03fb8ebb6253714bea740b02fd2833b957bdfab)), closes [#51](https://github.com/guneet-xyz/mon/issues/51)
+
 ## [0.4.0](https://github.com/guneet-xyz/mon/compare/v0.3.0...v0.4.0) (2026-11-12)
 
 
