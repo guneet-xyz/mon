@@ -1,8 +1,8 @@
-import { type Config, getConfig } from "@mon/config"
+import { statSync } from "fs"
+
+import { getConfig, type Config } from "@mon/config"
 
 import { env } from "@/env"
-
-import { statSync } from "fs"
 
 const TTL_MS = 5000
 

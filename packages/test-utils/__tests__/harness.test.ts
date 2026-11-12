@@ -1,8 +1,8 @@
+import { afterAll, describe, expect, it } from "bun:test"
+
 import { hostPings } from "@mon/db/schema"
 
 import { createTestDb } from "../index"
-
-import { afterAll, describe, expect, it } from "bun:test"
 
 describe("ephemeral Postgres harness", () => {
   let stop: (() => void) | undefined

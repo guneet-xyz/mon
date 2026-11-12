@@ -1,10 +1,10 @@
 import "@/styles/globals.css"
 
-import { Providers } from "./_components/providers"
-
 import { GeistSans } from "geist/font/sans"
 import { type Metadata } from "next"
 import localFont from "next/font/local"
+
+import { Providers } from "./_components/providers"
 
 export const metadata: Metadata = {
   title: "mon",

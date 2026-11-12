@@ -1,3 +1,5 @@
+import { describe, expect, it } from "bun:test"
+
 import type { PublicConfig, PublicGroupTile } from "@mon/config/schema"
 
 import {
@@ -6,8 +8,6 @@ import {
   layoutSubgrid,
   resolveGroupLayout,
 } from "./tile-generation"
-
-import { describe, expect, it } from "bun:test"
 
 const member = (key: string, extra: Record<string, number> = {}) => ({
   key,

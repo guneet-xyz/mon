@@ -1,8 +1,8 @@
+import { describe, expect, it } from "bun:test"
+
 import { getConfig } from "@mon/config"
 
 import { fixturePath } from "../fixtures/index"
-
-import { describe, expect, it } from "bun:test"
 
 describe("fixtures", () => {
   it("minimal.toml loads successfully", async () => {

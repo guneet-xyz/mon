@@ -1,5 +1,7 @@
+import { createHash } from "crypto"
+import { describe, expect, test } from "bun:test"
+
 import {
-  type Config,
   ConfigSchema,
   getAgentAssignments,
   getGroupMembers,
@@ -7,10 +9,8 @@ import {
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
+  type Config,
 } from "./schema"
-
-import { describe, expect, test } from "bun:test"
-import { createHash } from "crypto"
 
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex")
 

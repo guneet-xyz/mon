@@ -1,15 +1,15 @@
-import {
-  type Config,
-  ConfigSchema,
-  type GroupTile,
-  type MonitorTile,
-  getGroupMembers,
-  getMonitorTiles,
-} from "./schema"
-
 import { existsSync } from "fs"
 import { mkdir, readFile, writeFile } from "fs/promises"
 import { parse } from "smol-toml"
+
+import {
+  ConfigSchema,
+  getGroupMembers,
+  getMonitorTiles,
+  type Config,
+  type GroupTile,
+  type MonitorTile,
+} from "./schema"
 
 export type {
   Config,
@@ -57,8 +57,7 @@ export async function getMonitorConfig<T extends MonitorTile["type"]>(
 ): Promise<Extract<MonitorTile, { type: T }> | undefined> {
   const monitors = await getMonitors(path)
   return monitors.find((tile) => tile.type === type && tile.key === key) as
-    | Extract<MonitorTile, { type: T }>
-    | undefined
+    Extract<MonitorTile, { type: T }> | undefined
 }
 
 export async function getMonitors(path: string): Promise<MonitorTile[]> {

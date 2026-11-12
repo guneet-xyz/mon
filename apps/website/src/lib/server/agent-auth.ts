@@ -1,10 +1,9 @@
-import type { Config } from "@mon/config"
-
 import { createHash, timingSafeEqual } from "crypto"
 
+import type { Config } from "@mon/config"
+
 export type AuthResult =
-  | { agentId: string }
-  | { error: "missing" | "malformed" | "unauthorized" }
+  { agentId: string } | { error: "missing" | "malformed" | "unauthorized" }
 
 // Verify Authorization: Bearer <token> + X-Agent-Id header against config
 export function verifyBearerToken(

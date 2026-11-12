@@ -1,10 +1,10 @@
+import { describe, expect, it, mock } from "bun:test"
+
 import {
   UnauthorizedError,
   UnreachableError,
   WebsiteApiClient,
 } from "./api-client"
-
-import { describe, expect, it, mock } from "bun:test"
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {

@@ -1,6 +1,6 @@
-import { type MockHttpHost, createMockHttpHost } from "../index"
-
 import { afterEach, describe, expect, it } from "bun:test"
+
+import { createMockHttpHost, type MockHttpHost } from "../index"
 
 describe("createMockHttpHost", () => {
   let host: MockHttpHost | undefined

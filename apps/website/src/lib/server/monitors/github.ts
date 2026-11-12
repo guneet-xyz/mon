@@ -1,12 +1,12 @@
+import dayjs from "dayjs"
+
 import { and, desc, eq, gte, isNotNull, isNull } from "@mon/db/drizzle"
-import { type DbSelectGithubPing, githubPings } from "@mon/db/schema"
+import { githubPings, type DbSelectGithubPing } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
 import type { IncidentPing } from "."
 import { statusFromLatestPing } from "./status"
-
-import dayjs from "dayjs"
 
 export async function getGithubPings(
   dbKey: string,

@@ -1,5 +1,6 @@
 import { ClientOnly } from "@/components/client-only"
 import { ThemeButton } from "@/components/theme-button"
+
 import "@/styles/globals.css"
 
 import { type Metadata } from "next"
@@ -7,7 +8,9 @@ import localFont from "next/font/local"
 import Link from "next/link"
 import type { PageMapItem } from "nextra"
 import { Footer, Layout, Navbar } from "nextra-theme-docs"
+
 import "nextra-theme-docs/style.css"
+
 import { Head } from "nextra/components"
 import { getPageMap } from "nextra/page-map"
 

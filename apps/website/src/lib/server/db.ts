@@ -1,4 +1,4 @@
-import { type Db, createDb } from "@mon/db"
+import { createDb, type Db } from "@mon/db"
 
 import { env } from "@/env"
 

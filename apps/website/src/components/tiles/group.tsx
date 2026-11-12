@@ -1,5 +1,8 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
+import { Minimize2 } from "lucide-react"
+
 import { StatusDot } from "@/components/status-dot"
 import type { Subgrid } from "@/lib/client/tile-generation"
 import { getGroupTileInfo } from "@/lib/server/actions/get-group-tile-info"
@@ -7,9 +10,6 @@ import { cn } from "@/lib/utils"
 
 import { BaseTile } from "./_base"
 import { LoadingTile } from "./loading"
-
-import { useQuery } from "@tanstack/react-query"
-import { Minimize2 } from "lucide-react"
 
 function useGroupInfo(dbKey: string) {
   const { data, isFetched } = useQuery({

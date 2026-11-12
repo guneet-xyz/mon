@@ -1,8 +1,8 @@
+import { beforeEach, describe, expect, it, mock } from "bun:test"
+
 import type { GithubJobTile } from "@mon/contracts"
 
 import { pingGithub } from "./github"
-
-import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingGithub", () => {
   let mockFetch: any

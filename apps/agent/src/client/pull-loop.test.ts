@@ -1,9 +1,9 @@
-import type { JobTile, JobsResponse } from "@mon/contracts"
+import { describe, expect, it, mock } from "bun:test"
+
+import type { JobsResponse, JobTile } from "@mon/contracts"
 
 import { UnauthorizedError, UnreachableError } from "./api-client"
 import { startPullLoop } from "./pull-loop"
-
-import { describe, expect, it, mock } from "bun:test"
 
 interface FakeClientOptions {
   responses: Array<JobsResponse | Error>

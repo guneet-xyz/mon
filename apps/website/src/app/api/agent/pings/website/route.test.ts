@@ -1,6 +1,6 @@
-import { hashToken } from "@/lib/server/agent-auth"
-
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test"
+
+import { hashToken } from "@/lib/server/agent-auth"
 
 const TOKEN = "super-secret-agent-token-with-enough-entropy-1234"
 const AGENT_ID = "default"

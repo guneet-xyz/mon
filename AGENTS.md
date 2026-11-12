@@ -39,7 +39,7 @@ mon/
 
 - **Package manager: Bun**, version pinned in CI to `1.2.15`. Use `bun i`, `bunx`, never `npm`/`pnpm`.
 - **Workspace imports**: `@mon/config`, `@mon/db`, `@mon/db/schema`, `@mon/db/drizzle`, `@mon/contracts`. Each app owns its own `src/env.ts` (no shared env package). The `@/*` alias is **website-only** and points at `apps/website/src/*` (see root [tsconfig.json](file:///Users/guneet/projects/mon/tsconfig.json#L29-L31)).
-- **Prettier** is repo-wide and opinionated: `semi: false`, import order `@mon → @/ → relative`. Tailwind class sort + package.json sort plugins are active. Run via `bun run format:write`.
+- **Prettier** is repo-wide ([prettier.config.mjs](prettier.config.mjs), following the [workspace Prettier standard](https://git.guneet.dev/guneet/workspace/src/branch/main/decisions/prettier-configuration.md)): `semi: false`, import order `built-ins/third-party → @mon/* → @/ → relative`. Tailwind class sort + package.json sort plugins are active. Run via `bun run format:write`.
 - **Lint = website + docs + repo-wide `tsc --noEmit`**. Root `tsc` config **excludes** `apps/website` and `apps/docs` (they have their own `tsconfig.json` driven by Next).
 - **Discriminated unions on `type`** (zod `discriminatedUnion`) are the canonical pattern for tile/monitor variants — both schema and runtime dispatch use this.
 - **Result-style returns** for fallible ops: `{ success: true, ... } | { success: false, error: string }` (see [host.ts pingHost](file:///Users/guneet/projects/mon/apps/agent/src/jobs/host.ts#L31-L56)). No throwing for expected failure modes.

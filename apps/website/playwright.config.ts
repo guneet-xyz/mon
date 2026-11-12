@@ -1,7 +1,7 @@
-import { defineConfig, devices } from "@playwright/test"
 import { readFileSync } from "fs"
 import { dirname, join } from "path"
 import { fileURLToPath } from "url"
+import { defineConfig, devices } from "@playwright/test"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const RUNTIME_FILE = join(HERE, ".e2e-runtime.json")

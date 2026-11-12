@@ -36,8 +36,6 @@
     "eslint-config-next": "16.2.6",
     "pagefind": "^1.3.0",
     "postcss": "^8.5.3",
-    "prettier": "^3.5.3",
-    "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.0.15",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5.8.2",

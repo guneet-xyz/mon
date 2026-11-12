@@ -1,10 +1,10 @@
-import { type ContainerPingDTO, ContainerPingDTOSchema } from "@mon/contracts"
+import { ZodError } from "zod"
+
+import { ContainerPingDTOSchema, type ContainerPingDTO } from "@mon/contracts"
 
 import { verifyBearerToken } from "@/lib/server/agent-auth"
 import { getCachedConfig } from "@/lib/server/config-cache"
 import { insertContainerPing } from "@/lib/server/ingest/container"
-
-import { ZodError } from "zod"
 
 export async function POST(request: Request): Promise<Response> {
   const config = await getCachedConfig()

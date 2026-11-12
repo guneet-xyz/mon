@@ -1,8 +1,8 @@
+import { describe, expect, it } from "bun:test"
+
 import type { Config } from "@mon/config"
 
 import { hashToken, verifyBearerToken } from "@/lib/server/agent-auth"
-
-import { describe, expect, it } from "bun:test"
 
 const TOKEN = "super-secret-agent-token-with-enough-entropy-1234"
 

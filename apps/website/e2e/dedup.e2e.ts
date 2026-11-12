@@ -1,10 +1,10 @@
+import { randomUUID } from "crypto"
+import { expect, test } from "@playwright/test"
+import postgres from "postgres"
+
 import { hashToken } from "@/lib/server/agent-auth"
 
 import { getRuntime, writeRuntimeConfig } from "./_runtime"
-
-import { expect, test } from "@playwright/test"
-import { randomUUID } from "crypto"
-import postgres from "postgres"
 
 const E2E_TOKEN = "e2e-test-token-32-bytes-long-here"
 const E2E_TOKEN_HASH = hashToken(E2E_TOKEN)

@@ -1,9 +1,9 @@
-import { _resetCache, getCachedConfig } from "@/lib/server/config-cache"
-
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { mkdtempSync, rmSync, writeFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+
+import { _resetCache, getCachedConfig } from "@/lib/server/config-cache"
 
 let tmpDir: string
 let configPath: string

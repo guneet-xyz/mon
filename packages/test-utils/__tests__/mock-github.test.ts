@@ -1,6 +1,6 @@
-import { type MockServer, createMockGithubServer } from "../index"
-
 import { afterEach, describe, expect, it } from "bun:test"
+
+import { createMockGithubServer, type MockServer } from "../index"
 
 describe("createMockGithubServer", () => {
   let server: MockServer | undefined

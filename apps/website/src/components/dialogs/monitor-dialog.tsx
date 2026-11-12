@@ -1,5 +1,7 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
+
 import type { MonitorTile } from "@mon/config/schema"
 
 import { Incidents } from "@/components/dialogs/incidents"
@@ -14,8 +16,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
-
-import { useQuery } from "@tanstack/react-query"
 
 export function MonitorDialog({
   type,
