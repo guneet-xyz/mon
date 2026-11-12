@@ -1,4 +1,5 @@
 import type { GeneratedTile } from "@/lib/client/tile-generation"
+import { cn } from "@/lib/utils"
 
 import { ContainerTile } from "./container"
 import { EmptyTile } from "./empty"
@@ -13,13 +14,17 @@ import { WebsiteTile } from "./website"
 export function Tile({
   tile,
   onToggleGroup,
+  flipId,
+  enterDelay,
 }: {
   tile: GeneratedTile
   onToggleGroup?: (key: string) => void
+  flipId?: string // set on main-grid tiles for the expand/collapse animation
+  enterDelay?: number // position in a staggered entrance (group members)
 }) {
   if (tile.type === "container") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <ContainerTile
           dbKey={tile.key}
           r_span={tile.location.row_span}
@@ -31,7 +36,7 @@ export function Tile({
 
   if (tile.type === "host") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <HostTile
           dbKey={tile.key}
           r_span={tile.location.row_span}
@@ -43,7 +48,7 @@ export function Tile({
 
   if (tile.type === "website") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <WebsiteTile
           dbKey={tile.key}
           r_span={tile.location.row_span}
@@ -55,7 +60,7 @@ export function Tile({
 
   if (tile.type === "github") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <GithubTile
           dbKey={tile.key}
           r_span={tile.location.row_span}
@@ -68,7 +73,7 @@ export function Tile({
   if (tile.type === "group") {
     const toggle = () => onToggleGroup?.(tile.key)
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         {tile.subgrid ? (
           <ExpandedGroupTile
             dbKey={tile.key}
@@ -77,7 +82,7 @@ export function Tile({
           >
             {tile.subgrid.success
               ? tile.subgrid.tiles.map((member, index) => (
-                  <Tile key={index} tile={member} />
+                  <Tile key={index} tile={member} enterDelay={index} />
                 ))
               : null}
           </ExpandedGroupTile>
@@ -95,7 +100,7 @@ export function Tile({
 
   if (tile.type === "empty") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <EmptyTile />
       </Container>
     )
@@ -103,14 +108,14 @@ export function Tile({
 
   if (tile.type === "hidden")
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <HiddenTile />
       </Container>
     )
 
   if (tile.type === "logo") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <LogoTile
           r_span={tile.location.row_span}
           c_span={tile.location.col_span}
@@ -121,7 +126,7 @@ export function Tile({
 
   if (tile.type === "theme") {
     return (
-      <Container {...tile.location}>
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <ThemeTile />
       </Container>
     )
@@ -136,17 +141,29 @@ export function Container({
   row_span,
   col_start,
   col_span,
+  flipId,
+  enterDelay,
 }: {
   children: React.ReactNode
   row_start: number
   row_span: number
   col_start: number
   col_span: number
+  flipId?: string
+  enterDelay?: number
 }) {
   return (
     <div
-      className="m-1"
+      data-flip-id={flipId}
+      className={cn(
+        "m-1",
+        enterDelay !== undefined &&
+          "animate-in duration-300 fill-mode-both zoom-in-90 fade-in motion-reduce:animate-none",
+      )}
       style={{
+        ...(enterDelay !== undefined && {
+          "--tw-animation-delay": `${120 + enterDelay * 40}ms`,
+        }),
         gridColumnStart: col_start,
         gridColumnEnd: col_start + col_span,
         gridRowStart: row_start,
