@@ -6,16 +6,19 @@ Monitors are probably the tiles you will use the most.
 
 All monitors have the following common properties that you can set:
 
-| Property     | Type   | Description                                                                                         | Required |
-| ------------ | ------ | --------------------------------------------------------------------------------------------------- | -------- |
-| `key`        | string | Key to indentify this monitor in the database.                                                      | Yes      |
-| `name`       | string | Name of the monitor.                                                                                | No       |
-| `short_name` | string | Short name of the monitor. Used when the tile size is 1x1                                           | No       |
-| `icon`       | string | Icon to use for the monitor. This icon is used when tile is `1x1` size and `short_name` is not set. | No       |
+| Property     | Type   | Description                                                                                                      | Required |
+| ------------ | ------ | ---------------------------------------------------------------------------------------------------------------- | -------- |
+| `key`        | string | Key to indentify this monitor in the database.                                                                   | Yes      |
+| `name`       | string | Name of the monitor.                                                                                             | No       |
+| `short_name` | string | Short name of the monitor. Used when the tile size is 1x1                                                        | No       |
+| `icon`       | string | Icon to use for the monitor. This icon is used when tile is `1x1` size and `short_name` is not set.              | No       |
+| `hidden`     | bool   | Leave the monitor off the board. It is still polled and listed in its [groups](/docs/configuration/tiles/group). | No       |
 
 **Notes**:
 
-> `key` must be unique on a per monitor type basis.
+> `key` must be unique on a per monitor type basis. A monitor listed in a [group](/docs/configuration/tiles/group)'s `members` needs a key no other monitor uses.
+
+> If `hidden` is not set, the monitor is shown unless it belongs to a group and `hide_grouped_tiles` is enabled. See [Group](/docs/configuration/tiles/group#showing-members-on-the-board).
 
 > If `name` is not set, the `key` will be used as the monitor name.
 

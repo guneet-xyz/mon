@@ -15,3 +15,11 @@ export function statusFromLatestPing(
   if (ping.error) return "offline"
   return "online"
 }
+
+// A group is offline if any member is, unknown if any member has no fresh
+// status, and online only when every member is online.
+export function groupStatus(statuses: MonitorStatus[]): MonitorStatus {
+  if (statuses.includes("offline")) return "offline"
+  if (statuses.length === 0 || statuses.includes("unknown")) return "unknown"
+  return "online"
+}

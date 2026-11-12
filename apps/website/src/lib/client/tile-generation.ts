@@ -8,7 +8,7 @@ import type {
 const MAX_RATIO = 1.25
 
 export type GeneratedTile = (
-  | { type: MonitorTile["type"]; key: string }
+  | { type: MonitorTile["type"] | "group"; key: string }
   | {
       type: NonMonitorTile["type"]
     }

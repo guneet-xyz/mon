@@ -1,0 +1,66 @@
+# Group
+
+A group tile sums up several monitors in one tile. Use `type = "group"` to use this tile.
+
+The tile shows the group's name, how many of its members are up (for example `7/8 up`), the combined status and a status line with one segment per member. Clicking it lists every member with its status, and each member opens its own monitor dialog.
+
+## Properties
+
+Groups accept the [common tile properties](/docs/configuration/tiles) and these:
+
+| Property     | Type     | Description                                                                                       | Required |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------- | -------- |
+| `key`        | string   | Key to identify this group. Must be unique among groups.                                          | Yes      |
+| `members`    | string[] | `key`s of the monitors in this group, in display order. Each must match exactly one monitor tile. | Yes      |
+| `name`       | string   | Name of the group.                                                                                | No       |
+| `short_name` | string   | Short name of the group. Used when the tile size is 1x1.                                          | No       |
+| `icon`       | string   | Icon to use when the tile is `1x1` and `short_name` is not set.                                   | No       |
+
+A monitor can belong to any number of groups. Groups cannot contain other groups.
+
+## Status
+
+| Group status | When                                                  |
+| ------------ | ----------------------------------------------------- |
+| offline      | Any member is offline.                                |
+| unknown      | No member is offline, but at least one has no status. |
+| online       | Every member is online.                               |
+
+## Showing members on the board
+
+Monitors stay on the board by default, even when they belong to a group. Set `hidden = true` on a monitor to leave it off the board; it is still polled and listed in its groups.
+
+To hide grouped monitors by default instead, set `hide_grouped_tiles` in `[options]`. A grouped monitor with `hidden = false` is then still shown:
+
+```toml
+[options]
+hide_grouped_tiles = true
+```
+
+| `hide_grouped_tiles` | Monitor in a group             | Monitor not in a group       |
+| -------------------- | ------------------------------ | ---------------------------- |
+| `false` (default)    | Shown unless `hidden = true`   | Shown unless `hidden = true` |
+| `true`               | Hidden unless `hidden = false` | Shown unless `hidden = true` |
+
+## Usage
+
+```toml
+[[tiles]]
+type = "website"
+key = "site-immich"
+name = "Immich"
+url = "https://images.example.com"
+
+[[tiles]]
+type = "container"
+key = "ctr-immich-server"
+name = "Immich server"
+container_name = "immich_server"
+hidden = true
+
+[[tiles]]
+type = "group"
+key = "grp-immich"
+name = "Immich"
+members = ["site-immich", "ctr-immich-server"]
+```
