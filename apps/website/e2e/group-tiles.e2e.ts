@@ -156,6 +156,7 @@ test("group tile sums up its members and expands into a subgrid", async ({
 })
 
 test("theme choice survives a reload", async ({ page }) => {
+  await writeRuntimeConfig(runtimeConfigPath, `[[tiles]]\ntype = "theme"\n`)
   await page.emulateMedia({ colorScheme: "light" })
   await page.goto("/")
   await page.getByRole("button", { name: "Switch to dark theme" }).click()
