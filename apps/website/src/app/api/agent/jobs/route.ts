@@ -1,5 +1,5 @@
 import { getAgentAssignments } from "@mon/config/schema"
-import { type JobTile, JobsResponseSchema } from "@mon/contracts"
+import { JobsResponseSchema, type JobTile } from "@mon/contracts"
 
 import { verifyBearerToken } from "@/lib/server/agent-auth"
 import { getCachedConfig } from "@/lib/server/config-cache"

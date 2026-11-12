@@ -1,3 +1,5 @@
+import dayjs from "dayjs"
+
 import { and, asc, desc, eq, gte, isNotNull } from "@mon/db/drizzle"
 import { hostPings } from "@mon/db/schema"
 
@@ -5,8 +7,6 @@ import { db } from "@/lib/server/db"
 
 import type { IncidentPing } from "."
 import { statusFromLatestPing } from "./status"
-
-import dayjs from "dayjs"
 
 export async function getHostPings(
   dbKey: string,

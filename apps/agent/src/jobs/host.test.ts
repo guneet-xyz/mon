@@ -1,8 +1,8 @@
+import { beforeEach, describe, expect, it, mock } from "bun:test"
+
 import type { HostJobTile } from "@mon/contracts"
 
 import { pingHost } from "./host"
-
-import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingHost", () => {
   let mockExeca: any

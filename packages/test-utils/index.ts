@@ -1,12 +1,12 @@
-import * as schema from "@mon/db/schema"
-
 import { execSync } from "child_process"
-import { drizzle } from "drizzle-orm/postgres-js"
 import http from "http"
 import net from "net"
 import path from "path"
-import postgres from "postgres"
 import { fileURLToPath } from "url"
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
+
+import * as schema from "@mon/db/schema"
 
 export { fixturePath } from "./fixtures/index"
 
@@ -340,12 +340,7 @@ export interface MockCheckRun {
   id: number
   name: string
   status:
-    | "queued"
-    | "in_progress"
-    | "completed"
-    | "waiting"
-    | "requested"
-    | "pending"
+    "queued" | "in_progress" | "completed" | "waiting" | "requested" | "pending"
   conclusion:
     | "success"
     | "failure"

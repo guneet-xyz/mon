@@ -11,11 +11,11 @@
  *   5. Spawn `bunx playwright test ...`.
  *   6. Forward exit code; always tear down container + runtime files in `finally`.
  */
-import { createTestDb, fixturePath } from "@mon/test-utils"
-
 import { copyFileSync, existsSync, rmSync, writeFileSync } from "fs"
 import { dirname, join, resolve } from "path"
 import { fileURLToPath } from "url"
+
+import { createTestDb, fixturePath } from "@mon/test-utils"
 
 const WEBSITE_DIR = import.meta.dir.endsWith("/scripts")
   ? join(import.meta.dir, "..")

@@ -1,8 +1,8 @@
+import { beforeEach, describe, expect, it, mock } from "bun:test"
+
 import type { WebsiteJobTile } from "@mon/contracts"
 
 import { pingWebsite } from "./website"
-
-import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 describe("pingWebsite", () => {
   let mockFetch: any

@@ -1,9 +1,9 @@
+import { beforeEach, describe, expect, it, mock } from "bun:test"
+
 import type { Config } from "@mon/config"
 import type { JobsResponse } from "@mon/contracts"
 
 import { hashToken } from "@/lib/server/agent-auth"
-
-import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 const TOKEN = "super-secret-agent-token-with-enough-entropy-1234"
 const OTHER_TOKEN = "another-agent-secret-token-1234567890abcd"

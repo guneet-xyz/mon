@@ -1,12 +1,12 @@
+import { spawn } from "child_process"
+import { dirname, join, resolve } from "path"
+import { fileURLToPath } from "url"
+import { expect, test } from "@playwright/test"
+import postgres from "postgres"
+
 import { hashToken } from "@/lib/server/agent-auth"
 
 import { getRuntime, writeRuntimeConfig } from "./_runtime"
-
-import { expect, test } from "@playwright/test"
-import { spawn } from "child_process"
-import { dirname, join, resolve } from "path"
-import postgres from "postgres"
-import { fileURLToPath } from "url"
 
 const E2E_TOKEN = "e2e-test-token-32-bytes-long-here"
 const E2E_TOKEN_HASH = hashToken(E2E_TOKEN)

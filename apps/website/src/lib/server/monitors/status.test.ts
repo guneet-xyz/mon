@@ -1,6 +1,6 @@
-import { STALE_AFTER_MS, groupStatus, statusFromLatestPing } from "./status"
-
 import { describe, expect, it } from "bun:test"
+
+import { groupStatus, STALE_AFTER_MS, statusFromLatestPing } from "./status"
 
 const now = new Date("2026-11-10T12:00:00Z")
 const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000)

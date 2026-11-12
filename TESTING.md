@@ -62,9 +62,9 @@ packages/
 Use `bun:test` with `mock()` / `mock.module()`. Mock `@mon/db` to avoid touching Postgres in unit scope.
 
 ```ts
-import { pingHost } from "./host"
-
 import { describe, expect, mock, test } from "bun:test"
+
+import { pingHost } from "./host"
 
 mock.module("@mon/db", () => ({
   db: { insert: () => ({ values: () => Promise.resolve() }) },
@@ -145,11 +145,11 @@ Both helpers register exit handlers so a `Ctrl-C` during a test doesn't leak lis
 ## 8. Debugging flakes
 
 | Symptom                           | Try                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------- | ----------------------------- |
+| --------------------------------- | -------------------------------------------------------------------------- |
 | E2E intermittently fails          | `cd apps/website && bun run e2e -- --retries=2`                            |
 | Need to see what the browser did  | `bunx playwright show-trace apps/website/playwright-report/trace.zip`      |
-| "port in use" / agent won't start | `lsof -iTCP -sTCP:LISTEN -P -n                                             | grep 3055`then`kill -9 <pid>` |
-| Stray Postgres containers         | `docker ps --filter "name=mon-test-" -q                                    | xargs -r docker rm -f`        |
+| "port in use" / agent won't start | `lsof -iTCP -sTCP:LISTEN -P -n \| grep 3055`, then `kill -9 <pid>`         |
+| Stray Postgres containers         | `docker ps --filter "name=mon-test-" -q \| xargs -r docker rm -f`          |
 | Unit test hangs                   | Check for an un-mocked `@mon/db` import; add `mock.module("@mon/db", ...)` |
 
 CI uploads the Playwright HTML report as `playwright-report` artifact for 14 days; download it from the failed run's Summary page.

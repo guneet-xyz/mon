@@ -1,7 +1,3 @@
-import { DuotoneHoverIcon } from "@/components/duotone-hover-icon"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
 import Link from "next/link"
 import {
   PiBook,
@@ -11,6 +7,10 @@ import {
   PiPlay,
   PiPlayDuotone,
 } from "react-icons/pi"
+
+import { DuotoneHoverIcon } from "@/components/duotone-hover-icon"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function HomePage() {
   return (

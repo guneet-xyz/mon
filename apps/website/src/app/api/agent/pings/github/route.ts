@@ -1,3 +1,5 @@
+import { z, ZodError } from "zod"
+
 import { GithubCheckRunDTOSchema, GithubPingDTOSchema } from "@mon/contracts"
 
 import { verifyBearerToken } from "@/lib/server/agent-auth"
@@ -6,8 +8,6 @@ import {
   insertGithubCheckRun,
   insertGithubPing,
 } from "@/lib/server/ingest/github"
-
-import { ZodError, z } from "zod"
 
 const GithubBodySchema = z.union([GithubPingDTOSchema, GithubCheckRunDTOSchema])
 

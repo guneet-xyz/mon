@@ -1,12 +1,12 @@
+import { spawn } from "child_process"
+import { dirname, join, resolve } from "path"
+import { fileURLToPath } from "url"
+import { expect, test } from "@playwright/test"
+import postgres from "postgres"
+
 import { hashToken } from "@/lib/server/agent-auth"
 
 import { getRuntime, writeRuntimeConfig } from "./_runtime"
-
-import { expect, test } from "@playwright/test"
-import { spawn } from "child_process"
-import { dirname, join, resolve } from "path"
-import postgres from "postgres"
-import { fileURLToPath } from "url"
 
 interface MockGithubServer {
   url: string

@@ -1,20 +1,20 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
+import dayjs from "dayjs"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
+
 import type { MonitorTile } from "@mon/config/schema"
 
 import {
-  type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig,
 } from "@/components/ui/chart"
 import { getPings } from "@/lib/server/actions/get-pings"
-
-import { useQuery } from "@tanstack/react-query"
-import dayjs from "dayjs"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 export function LatencyChart({
   type,

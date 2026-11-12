@@ -1,10 +1,9 @@
-import { getConfig, getMonitorConfig, getMonitors } from "./index"
-
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdtempSync, rmSync } from "fs"
-import { writeFileSync } from "fs"
+import { mkdtempSync, rmSync, writeFileSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
+import { afterEach, beforeEach, describe, expect, it } from "bun:test"
+
+import { getConfig, getMonitorConfig, getMonitors } from "./index"
 
 describe("config", () => {
   let tmpDir: string

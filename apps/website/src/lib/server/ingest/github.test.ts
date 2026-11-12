@@ -1,9 +1,9 @@
+import { describe, expect, it, mock } from "bun:test"
+
 import type { GithubCheckRunDTO, GithubPingDTO } from "@mon/contracts"
 import type { Db } from "@mon/db"
 
 import { insertGithubCheckRun, insertGithubPing } from "./github"
-
-import { describe, expect, it, mock } from "bun:test"
 
 function makeMockDb(returning: () => Promise<{ pingId: string }[]>): Db {
   return {

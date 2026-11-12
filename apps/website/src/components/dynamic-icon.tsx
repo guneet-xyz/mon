@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils"
-
 import { Icon } from "@iconify/react"
+
+import { cn } from "@/lib/utils"
 
 export function DynamicIcon({
   icon,

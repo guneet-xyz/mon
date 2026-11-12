@@ -1,10 +1,10 @@
 "use client"
 
-import { DuotoneHoverIcon } from "./duotone-hover-icon"
-import { Button } from "./ui/button"
-
 import { useTheme } from "nextra-theme-docs"
 import { PiMoon, PiMoonDuotone, PiSun, PiSunDuotone } from "react-icons/pi"
+
+import { DuotoneHoverIcon } from "./duotone-hover-icon"
+import { Button } from "./ui/button"
 
 export function ThemeButton() {
   const { theme, setTheme } = useTheme()

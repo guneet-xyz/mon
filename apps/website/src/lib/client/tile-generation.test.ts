@@ -1,6 +1,6 @@
-import type { Tile } from "@mon/config/schema"
-
 import { describe, expect, it } from "bun:test"
+
+import type { Tile } from "@mon/config/schema"
 
 function makeTile(overrides: Partial<Tile> & { type: string }): Tile {
   return {

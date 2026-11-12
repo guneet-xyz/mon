@@ -1,9 +1,9 @@
 "use client"
 
+import { useEffect, useState, type ReactNode } from "react"
+
 import { QueryProvider } from "./query"
 import { ThemeProvider } from "./theme"
-
-import { type ReactNode, useEffect, useState } from "react"
 
 export function Providers({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)

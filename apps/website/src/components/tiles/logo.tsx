@@ -1,6 +1,6 @@
-import { BaseTile } from "./_base"
-
 import Link from "next/link"
+
+import { BaseTile } from "./_base"
 
 export function LogoTile({
   r_span,

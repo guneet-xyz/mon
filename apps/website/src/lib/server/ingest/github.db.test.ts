@@ -1,9 +1,9 @@
+import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test"
+
 import type { GithubCheckRunDTO, GithubPingDTO } from "@mon/contracts"
-import { type TestDb, createTestDb } from "@mon/test-utils"
+import { createTestDb, type TestDb } from "@mon/test-utils"
 
 import { insertGithubCheckRun, insertGithubPing } from "./github"
-
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test"
 
 // Exercises the real schema (FK from github_ping.check_run_id to
 // github_check_run.id, unique ids) with the order the agent pushes in.

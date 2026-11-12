@@ -1,13 +1,13 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
+
 import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 import { getLatestRuns } from "@/lib/server/actions/github/latest-runs"
 
 import { BaseTile } from "./_base"
 import { LoadingTile } from "./loading"
-
-import { useQuery } from "@tanstack/react-query"
 
 export function GithubTile({
   dbKey,

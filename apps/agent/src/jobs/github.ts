@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import type {
   GithubCheckRunDTO,
   GithubJobTile,
@@ -5,8 +7,6 @@ import type {
 } from "@mon/contracts"
 
 import { env } from "../env"
-
-import { z } from "zod"
 
 const ResponseSchema = z.object({
   check_runs: z.array(

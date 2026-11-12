@@ -1,10 +1,10 @@
-import { type HostPingDTO, HostPingDTOSchema } from "@mon/contracts"
+import { ZodError } from "zod"
+
+import { HostPingDTOSchema, type HostPingDTO } from "@mon/contracts"
 
 import { verifyBearerToken } from "@/lib/server/agent-auth"
 import { getCachedConfig } from "@/lib/server/config-cache"
 import { insertHostPing } from "@/lib/server/ingest/host"
-
-import { ZodError } from "zod"
 
 export async function POST(request: Request): Promise<Response> {
   const config = await getCachedConfig()

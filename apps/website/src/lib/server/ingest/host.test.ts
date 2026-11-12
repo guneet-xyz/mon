@@ -1,9 +1,9 @@
+import { describe, expect, it, mock } from "bun:test"
+
 import type { HostPingDTO } from "@mon/contracts"
 import type { Db } from "@mon/db"
 
 import { insertHostPing } from "./host"
-
-import { describe, expect, it, mock } from "bun:test"
 
 function makeMockDb(returning: () => Promise<{ pingId: string }[]>): Db {
   return {

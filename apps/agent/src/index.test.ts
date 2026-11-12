@@ -1,3 +1,5 @@
+import { describe, expect, it, mock } from "bun:test"
+
 import type {
   ContainerJobTile,
   ContainerPingDTO,
@@ -9,8 +11,6 @@ import type {
   WebsiteJobTile,
   WebsitePingDTO,
 } from "@mon/contracts"
-
-import { describe, expect, it, mock } from "bun:test"
 
 const hostDto: HostPingDTO = {
   kind: "host",
