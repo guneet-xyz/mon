@@ -32,9 +32,47 @@ export type GeneratedTile = (
 // Anything that can be placed on a grid: main-grid tiles and group members.
 type Placeable = PublicTile | PublicGroupMember
 
+type Anchor = { row: number; col: number }
+
 type IndexedTile = {
   index: number
   tile: Placeable
+  // While any group is expanded, tiles are anchored to the cell they occupy
+  // on the collapsed board: expanded groups grow from it, and other tiles
+  // stay on it unless an expanded group covers it.
+  anchor?: Anchor
+  stay?: boolean
+}
+
+// Top-left cells for a r_span x c_span tile, nearest to `anchor` first: cells
+// whose area covers the anchor come first, preferring the anchor as top-left
+// (growing right and down), then shifting as little as possible.
+function anchoredCandidates(
+  anchor: Anchor,
+  r_span: number,
+  c_span: number,
+  r_max: number,
+  c_max: number,
+): Array<[number, number]> {
+  const ar = Math.min(anchor.row, r_max)
+  const ac = Math.min(anchor.col, c_max)
+  const outside = (start: number, span: number, at: number) =>
+    Math.max(0, start - at, at - (start + span - 1))
+  const candidates: Array<[number, number, number, number]> = []
+  for (let r = 1; r <= r_max; r++) {
+    for (let c = 1; c <= c_max; c++) {
+      candidates.push([
+        r,
+        c,
+        outside(r, r_span, ar) + outside(c, c_span, ac),
+        Math.abs(r - ar) + Math.abs(c - ac),
+      ])
+    }
+  }
+  candidates.sort(
+    (a, b) => a[2] - b[2] || a[3] - b[3] || a[0] - b[0] || a[1] - b[1],
+  )
+  return candidates.map(([r, c]) => [r, c])
 }
 
 function canTileFit({
@@ -71,7 +109,7 @@ function canTileFit({
 function placeTile({
   tiles_available,
   placed_tiles,
-  tile: { index: tile_index, tile },
+  tile: { index: tile_index, tile, anchor },
 }: {
   tiles_available: Array<Array<boolean>>
   placed_tiles: Array<GeneratedTile>
@@ -99,37 +137,44 @@ function placeTile({
   const c_span = tile.col_span ?? 1
   const c_end = tile.col_start ? c_start + c_span - 1 : c_max
 
-  for (let r = r_start; r <= r_end; r++) {
-    for (let c = c_start; c <= c_end; c++) {
-      if (
-        canTileFit({
-          tiles_available,
-          r_start: r,
-          r_span: r_span,
-          r_max: r_max,
-          c_start: c,
-          c_span: c_span,
-          c_max: c_max,
-        })
-      ) {
-        for (let rr = r; rr < r + r_span; rr++) {
-          for (let cc = c; cc < c + c_span; cc++) {
-            tiles_available[rr - 1]![cc - 1] = false
-          }
+  const candidates: Array<[number, number]> = []
+  if (anchor) {
+    candidates.push(...anchoredCandidates(anchor, r_span, c_span, r_max, c_max))
+  } else {
+    for (let r = r_start; r <= r_end; r++) {
+      for (let c = c_start; c <= c_end; c++) candidates.push([r, c])
+    }
+  }
+
+  for (const [r, c] of candidates) {
+    if (
+      canTileFit({
+        tiles_available,
+        r_start: r,
+        r_span: r_span,
+        r_max: r_max,
+        c_start: c,
+        c_span: c_span,
+        c_max: c_max,
+      })
+    ) {
+      for (let rr = r; rr < r + r_span; rr++) {
+        for (let cc = c; cc < c + c_span; cc++) {
+          tiles_available[rr - 1]![cc - 1] = false
         }
-
-        placed_tiles.push({
-          ...tile,
-          location: {
-            row_start: r,
-            row_span: r_span,
-            col_start: c,
-            col_span: c_span,
-          },
-        })
-
-        return { success: true }
       }
+
+      placed_tiles.push({
+        ...tile,
+        location: {
+          row_start: r,
+          row_span: r_span,
+          col_start: c,
+          col_span: c_span,
+        },
+      })
+
+      return { success: true }
     }
   }
 
@@ -148,11 +193,39 @@ function placeTiles({
   placed_tiles: Array<GeneratedTile>
   tiles: Array<IndexedTile>
 }): { success: true } | { success: false; error: string } {
-  for (const { index: tile_index, tile } of tiles) {
+  // Tiles that can stay exactly where they were go first, so a displaced
+  // tile never takes a cell another tile is still sitting on.
+  const remaining: Array<IndexedTile> = []
+  for (const tile of tiles) {
+    const { anchor, tile: t } = tile
+    if (
+      tile.stay &&
+      anchor &&
+      canTileFit({
+        tiles_available,
+        r_start: anchor.row,
+        r_span: t.row_span ?? 1,
+        r_max: tiles_available.length,
+        c_start: anchor.col,
+        c_span: t.col_span ?? 1,
+        c_max: tiles_available[0]!.length,
+      })
+    ) {
+      placeTile({
+        tiles_available,
+        placed_tiles,
+        tile: { ...tile, anchor },
+      })
+    } else {
+      remaining.push(tile)
+    }
+  }
+
+  for (const tile of remaining) {
     const output = placeTile({
       tiles_available,
       placed_tiles,
-      tile: { index: tile_index, tile },
+      tile,
     })
 
     if (output.success === false) {
@@ -162,10 +235,32 @@ function placeTiles({
   return { success: true }
 }
 
+const tileId = (tile: Placeable) =>
+  "key" in tile ? `${tile.type}:${tile.key}` : undefined
+
 // Placement order: empty/hidden placeholders, then tiles with a fixed start,
-// then tiles with a span, then the rest, each in config order.
-function prioritize(tiles: Array<Placeable>): Array<Array<IndexedTile>> {
-  const tiles_input = tiles.map((tile, index) => ({ index, tile }))
+// then expanded groups, then other anchored tiles, then tiles with a span,
+// then the rest, each in config order.
+function prioritize(
+  tiles: Array<Placeable>,
+  anchors: ReadonlyMap<string, Anchor> = new Map(),
+  expanding: ReadonlySet<string> = new Set(),
+): Array<Array<IndexedTile>> {
+  const tiles_input: Array<IndexedTile> = tiles.map((tile, index) => {
+    const id = tileId(tile)
+    const anchor =
+      id !== undefined &&
+      tile.row_start === undefined &&
+      tile.col_start === undefined
+        ? anchors.get(id)
+        : undefined
+    return {
+      index,
+      tile,
+      anchor,
+      stay: anchor !== undefined && !expanding.has(id!),
+    }
+  })
   const added = new Set<number>()
   const priority_list_of_tiles: Array<Array<IndexedTile>> = []
   function addToPriorityList(tiles: Array<IndexedTile>) {
@@ -190,6 +285,12 @@ function prioritize(tiles: Array<Placeable>): Array<Array<IndexedTile>> {
         tile.row_start !== undefined || tile.col_start !== undefined,
     ),
   )
+
+  addToPriorityList(
+    tiles_input.filter(({ anchor, stay }) => anchor !== undefined && !stay),
+  )
+
+  addToPriorityList(tiles_input.filter(({ stay }) => stay))
 
   addToPriorityList(
     tiles_input.filter(
@@ -393,7 +494,31 @@ export function generateTiles(
     return { ...tile, row_span, col_span }
   })
 
-  const priority_list_of_tiles = prioritize(tiles)
+  // Expanding happens in place: each expanded group grows from where it sits
+  // on the collapsed board, and every other tile keeps its collapsed cell
+  // unless an expanded group now covers it, in which case it moves to the
+  // nearest free cell.
+  const anchors = new Map<string, Anchor>()
+  if (subgrids.size > 0) {
+    const collapsed = generateTiles(config, clientWidth, clientHeight)
+    if (collapsed.success) {
+      for (const tile of collapsed.tiles) {
+        const id = "key" in tile ? `${tile.type}:${tile.key}` : undefined
+        if (id !== undefined) {
+          anchors.set(id, {
+            row: tile.location.row_start,
+            col: tile.location.col_start,
+          })
+        }
+      }
+    }
+  }
+
+  const priority_list_of_tiles = prioritize(
+    tiles,
+    anchors,
+    new Set([...subgrids.keys()].map((key) => `group:${key}`)),
+  )
 
   let rows = 0
   let cols = 0

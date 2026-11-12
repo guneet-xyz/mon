@@ -4,7 +4,7 @@ A group tile sums up several monitors in one tile. Use `type = "group"` to use t
 
 Collapsed, the tile shows the group's name, how many of its members are up (for example `7/8 up`), the combined status and a status line with one segment per member.
 
-Clicking it expands the group in place: it grows to its expanded size, the rest of the board moves to make room, and the group becomes a subgrid of its member tiles. Each member opens its own monitor dialog. The header of an expanded group collapses it again. Any number of groups can be expanded at once, and the browser remembers which ones are expanded (as it does the theme) across reloads.
+Clicking it expands the group in place: it grows from the cell it occupies to its expanded size (shifting back only where it would run off the board), and the group becomes a subgrid of its member tiles. Other tiles stay where they are; only the ones the group now covers move, each to the nearest free cell, and the board grows if it has to. The change is animated so you can follow which tiles moved; the animation is off when your system asks for reduced motion. Each member opens its own monitor dialog. The header of an expanded group collapses it again. Any number of groups can be expanded at once, and the browser remembers which ones are expanded (as it does the theme) across reloads.
 
 ## Properties
 

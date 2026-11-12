@@ -155,6 +155,100 @@ test("group tile sums up its members and expands into a subgrid", async ({
   agentProcess = null
 })
 
+test("groups expand in place with an animation", async ({ page }, testInfo) => {
+  test.setTimeout(60_000)
+  const hosts = Array.from(
+    { length: 9 },
+    (_, i) => `
+[[tiles]]
+type = "host"
+key = "anim-host-${i}"
+address = "192.0.2.${i + 10}"
+`,
+  ).join("")
+  await writeRuntimeConfig(
+    runtimeConfigPath,
+    `
+[options]
+hide_grouped_tiles = true
+${hosts}
+[[tiles]]
+type = "group"
+key = "anim-group"
+name = "Anim Group"
+members = ["anim-host-0", "anim-host-1", "anim-host-2", "anim-host-3"]
+`,
+  )
+  await page.setViewportSize({ width: 1200, height: 800 })
+  await page.goto("/")
+  const collapsed = page.getByRole("button", { name: "Expand Anim Group" })
+  await expect(collapsed).toBeVisible({ timeout: 10_000 })
+  const before = (await collapsed.boundingBox())!
+  const otherTiles = async () =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll<HTMLElement>("[data-flip-id]"))
+        .filter((el) => el.dataset.flipId?.startsWith("host:"))
+        .map((el) => {
+          const r = el.getBoundingClientRect()
+          return `${el.dataset.flipId} ${Math.round(r.x)},${Math.round(r.y)}`
+        }),
+    )
+  const positionsBefore = await otherTiles()
+
+  // Slow animations down so the screenshots show the transition.
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send("Animation.enable")
+  await cdp.send("Animation.setPlaybackRate", { playbackRate: 0.1 })
+  await collapsed.click()
+  const scripted = () =>
+    page.evaluate(
+      () =>
+        document
+          .getAnimations()
+          .filter(
+            (a) =>
+              !(a instanceof CSSAnimation) && !(a instanceof CSSTransition),
+          ).length,
+    )
+  expect(await scripted()).toBeGreaterThan(0)
+  for (const step of [1, 2, 3]) {
+    await page.waitForTimeout(800)
+    await testInfo.attach(`expanding-${step}`, {
+      body: await page.screenshot(),
+      contentType: "image/png",
+    })
+  }
+  await cdp.send("Animation.setPlaybackRate", { playbackRate: 1 })
+
+  const group = page.getByTestId("expanded-group")
+  await expect(group).toBeVisible()
+  await expect.poll(scripted).toBe(0)
+  await testInfo.attach("expanded", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+
+  // In place: the expanded group covers the collapsed tile's centre.
+  const after = (await group.boundingBox())!
+  const cx = before.x + before.width / 2
+  const cy = before.y + before.height / 2
+  expect(cx).toBeGreaterThan(after.x)
+  expect(cx).toBeLessThan(after.x + after.width)
+  expect(cy).toBeGreaterThan(after.y)
+  expect(cy).toBeLessThan(after.y + after.height)
+
+  // Only the tiles the group now covers move.
+  const positionsAfter = await otherTiles()
+  const moved = positionsAfter.filter((p) => !positionsBefore.includes(p))
+  expect(moved.length).toBeLessThanOrEqual(3)
+
+  // Reduced motion turns the animation off.
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.getByRole("button", { name: "Collapse Anim Group" }).click()
+  await expect(collapsed).toBeVisible()
+  expect(await scripted()).toBe(0)
+})
+
 test("theme choice survives a reload", async ({ page }) => {
   await writeRuntimeConfig(runtimeConfigPath, `[[tiles]]\ntype = "theme"\n`)
   await page.emulateMedia({ colorScheme: "light" })

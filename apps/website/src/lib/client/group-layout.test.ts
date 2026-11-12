@@ -183,3 +183,94 @@ describe("generateTiles with groups", () => {
     expect(result.layout.rows * result.layout.cols).toBeGreaterThanOrEqual(5)
   })
 })
+
+describe("generateTiles expands groups in place", () => {
+  const host = (key: string) => ({
+    type: "host" as const,
+    key,
+    address: "10.0.0.1",
+  })
+  const config: PublicConfig = {
+    options: {
+      ping_interval_ms: 6000,
+      max_retries: 3,
+      retry_delay_ms: 1000,
+      default_tile: "empty",
+      hide_grouped_tiles: true,
+      desktop: { rows: 8, columns: 5 },
+    },
+    // 3x3 board: h1 h2 h3 / h4 g h5 / h6 h7 h8
+    tiles: [
+      host("h1"),
+      host("h2"),
+      host("h3"),
+      host("h4"),
+      group([member("a"), member("b")], {
+        key: "g",
+        expanded: { row_span: 1, col_span: 2 },
+      }),
+      host("h5"),
+      host("h6"),
+      host("h7"),
+      host("h8"),
+    ],
+  }
+  const at = (result: ReturnType<typeof generateTiles>, key: string) => {
+    if (!result.success) throw new Error(result.error)
+    return result.tiles.find((t) => "key" in t && t.key === key)?.location
+  }
+
+  it("grows the group from its collapsed cell", () => {
+    const collapsed = generateTiles(config, 900, 900)
+    const expanded = generateTiles(config, 900, 900, new Set(["g"]))
+    expect(at(collapsed, "g")).toMatchObject({ row_start: 2, col_start: 2 })
+    expect(at(expanded, "g")).toEqual({
+      row_start: 2,
+      row_span: 1,
+      col_start: 2,
+      col_span: 2,
+    })
+  })
+
+  it("moves only the tiles the group now covers", () => {
+    const collapsed = generateTiles(config, 900, 900)
+    const expanded = generateTiles(config, 900, 900, new Set(["g"]))
+    const moved = ["h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8"].filter(
+      (key) =>
+        JSON.stringify(at(collapsed, key)) !==
+        JSON.stringify(at(expanded, key)),
+    )
+    expect(moved).toEqual(["h5"])
+  })
+
+  it("always covers its collapsed cell", () => {
+    // Put the group at every position of the board and every expanded size.
+    for (let position = 0; position < 9; position++) {
+      for (const expanded of [
+        { row_span: 1, col_span: 3 },
+        { row_span: 3, col_span: 1 },
+        { row_span: 2, col_span: 2 },
+      ]) {
+        const tiles: PublicConfig["tiles"] = config.tiles.filter(
+          (t) => t.type !== "group",
+        )
+        tiles.splice(
+          position,
+          0,
+          group([member("a"), member("b")], { key: "g", expanded }),
+        )
+        const board = { ...config, tiles }
+        const before = at(generateTiles(board, 900, 900), "g")!
+        const after = at(generateTiles(board, 900, 900, new Set(["g"])), "g")!
+        expect(after.row_start).toBeLessThanOrEqual(before.row_start)
+        expect(after.row_start + after.row_span).toBeGreaterThan(
+          before.row_start,
+        )
+        expect(after.col_start).toBeLessThanOrEqual(before.col_start)
+        expect(after.col_start + after.col_span).toBeGreaterThan(
+          before.col_start,
+        )
+      }
+    }
+  })
+})
