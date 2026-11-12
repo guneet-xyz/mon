@@ -4,11 +4,13 @@ import type { PublicConfig } from "@mon/config/schema"
 
 import { Tile } from "@/components/tiles"
 import useWindowDimensions from "@/lib/client/hooks/dimensions"
+import { useExpandedGroups } from "@/lib/client/hooks/expanded-groups"
 import { generateTiles } from "@/lib/client/tile-generation"
 
 export function TileGrid({ config }: { config: PublicConfig }) {
   const { width, height } = useWindowDimensions()
-  const data = generateTiles(config, width, height)
+  const { expanded, toggle } = useExpandedGroups()
+  const data = generateTiles(config, width, height, expanded)
   if (!data.success) {
     return <div>Error: {data.error}</div>
   }
@@ -25,7 +27,7 @@ export function TileGrid({ config }: { config: PublicConfig }) {
         }}
       >
         {tiles.map((tile, index) => (
-          <Tile key={index} tile={tile} />
+          <Tile key={index} tile={tile} onToggleGroup={toggle} />
         ))}
       </div>
     </div>

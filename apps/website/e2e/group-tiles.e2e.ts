@@ -79,7 +79,7 @@ test.afterAll(async () => {
   }
 })
 
-test("group tile sums up its members and lists them in its dialog", async ({
+test("group tile sums up its members and expands into a subgrid", async ({
   page,
 }) => {
   test.setTimeout(120_000)
@@ -123,19 +123,52 @@ test("group tile sums up its members and lists them in its dialog", async ({
   await expect(page.getByText("127.0.0.2")).toBeVisible()
   await expect(page.getByText("127.0.0.1")).toHaveCount(0)
 
-  await page.getByText("E2E Group").click()
-  const dialog = page.getByRole("dialog")
-  const members = dialog.getByTestId("group-member")
-  await expect(members).toHaveCount(2)
-  await expect(members.nth(0)).toContainText("Grouped Hidden Host")
-  await expect(members.nth(0)).toContainText("127.0.0.1")
-  await expect(members.nth(0).locator('[data-status="online"]')).toBeVisible()
+  // Expanding shows the member tiles in place, including the hidden one.
+  await page.getByRole("button", { name: "Expand E2E Group" }).click()
+  const group = page.getByTestId("expanded-group")
+  await expect(group).toBeVisible()
+  await expect(group.getByText("127.0.0.1")).toBeVisible({ timeout: 10_000 })
+  await expect(group.getByText("127.0.0.2")).toBeVisible()
+  await expect(group.locator('[data-status="online"]')).toHaveCount(3)
 
-  await members.nth(0).click()
+  // Members open their own monitor dialog.
+  await group.getByText("127.0.0.1").click()
   await expect(
     page.getByRole("dialog").filter({ hasText: "Latency" }),
   ).toContainText("grp-host-hidden")
+  await page.keyboard.press("Escape")
+
+  // The expanded state survives a reload, and so does collapsing it.
+  await page.reload()
+  await expect(page.getByTestId("expanded-group")).toBeVisible({
+    timeout: 10_000,
+  })
+  await page.getByRole("button", { name: "Collapse E2E Group" }).click()
+  await expect(page.getByTestId("expanded-group")).toHaveCount(0)
+  await page.reload()
+  await expect(
+    page.getByRole("button", { name: "Expand E2E Group" }),
+  ).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByTestId("expanded-group")).toHaveCount(0)
 
   agentProcess.kill("SIGTERM")
   agentProcess = null
+})
+
+test("theme choice survives a reload", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" })
+  await page.goto("/")
+  await page.getByRole("button", { name: "Switch to dark theme" }).click()
+  await expect(page.locator("html")).toHaveClass(/dark/)
+
+  await page.reload()
+  await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 10_000 })
+  await page.getByRole("button", { name: "Switch to light theme" }).click()
+  await expect(page.locator("html")).not.toHaveClass(/dark/)
+
+  await page.reload()
+  await expect(
+    page.getByRole("button", { name: "Switch to dark theme" }),
+  ).toBeVisible({ timeout: 10_000 })
+  await expect(page.locator("html")).not.toHaveClass(/dark/)
 })

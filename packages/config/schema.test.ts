@@ -301,7 +301,7 @@ describe("ConfigSchema — groups", () => {
       type: "group",
       key: "g1",
       name: "App",
-      members: ["w1", "c1"],
+      members: [{ key: "w1" }, { key: "c1" }],
     })
   })
 
@@ -441,5 +441,87 @@ describe("grid visibility", () => {
       "key" in tile ? tile.key : tile.type,
     )
     expect(keys).toEqual(["plain", "shown", "g1", "logo"])
+  })
+})
+
+describe("ConfigSchema — expanded groups", () => {
+  const tiles = [
+    { type: "host", key: "h1", address: "1.1.1.1" },
+    { type: "website", key: "w1", url: "https://a.com" },
+    { type: "container", key: "c1", container_name: "db" },
+  ]
+  const group = (extra: Record<string, unknown>) =>
+    ConfigSchema.safeParse({
+      tiles: [...tiles, { type: "group", key: "g1", ...extra }],
+    })
+
+  test("accepts inline member placement and an expanded size", () => {
+    const result = group({
+      members: ["h1", { key: "w1", col_span: 2, row_start: 2 }],
+      expanded: { row_span: 2, col_span: 3, rows: 2, cols: 2 },
+    })
+    expect(result.success).toBe(true)
+    const parsed = result.data!.tiles[3]!
+    if (parsed.type !== "group") throw new Error("expected a group")
+    expect(parsed.members).toEqual([
+      { key: "h1" },
+      { key: "w1", col_span: 2, row_start: 2 },
+    ])
+    expect(parsed.expanded).toEqual({
+      row_span: 2,
+      col_span: 3,
+      rows: 2,
+      cols: 2,
+    })
+  })
+
+  test("rejects non-positive spans", () => {
+    expect(group({ members: ["h1"], expanded: { rows: 0 } }).success).toBe(
+      false,
+    )
+    expect(group({ members: [{ key: "h1", col_span: 0 }] }).success).toBe(false)
+  })
+
+  test("rejects a member placed outside an explicit subgrid", () => {
+    expect(
+      group({
+        members: [{ key: "h1", col_start: 3 }],
+        expanded: { cols: 2 },
+      }).success,
+    ).toBe(false)
+    expect(
+      group({
+        members: [{ key: "h1", row_span: 3 }],
+        expanded: { rows: 2 },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects members that need more cells than the subgrid has", () => {
+    expect(
+      group({
+        members: ["h1", "w1", "c1"],
+        expanded: { rows: 1, cols: 2 },
+      }).success,
+    ).toBe(false)
+  })
+
+  test("toPublicConfig gives members their monitor type", () => {
+    const config = ConfigSchema.parse({
+      tiles: [
+        ...tiles,
+        {
+          type: "group",
+          key: "g1",
+          members: ["c1", { key: "h1", col_span: 2 }],
+        },
+      ],
+    })
+    const pub = toPublicConfig(config).tiles.find((t) => t.type === "group")
+    if (pub?.type !== "group") throw new Error("expected a group")
+    expect(pub.members).toEqual([
+      { key: "c1", type: "container" },
+      { key: "h1", type: "host", col_span: 2 },
+    ])
   })
 })

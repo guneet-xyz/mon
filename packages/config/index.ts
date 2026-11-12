@@ -22,6 +22,8 @@ export type {
   Website,
   Github,
   GroupTile,
+  GroupMember,
+  PublicGroupMember,
   PublicConfig,
   PublicTile,
   PublicMonitorTile,
