@@ -6,6 +6,9 @@ const _OptionsSchema = z.object({
   max_retries: z.number().default(3), // Default to 3 retries
   retry_delay_ms: z.number().default(1000), // Default to 1 second delay between retries
   default_tile: z.literal("empty").or(z.literal("hidden")).default("empty"),
+  // When true, monitors listed in a group's `members` are left off the grid
+  // unless they set `hidden = false`.
+  hide_grouped_tiles: z.boolean().default(false),
   desktop: z
     .object({
       rows: z.number().default(8),
@@ -28,16 +31,20 @@ const TileSchema = z.object({
   col_span: z.number().optional(),
 })
 
-const MonitorSchema = TileSchema.extend({
+const KeyedTileSchema = TileSchema.extend({
   key: z.string().min(1).max(64), // stored in varchar(64) ping key columns
   name: z.string().optional(),
   icon: z.string().optional(),
   short_name: z.string().optional(),
+})
+
+const MonitorSchema = KeyedTileSchema.extend({
+  hidden: z.boolean().optional(), // leave off the grid; still polled and listed in groups
   agent: z.string().default("default"), // which agent handles this tile
   interval_seconds: z.number().int().positive().optional(), // per-tile override; falls back to options.ping_interval_ms
 })
 
-export const ConfigSchema = z.object({
+const _ConfigSchema = z.object({
   options: OptionsSchema,
   agents: z.record(z.string(), AgentSchema).optional().default({}),
   tiles: z
@@ -60,6 +67,10 @@ export const ConfigSchema = z.object({
           type: z.literal("github"),
           repo: z.string().regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/),
           github_token: z.string().optional(), // per-tile GitHub PAT; agent must not use env.GITHUB_TOKEN
+        }),
+        KeyedTileSchema.extend({
+          type: z.literal("group"),
+          members: z.array(z.string()).min(1), // monitor keys
         }),
         TileSchema.extend({
           type: z.literal("empty"),
@@ -92,6 +103,53 @@ export const ConfigSchema = z.object({
     .default([]),
 })
 
+export const ConfigSchema = _ConfigSchema.superRefine((config, ctx) => {
+  // Groups refer to monitors by key alone, so each member must match exactly
+  // one monitor. Monitors of different types may otherwise share a key.
+  const monitorCounts = new Map<string, number>()
+  const groupKeys = new Set<string>()
+  for (const tile of config.tiles) {
+    if (isMonitorTile(tile)) {
+      monitorCounts.set(tile.key, (monitorCounts.get(tile.key) ?? 0) + 1)
+    }
+  }
+
+  config.tiles.forEach((tile, index) => {
+    if (tile.type !== "group") return
+    if (groupKeys.has(tile.key)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Duplicate group key "${tile.key}"`,
+        path: ["tiles", index, "key"],
+      })
+    }
+    groupKeys.add(tile.key)
+
+    const seen = new Set<string>()
+    tile.members.forEach((member, memberIndex) => {
+      const path = ["tiles", index, "members", memberIndex]
+      const count = monitorCounts.get(member) ?? 0
+      if (count !== 1) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            count === 0
+              ? `Group "${tile.key}" member "${member}" is not a monitor key`
+              : `Group "${tile.key}" member "${member}" matches ${count} monitors; give them unique keys`,
+          path,
+        })
+      } else if (seen.has(member)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Group "${tile.key}" lists "${member}" more than once`,
+          path,
+        })
+      }
+      seen.add(member)
+    })
+  })
+})
+
 export type Config = z.infer<typeof ConfigSchema>
 export type Agent = z.infer<typeof AgentSchema>
 export type Tile = Config["tiles"][number]
@@ -101,7 +159,12 @@ export type NonMonitorTile = Extract<
   { type: "empty" | "hidden" | "logo" | "theme" }
 >
 
-export type MonitorTile = Exclude<Config["tiles"][number], NonMonitorTile>
+export type GroupTile = Extract<Config["tiles"][number], { type: "group" }>
+
+export type MonitorTile = Exclude<
+  Config["tiles"][number],
+  NonMonitorTile | GroupTile
+>
 
 type ExtractTileType<T extends Config["tiles"][number]["type"]> = Omit<
   Config["tiles"][number] & { type: T },
@@ -133,6 +196,7 @@ export type PublicMonitorTile = DistributiveOmit<
   MonitorTile,
   ServerOnlyTileField
 >
+export type PublicGroupTile = DistributiveOmit<GroupTile, ServerOnlyTileField>
 export type PublicConfig = {
   options: Config["options"]
   tiles: PublicTile[]
@@ -146,27 +210,56 @@ export function toPublicTile<T extends Tile>(
   return copy as DistributiveOmit<T, ServerOnlyTileField>
 }
 
-// Strips agents (token hashes) and server-only tile fields before a config
-// is serialized to the client.
+// Strips agents (token hashes), server-only tile fields and monitors that are
+// not on the grid before a config is serialized to the client.
 export function toPublicConfig(config: Config): PublicConfig {
   return {
     options: config.options,
-    tiles: config.tiles.map((tile) => toPublicTile(tile)),
+    tiles: config.tiles
+      .filter((tile) => isTileOnGrid(config, tile))
+      .map((tile) => toPublicTile(tile)),
   }
+}
+
+export function isMonitorTile(tile: Tile): tile is MonitorTile {
+  return (
+    tile.type === "host" ||
+    tile.type === "website" ||
+    tile.type === "container" ||
+    tile.type === "github"
+  )
+}
+
+export function getMonitorTiles(config: Config): MonitorTile[] {
+  return config.tiles.filter(isMonitorTile)
+}
+
+export function getGroupMembers(
+  config: Config,
+  group: GroupTile,
+): MonitorTile[] {
+  const monitors = new Map(
+    getMonitorTiles(config).map((tile) => [tile.key, tile]),
+  )
+  return group.members.flatMap((key) => monitors.get(key) ?? [])
+}
+
+// A monitor's own `hidden` wins. Otherwise grouped monitors follow
+// options.hide_grouped_tiles and ungrouped ones are shown.
+export function isTileOnGrid(config: Config, tile: Tile): boolean {
+  if (!isMonitorTile(tile)) return true
+  if (tile.hidden !== undefined) return !tile.hidden
+  if (!config.options.hide_grouped_tiles) return true
+  return !config.tiles.some(
+    (other) => other.type === "group" && other.members.includes(tile.key),
+  )
 }
 
 export function getAgentAssignments(
   config: Config,
   agentId: string,
 ): MonitorTile[] {
-  return config.tiles.filter(
-    (tile): tile is MonitorTile =>
-      tile.type !== "empty" &&
-      tile.type !== "hidden" &&
-      tile.type !== "logo" &&
-      tile.type !== "theme" &&
-      tile.agent === agentId,
-  )
+  return getMonitorTiles(config).filter((tile) => tile.agent === agentId)
 }
 
 export function verifyAgentToken(

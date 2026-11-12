@@ -12,6 +12,7 @@ function makeConfig() {
       max_retries: 3,
       retry_delay_ms: 1000,
       default_tile: "empty",
+      hide_grouped_tiles: false,
       desktop: { rows: 8, columns: 5 },
     },
     agents: {

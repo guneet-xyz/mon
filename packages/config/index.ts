@@ -1,4 +1,11 @@
-import { type Config, ConfigSchema, type MonitorTile } from "./schema"
+import {
+  type Config,
+  ConfigSchema,
+  type GroupTile,
+  type MonitorTile,
+  getGroupMembers,
+  getMonitorTiles,
+} from "./schema"
 
 import { existsSync } from "fs"
 import { mkdir, readFile, writeFile } from "fs/promises"
@@ -14,12 +21,18 @@ export type {
   Container,
   Website,
   Github,
+  GroupTile,
   PublicConfig,
   PublicTile,
   PublicMonitorTile,
+  PublicGroupTile,
 } from "./schema"
 export {
   getAgentAssignments,
+  getGroupMembers,
+  getMonitorTiles,
+  isMonitorTile,
+  isTileOnGrid,
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
@@ -47,12 +60,17 @@ export async function getMonitorConfig<T extends MonitorTile["type"]>(
 }
 
 export async function getMonitors(path: string): Promise<MonitorTile[]> {
+  return getMonitorTiles(await getConfig(path))
+}
+
+export async function getGroupConfig(
+  path: string,
+  key: string,
+): Promise<{ group: GroupTile; members: MonitorTile[] } | undefined> {
   const config = await getConfig(path)
-  return config.tiles.filter(
-    (tile) =>
-      tile.type !== "empty" &&
-      tile.type !== "hidden" &&
-      tile.type !== "logo" &&
-      tile.type !== "theme",
+  const group = config.tiles.find(
+    (tile): tile is GroupTile => tile.type === "group" && tile.key === key,
   )
+  if (!group) return undefined
+  return { group, members: getGroupMembers(config, group) }
 }

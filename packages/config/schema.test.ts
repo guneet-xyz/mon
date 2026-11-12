@@ -2,6 +2,8 @@ import {
   type Config,
   ConfigSchema,
   getAgentAssignments,
+  getGroupMembers,
+  isTileOnGrid,
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
@@ -277,5 +279,167 @@ describe("ConfigSchema — monitor keys", () => {
       tiles: [{ type: "host", key: "", address: "127.0.0.1" }],
     })
     expect(result.success).toBe(false)
+  })
+})
+
+describe("ConfigSchema — groups", () => {
+  const tiles = [
+    { type: "host", key: "h1", address: "1.1.1.1" },
+    { type: "website", key: "w1", url: "https://a.com" },
+    { type: "container", key: "c1", container_name: "db" },
+  ]
+
+  test("parses a group that lists monitor keys", () => {
+    const config = ConfigSchema.parse({
+      tiles: [
+        ...tiles,
+        { type: "group", key: "g1", name: "App", members: ["w1", "c1"] },
+      ],
+    })
+    const group = config.tiles[3]!
+    expect(group).toEqual({
+      type: "group",
+      key: "g1",
+      name: "App",
+      members: ["w1", "c1"],
+    })
+  })
+
+  test("lets one monitor belong to several groups", () => {
+    const config = ConfigSchema.parse({
+      tiles: [
+        ...tiles,
+        { type: "group", key: "g1", members: ["h1", "w1"] },
+        { type: "group", key: "g2", members: ["h1", "c1"] },
+      ],
+    })
+    expect(config.tiles.filter((t) => t.type === "group")).toHaveLength(2)
+  })
+
+  test("rejects a group without members", () => {
+    const result = ConfigSchema.safeParse({
+      tiles: [...tiles, { type: "group", key: "g1", members: [] }],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects members that are not monitor keys", () => {
+    const unknown = ConfigSchema.safeParse({
+      tiles: [...tiles, { type: "group", key: "g1", members: ["nope"] }],
+    })
+    expect(unknown.success).toBe(false)
+
+    const nested = ConfigSchema.safeParse({
+      tiles: [
+        ...tiles,
+        { type: "group", key: "g1", members: ["h1"] },
+        { type: "group", key: "g2", members: ["g1"] },
+      ],
+    })
+    expect(nested.success).toBe(false)
+  })
+
+  test("rejects a member listed twice in one group", () => {
+    const result = ConfigSchema.safeParse({
+      tiles: [...tiles, { type: "group", key: "g1", members: ["h1", "h1"] }],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects duplicate group keys", () => {
+    const result = ConfigSchema.safeParse({
+      tiles: [
+        ...tiles,
+        { type: "group", key: "g1", members: ["h1"] },
+        { type: "group", key: "g1", members: ["w1"] },
+      ],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  test("rejects a member key shared by several monitors", () => {
+    const shared = [
+      { type: "host", key: "x", address: "1.1.1.1" },
+      { type: "website", key: "x", url: "https://a.com" },
+    ]
+    expect(ConfigSchema.safeParse({ tiles: shared }).success).toBe(true)
+    expect(
+      ConfigSchema.safeParse({
+        tiles: [...shared, { type: "group", key: "g1", members: ["x"] }],
+      }).success,
+    ).toBe(false)
+  })
+
+  test("getGroupMembers returns monitors in member order", () => {
+    const config = ConfigSchema.parse({
+      tiles: [...tiles, { type: "group", key: "g1", members: ["c1", "h1"] }],
+    })
+    const group = config.tiles[3]!
+    if (group.type !== "group") throw new Error("expected a group")
+    expect(getGroupMembers(config, group).map((t) => t.key)).toEqual([
+      "c1",
+      "h1",
+    ])
+  })
+
+  test("agents are never assigned group tiles", () => {
+    const config = ConfigSchema.parse({
+      tiles: [...tiles, { type: "group", key: "g1", members: ["h1"] }],
+    })
+    expect(getAgentAssignments(config, "default").map((t) => t.key)).toEqual([
+      "h1",
+      "w1",
+      "c1",
+    ])
+  })
+})
+
+describe("grid visibility", () => {
+  const parse = (hide_grouped_tiles: boolean) =>
+    ConfigSchema.parse({
+      options: { hide_grouped_tiles },
+      tiles: [
+        { type: "host", key: "plain", address: "1.1.1.1" },
+        { type: "host", key: "grouped", address: "1.1.1.2" },
+        { type: "host", key: "shown", address: "1.1.1.3", hidden: false },
+        { type: "host", key: "hidden", address: "1.1.1.4", hidden: true },
+        { type: "host", key: "solo-hidden", address: "1.1.1.5", hidden: true },
+        {
+          type: "group",
+          key: "g1",
+          members: ["grouped", "shown", "hidden"],
+        },
+        { type: "logo" },
+      ],
+    })
+
+  const onGrid = (config: Config) =>
+    config.tiles
+      .filter((tile) => isTileOnGrid(config, tile))
+      .map((tile) => ("key" in tile ? tile.key : tile.type))
+
+  test("hide_grouped_tiles defaults to false", () => {
+    expect(ConfigSchema.parse({}).options.hide_grouped_tiles).toBe(false)
+  })
+
+  test("shows every monitor unless it sets hidden = true", () => {
+    expect(onGrid(parse(false))).toEqual([
+      "plain",
+      "grouped",
+      "shown",
+      "g1",
+      "logo",
+    ])
+  })
+
+  test("hide_grouped_tiles hides grouped monitors unless hidden = false", () => {
+    expect(onGrid(parse(true))).toEqual(["plain", "shown", "g1", "logo"])
+  })
+
+  test("toPublicConfig leaves off-grid monitors out", () => {
+    const keys = toPublicConfig(parse(true)).tiles.map((tile) =>
+      "key" in tile ? tile.key : tile.type,
+    )
+    expect(keys).toEqual(["plain", "shown", "g1", "logo"])
   })
 })

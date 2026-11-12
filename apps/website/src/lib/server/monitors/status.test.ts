@@ -1,4 +1,4 @@
-import { STALE_AFTER_MS, statusFromLatestPing } from "./status"
+import { STALE_AFTER_MS, groupStatus, statusFromLatestPing } from "./status"
 
 import { describe, expect, it } from "bun:test"
 
@@ -37,5 +37,23 @@ describe("statusFromLatestPing", () => {
     expect(
       statusFromLatestPing({ timestamp: stale, error: "timeout" }, now),
     ).toBe("unknown")
+  })
+})
+
+describe("groupStatus", () => {
+  it("is online when every member is online", () => {
+    expect(groupStatus(["online", "online"])).toBe("online")
+  })
+
+  it("is offline when any member is offline", () => {
+    expect(groupStatus(["online", "unknown", "offline"])).toBe("offline")
+  })
+
+  it("is unknown when a member is unknown and none is offline", () => {
+    expect(groupStatus(["online", "unknown"])).toBe("unknown")
+  })
+
+  it("is unknown without members", () => {
+    expect(groupStatus([])).toBe("unknown")
   })
 })
