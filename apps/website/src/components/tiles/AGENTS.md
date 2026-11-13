@@ -16,7 +16,7 @@ One file per tile variant from the Zod discriminated union in `@mon/config/schem
   3. add agent job in `apps/agent/src/jobs/`,
   4. add `<NewTile>` here + register in [index.tsx](file:///Users/guneet/projects/mon/apps/website/src/components/tiles/index.tsx),
   5. add branch in [lib/server/monitors/index.ts](file:///Users/guneet/projects/mon/apps/website/src/lib/server/monitors/index.ts) (getStatus/getIncidentPings/getPings).
-- **Title sizing rule** (host.tsx is the canonical example): if `short_name` set use it; else if 1×1 cell render single uppercase initial of `name`; else full name.
+- **Title fitting lives in `<BaseTile>`**: pass the full name as `title` and `short_name` as `short_title`. BaseTile measures the name against the tile (ResizeObserver), scales it down to `MIN_TITLE_SCALE` if needed, and otherwise shows `short_title`, then `icon`, then the initial (`lib/client/tile-title.ts`). Don't pre-shorten titles by span in the tile components.
 - **Orientation rule**: `c_span === 1 && r_span > 1` → `"vertical"` (rotates title 90°). Encoded once in each monitor tile.
 
 ## ANTI-PATTERNS

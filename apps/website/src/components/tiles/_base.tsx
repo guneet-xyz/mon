@@ -1,12 +1,24 @@
+"use client"
+
+import { useLayoutEffect, useRef, useState } from "react"
+
 import { DynamicIcon } from "@/components/dynamic-icon"
 import { StatusDot } from "@/components/status-dot"
+import {
+  fitTitle,
+  initialTitle,
+  TITLE_PADDING_PX,
+} from "@/lib/client/tile-title"
 import { cn } from "@/lib/utils"
 
+const TITLE_CLASS = "font-display whitespace-nowrap md:text-xl"
+
+// r_span/c_span describe the tile's grid size; the title no longer depends
+// on them because it is measured against the tile's actual size.
 export function BaseTile({
-  r_span,
-  c_span,
   status,
   title,
+  short_title,
   top_text,
   orientation,
   icon,
@@ -19,7 +31,8 @@ export function BaseTile({
 }: {
   r_span: number
   c_span: number
-  title?: string
+  title?: string // full name, shown whenever it fits
+  short_title?: string // shown instead of the name when it does not fit
   top_text?: string
   orientation?: "horizontal" | "vertical"
   status?: "online" | "offline" | "unknown"
@@ -31,9 +44,58 @@ export function BaseTile({
   statusLine?: Array<"online" | "offline" | "unknown">
   label?: string // accessible name when the tile acts as a button
 }) {
-  const showIconOnly = r_span === 1 && c_span === 1
+  const rootRef = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLSpanElement>(null)
+  // Scale for the full title, or null to show the compact title instead.
+  const [scale, setScale] = useState<number | null>(1)
+
+  useLayoutEffect(() => {
+    const root = rootRef.current
+    const measure = measureRef.current
+    if (!root || !measure) return
+    const check = () => {
+      const room =
+        orientation === "vertical" ? root.clientHeight : root.clientWidth
+      setScale(fitTitle(room - TITLE_PADDING_PX, measure.offsetWidth))
+    }
+    check()
+    const observer = new ResizeObserver(check)
+    observer.observe(root)
+    return () => observer.disconnect()
+  }, [title, orientation])
+
+  const titleClass = cn(
+    "text-center text-emerald-900 dark:text-emerald-100",
+    TITLE_CLASS,
+    { "rotate-90": orientation === "vertical" },
+  )
+
+  let content: React.ReactNode = null
+  if (title && scale !== null) {
+    content = (
+      <div
+        className={titleClass}
+        style={scale < 1 ? { scale: String(scale) } : undefined}
+      >
+        {title}
+      </div>
+    )
+  } else if (title && short_title) {
+    content = <div className={titleClass}>{short_title}</div>
+  } else if (icon) {
+    content = (
+      <DynamicIcon
+        icon={icon}
+        className="text-emerald-900 dark:text-emerald-100"
+      />
+    )
+  } else if (title) {
+    content = <div className={titleClass}>{initialTitle(title)}</div>
+  }
+
   return (
     <div
+      ref={rootRef}
       className={cn(
         "relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-xl transition-colors hover:cursor-pointer",
         "shadow-sm shadow-emerald-600 dark:shadow-emerald-700",
@@ -69,23 +131,22 @@ export function BaseTile({
         <StatusDot status={status} className="absolute top-2 right-2" />
       ) : null}
 
-      {icon && showIconOnly ? (
-        <DynamicIcon
-          icon={icon}
-          className="text-emerald-900 dark:text-emerald-100"
-        />
-      ) : (
-        <div
+      {title ? (
+        // Measures the full title in the title's font. The text comes from a
+        // pseudo-element so it is not part of the page's text.
+        <span
+          ref={measureRef}
+          aria-hidden
+          data-text={title}
           className={cn(
-            "text-center font-display text-emerald-900 md:text-xl dark:text-emerald-100",
-            {
-              "rotate-90": orientation === "vertical",
-            },
+            // w-max: an absolute element would otherwise shrink to the tile width.
+            "pointer-events-none invisible absolute w-max before:content-[attr(data-text)]",
+            TITLE_CLASS,
           )}
-        >
-          {title}
-        </div>
-      )}
+        />
+      ) : null}
+
+      {content}
 
       {top_right_icon ? (
         <DynamicIcon

@@ -8,7 +8,6 @@ export function ThemeTile() {
   const { theme, setTheme } = useTheme()
   return (
     <BaseTile
-      title="Won't show up in the grid"
       r_span={1}
       c_span={1}
       icon={theme === "dark" ? "pixelarticons:moon" : "solar:sun-bold-duotone"}
