@@ -36,8 +36,8 @@ export function TileGrid({ config }: { config: PublicConfig }) {
         ref={gridRef}
         className="grid h-full w-full"
         style={{
-          gridTemplateColumns: `repeat(${data.layout.cols}, 1fr)`,
-          gridTemplateRows: `repeat(${data.layout.rows}, 1fr)`,
+          gridTemplateColumns: `repeat(${data.layout.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${data.layout.rows}, minmax(0, 1fr))`,
         }}
       >
         {tiles.map((tile) => (
