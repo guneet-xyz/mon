@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/guneet-xyz/mon/compare/v0.5.0...v0.6.0) (2026-11-13)
+
+
+### Features
+
+* show full tile names when they fit ([#55](https://github.com/guneet-xyz/mon/issues/55)) ([bd8541c](https://github.com/guneet-xyz/mon/commit/bd8541c8478616edd2b8f1066be0bf707152bdf3))
+
 ## [0.5.0](https://github.com/guneet-xyz/mon/compare/v0.4.0...v0.5.0) (2026-11-12)
 
 
