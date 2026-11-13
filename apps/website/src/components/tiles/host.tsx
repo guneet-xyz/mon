@@ -30,16 +30,7 @@ export function HostTile({
   if (!config) {
     throw new Error(`Host tile with key "${dbKey}" not found in configuration.`)
   }
-  let title: string
   const name = config.name ?? config.key
-
-  if (config.short_name) {
-    title = config.short_name
-  } else if (r_span === 1 && c_span === 1) {
-    title = name.length > 3 ? name[0]!.toUpperCase() : name
-  } else {
-    title = config.name ?? config.key
-  }
 
   let orientation: "horizontal" | "vertical" = "horizontal"
 
@@ -51,7 +42,8 @@ export function HostTile({
       <BaseTile
         r_span={r_span}
         c_span={c_span}
-        title={title}
+        title={name}
+        short_title={config.short_name}
         top_text={config.address}
         status={status}
         orientation={orientation}

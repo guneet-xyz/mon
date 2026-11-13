@@ -15,8 +15,8 @@ Groups accept the [common tile properties](/docs/configuration/tiles) and these:
 | `key`        | string | Key to identify this group. Must be unique among groups.                                                                                  | Yes      |
 | `members`    | array  | Monitors in this group, in placement order: a monitor `key`, or a [member table](#members). Each key must match exactly one monitor tile. | Yes      |
 | `name`       | string | Name of the group.                                                                                                                        | No       |
-| `short_name` | string | Short name of the group. Used when the tile size is 1x1.                                                                                  | No       |
-| `icon`       | string | Icon to use when the tile is `1x1` and `short_name` is not set.                                                                           | No       |
+| `short_name` | string | Short name of the group. Shown instead of the name when the name does not fit the tile.                                                   | No       |
+| `icon`       | string | Icon shown when the name does not fit the tile and `short_name` is not set.                                                               | No       |
 | `expanded`   | table  | Size and subgrid of the expanded group. See [Expanded size](#expanded-size).                                                              | No       |
 
 The common `row_span` and `col_span` properties set the collapsed size.

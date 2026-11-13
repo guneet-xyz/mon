@@ -10,8 +10,8 @@ All monitors have the following common properties that you can set:
 | ------------ | ------ | ---------------------------------------------------------------------------------------------------------------- | -------- |
 | `key`        | string | Key to indentify this monitor in the database.                                                                   | Yes      |
 | `name`       | string | Name of the monitor.                                                                                             | No       |
-| `short_name` | string | Short name of the monitor. Used when the tile size is 1x1                                                        | No       |
-| `icon`       | string | Icon to use for the monitor. This icon is used when tile is `1x1` size and `short_name` is not set.              | No       |
+| `short_name` | string | Short name of the monitor. Shown instead of the name when the name does not fit the tile.                        | No       |
+| `icon`       | string | Icon shown when the name does not fit the tile and `short_name` is not set.                                      | No       |
 | `hidden`     | bool   | Leave the monitor off the board. It is still polled and listed in its [groups](/docs/configuration/tiles/group). | No       |
 
 **Notes**:
@@ -22,4 +22,4 @@ All monitors have the following common properties that you can set:
 
 > If `name` is not set, the `key` will be used as the monitor name.
 
-> If `short_name` and `icon` are not set, first letter of the `name` will be used as the icon.
+> Tiles show the full name whenever it fits, shrinking it slightly if needed. When it doesn't (for example on a phone), they show `short_name`, then `icon`, then the first letter of the name.
