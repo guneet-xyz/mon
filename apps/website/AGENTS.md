@@ -12,14 +12,14 @@ src/
 │   └── _components/providers/  # ThemeProvider + react-query QueryClientProvider
 ├── components/
 │   ├── tiles/                  # one file per tile type (see tiles/AGENTS.md)
-│   ├── dialogs/                # modals opened from tiles (incidents, latency chart)
+│   ├── dialogs/                # modals opened from tiles (monitor dialog: summary, uptime, series charts, incidents)
 │   ├── ui/                     # shadcn/ui primitives (style: new-york)
 │   └── *.tsx                   # shared atoms (status-dot, dynamic-icon, client-only)
 └── lib/
     ├── client/                 # browser-only: tile-generation, useWindowDimensions
     └── server/
         ├── actions/            # "use server" RPC entry points
-        └── monitors/           # per-type DB query helpers (host/website/container/github)
+        └── monitors/           # status per type; history.ts (series, uptime, incidents per range), details.ts (latest details, warnings)
 ```
 
 ## WHERE TO LOOK
@@ -40,7 +40,8 @@ src/
 - **Type-dispatch facades** in `lib/server/monitors/index.ts` and `components/tiles/index.tsx` use `if (type === "x")` chains over the Zod discriminated union — exhaustiveness is enforced by the trailing `throw new Error(...)`. **Always add a new branch** when extending the tile union.
 - **shadcn `ui/` is generated code** — match existing variants (cva, `className` last in props) and rerun `npx shadcn` rather than hand-editing.
 - **Icons**: `lucide-react` for fixed UI chrome, `@iconify/react` (via `DynamicIcon`) for user-configurable tile icons.
-- **Data fetching in client components: TanStack Query** with `queryKey: ["monitor-config", type, dbKey]`. Server actions are the `queryFn`.
+- **Data fetching in client components: TanStack Query** with `queryKey: ["monitor-config", type, dbKey]` (shared by a tile and its dialog). Server actions are the `queryFn`. Every query refetches every 60 s (`QueryProvider` default), so a board left open stays current.
+- **Raw SQL in `lib/server/monitors/history.ts`**: postgres-js cannot take `Date` parameters inside `sql` templates; pass ISO strings cast to `timestamptz`.
 
 ## ANTI-PATTERNS
 

@@ -1,0 +1,22 @@
+# Container
+
+Checks a Docker container on the agent's machine. Use `type = "container"` for this monitor.
+
+| Property         | Type   | Description                                                                 | Required | Default                       |
+| ---------------- | ------ | --------------------------------------------------------------------------- | -------- | ----------------------------- |
+| `container_name` | string | Name of the container.                                                      | Yes      | -                             |
+| `docker_socket`  | string | Docker API to ask: a `unix://` socket path, a bare path, or a `tcp://` URL. | No       | `unix:///var/run/docker.sock` |
+
+The container is up while Docker reports it as running. The agent also records its health check status, restarts, start time, image and version (the `org.opencontainers.image.version` label), and how it last exited. For running containers it records CPU % and memory the way `docker stats` reports them; CPU % appears from the second check onward, because it is measured between two checks.
+
+The agent needs access to the Docker API, for example by mounting the socket. That gives the agent full control of Docker on that machine, so prefer a read-only Docker API proxy where you can.
+
+```toml
+[[tiles]]
+type = "container"
+key = "ctr-immich-server"
+name = "Immich server"
+container_name = "immich_server"
+```
+
+See [Monitors](/docs/configuration/tiles/monitors) for the common properties and what the board shows.

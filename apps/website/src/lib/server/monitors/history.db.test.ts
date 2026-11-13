@@ -3,10 +3,14 @@ import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test"
 import { containerPings, hostPings, websitePings } from "@mon/db/schema"
 import { createTestDb, type TestDb } from "@mon/test-utils"
 
+import type * as Monitors from "."
+import type * as Details from "./details"
+import type * as History from "./history"
+
 let testDb: TestDb
-let history: typeof import("./history")
-let details: typeof import("./details")
-let monitors: typeof import(".")
+let history: typeof History
+let details: typeof Details
+let monitors: typeof Monitors
 
 const now = new Date("2026-11-13T12:00:00.000Z")
 const at = (minutesAgo: number) => new Date(now.getTime() - minutesAgo * 60_000)
