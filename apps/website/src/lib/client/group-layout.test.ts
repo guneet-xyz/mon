@@ -2,12 +2,21 @@ import { describe, expect, it } from "bun:test"
 
 import type { PublicConfig, PublicGroupTile } from "@mon/config/schema"
 
-import {
-  bestSubgrid,
-  generateTiles,
-  layoutSubgrid,
-  resolveGroupLayout,
-} from "./tile-generation"
+import { bestSubgrid, generateTiles, layoutGroup } from "./tile-generation"
+
+// Size and subgrid dimensions of an expanded group without nested groups.
+const resolveGroupLayout = (group: PublicGroupTile) => {
+  const layout = layoutGroup(group, {}, new Set())
+  if (!layout.subgrid.success) throw new Error(layout.subgrid.error)
+  return {
+    row_span: layout.row_span,
+    col_span: layout.col_span,
+    rows: layout.subgrid.rows,
+    cols: layout.subgrid.cols,
+  }
+}
+const layoutSubgrid = (group: PublicGroupTile) =>
+  layoutGroup(group, {}, new Set()).subgrid
 
 const member = (key: string, extra: Record<string, number> = {}) => ({
   key,
@@ -18,7 +27,13 @@ const member = (key: string, extra: Record<string, number> = {}) => ({
 const group = (
   members: PublicGroupTile["members"],
   extra: Partial<PublicGroupTile> = {},
-): PublicGroupTile => ({ type: "group", key: "g", members, ...extra })
+): PublicGroupTile => ({
+  type: "group",
+  key: "g",
+  members,
+  initial_state: "collapsed",
+  ...extra,
+})
 
 describe("bestSubgrid", () => {
   it("matches the expanded tile's shape", () => {
@@ -149,6 +164,7 @@ describe("generateTiles with groups", () => {
       hide_grouped_tiles: true,
       desktop: { rows: 8, columns: 5 },
     },
+    groups: {},
     tiles: [
       { type: "host", key: "solo", address: "10.0.0.1" },
       group([member("a"), member("b"), member("c"), member("d")], {
@@ -199,6 +215,7 @@ describe("generateTiles expands groups in place", () => {
       hide_grouped_tiles: true,
       desktop: { rows: 8, columns: 5 },
     },
+    groups: {},
     // 3x3 board: h1 h2 h3 / h4 g h5 / h6 h7 h8
     tiles: [
       host("h1"),
@@ -272,5 +289,109 @@ describe("generateTiles expands groups in place", () => {
         )
       }
     }
+  })
+})
+
+describe("nested groups", () => {
+  const nested = (key: string, count: number, extra = {}): PublicGroupTile =>
+    group(
+      Array.from({ length: count }, (_, i) => member(`${key}-${i}`)),
+      { key, ...extra },
+    )
+  // A 3x3 parent of eight hosts and one nested group of four hosts.
+  const child = nested("child", 4)
+  const parent = (extra: Partial<PublicGroupTile> = {}) =>
+    group(
+      [
+        ...Array.from({ length: 4 }, (_, i) => member(`p-${i}`)),
+        { key: "child", type: "group" as const },
+        ...Array.from({ length: 4 }, (_, i) => member(`p-${i + 4}`)),
+      ],
+      { key: "parent", ...extra },
+    )
+  const groups = (p: PublicGroupTile) => ({ parent: p, child })
+  const at = (layout: ReturnType<typeof layoutGroup>, key: string) => {
+    if (!layout.subgrid.success) throw new Error(layout.subgrid.error)
+    return layout.subgrid.tiles.find((t) => "key" in t && t.key === key)
+  }
+
+  it("keeps a collapsed nested group at one cell", () => {
+    const layout = layoutGroup(parent(), groups(parent()), new Set())
+    expect(layout).toMatchObject({ row_span: 3, col_span: 3 })
+    const tile = at(layout, "child")
+    expect(tile?.location).toMatchObject({ row_span: 1, col_span: 1 })
+    expect(tile && "subgrid" in tile && tile.subgrid).toBeFalsy()
+  })
+
+  it("grows the parent when a nested group expands inside it", () => {
+    const layout = layoutGroup(parent(), groups(parent()), new Set(["child"]))
+    // 8 hosts + a 2x2 child need 12 cells: the parent grows past 3x3.
+    expect(layout.row_span * layout.col_span).toBeGreaterThanOrEqual(12)
+    const tile = at(layout, "child")
+    expect(tile?.location).toMatchObject({ row_span: 2, col_span: 2 })
+    if (tile?.type !== "group" || !tile.subgrid?.success)
+      throw new Error("expected an expanded nested group")
+    expect(tile.subgrid).toMatchObject({ rows: 2, cols: 2 })
+  })
+
+  it("expands a nested group in place", () => {
+    const before = at(
+      layoutGroup(parent(), groups(parent()), new Set()),
+      "child",
+    )!.location
+    const layout = layoutGroup(parent(), groups(parent()), new Set(["child"]))
+    const after = at(layout, "child")!.location
+    expect(after.row_start).toBeLessThanOrEqual(before.row_start)
+    expect(after.row_start + after.row_span).toBeGreaterThan(before.row_start)
+    expect(after.col_start).toBeLessThanOrEqual(before.col_start)
+    expect(after.col_start + after.col_span).toBeGreaterThan(before.col_start)
+  })
+
+  it("stops growing at the maximum and packs more cells instead", () => {
+    const capped = parent({ expanded: { max_row_span: 3, max_col_span: 3 } })
+    const layout = layoutGroup(capped, groups(capped), new Set(["child"]))
+    expect(layout).toMatchObject({ row_span: 3, col_span: 3 })
+    if (!layout.subgrid.success) throw new Error(layout.subgrid.error)
+    expect(layout.subgrid.rows * layout.subgrid.cols).toBeGreaterThanOrEqual(12)
+  })
+
+  it("starts at the minimum size", () => {
+    const small = group([member("a")], {
+      key: "small",
+      expanded: { min_row_span: 2, min_col_span: 3 },
+    })
+    expect(layoutGroup(small, {}, new Set())).toMatchObject({
+      row_span: 2,
+      col_span: 3,
+    })
+  })
+
+  it("lays out nested groups on the main board", () => {
+    const config: PublicConfig = {
+      options: {
+        ping_interval_ms: 6000,
+        max_retries: 3,
+        retry_delay_ms: 1000,
+        default_tile: "empty",
+        hide_grouped_tiles: true,
+        desktop: { rows: 8, columns: 5 },
+      },
+      tiles: [parent()],
+      groups: groups(parent()),
+    }
+    const result = generateTiles(
+      config,
+      1200,
+      900,
+      new Set(["parent", "child"]),
+    )
+    if (!result.success) throw new Error(result.error)
+    const top = result.tiles.find((t) => t.type === "group")
+    if (top?.type !== "group" || !top.subgrid?.success)
+      throw new Error("expected an expanded parent")
+    const inner = top.subgrid.tiles.find(
+      (t) => t.type === "group" && t.key === "child",
+    )
+    expect(inner?.type === "group" && inner.subgrid?.success).toBe(true)
   })
 })

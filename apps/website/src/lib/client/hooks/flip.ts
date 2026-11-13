@@ -5,15 +5,17 @@ import { useLayoutEffect, useRef, type RefObject } from "react"
 const DURATION_MS = 320
 const EASING = "cubic-bezier(0.2, 0, 0, 1)"
 
-// FLIP animation for the board's tiles. After each render it measures every
-// child with a `data-flip-id` and, when `trigger` changed (a group was
-// expanded or collapsed), animates each tile from its previous rect:
+// FLIP animation for the board's tiles, including tiles inside expanded
+// groups. After each render it measures every element with a `data-flip-id`
+// and, when `trigger` changed (a group was expanded or collapsed), animates
+// each tile from its previous rect. A nested tile moves relative to the tile
+// that contains it, so it is not animated twice when its parent moves:
 // - an expanding group is revealed from its old area with a clip, so its
 //   content is never stretched,
 // - a collapsing group scales down from its old size while fading in,
 // - other tiles slide (and resize, if the board's columns changed) from
 //   their old rect,
-// - new tiles fade in.
+// - new tiles fade in (tiles inside a group use their own CSS entrance).
 // Window resizes update the measurements without animating.
 export function useFlipAnimation(
   ref: RefObject<HTMLElement | null>,
@@ -31,19 +33,39 @@ export function useFlipAnimation(
     lastTrigger.current = trigger
 
     const next = new Map<string, DOMRect>()
-    for (const child of Array.from(grid.children)) {
-      if (!(child instanceof HTMLElement)) continue
+    // Document order: a tile is always measured before the tiles inside it.
+    for (const child of Array.from(
+      grid.querySelectorAll<HTMLElement>("[data-flip-id]"),
+    )) {
       const id = child.dataset.flipId
       if (!id) continue
-      for (const running of child.getAnimations()) running.cancel()
+      for (const running of child.getAnimations()) {
+        if (!(running instanceof CSSAnimation)) running.cancel()
+      }
 
       const rect = child.getBoundingClientRect()
       next.set(id, rect)
       if (!animate) continue
 
-      const prev = rects.current.get(id)
+      const parentId =
+        child.parentElement?.closest<HTMLElement>("[data-flip-id]")?.dataset
+          .flipId
+      let prev = rects.current.get(id)
+      if (prev && parentId) {
+        const parentPrev = rects.current.get(parentId)
+        const parentNow = next.get(parentId)
+        if (parentPrev && parentNow) {
+          prev = new DOMRect(
+            prev.x - parentPrev.x + parentNow.x,
+            prev.y - parentPrev.y + parentNow.y,
+            prev.width,
+            prev.height,
+          )
+        }
+      }
       const options = { duration: DURATION_MS, easing: EASING }
       if (!prev) {
+        if (parentId) continue
         child.animate(
           [
             { opacity: 0, transform: "scale(0.92)" },
