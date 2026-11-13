@@ -30,7 +30,15 @@ type = "container"
 key = "name-container"
 name = "Nextcloud DB"
 container_name = "nextcloud-mariadb"
+${Array.from(
+  { length: 8 },
+  (_, i) => `
+[[tiles]]
+type = "host"
+key = "fill-${i}"
+address = "192.0.2.${30 + i}"
 `,
+).join("")}`,
   )
 
   // Desktop: every 1x1 tile has room for its full name.
@@ -51,8 +59,8 @@ container_name = "nextcloud-mariadb"
     contentType: "image/png",
   })
 
-  // Phone: long names fall back to short_name, then the initial; names that
-  // still fit stay.
+  // Phone: 12 tiles make a 5x3 board with ~100 px cells. Long names fall
+  // back to short_name, then the initial; names that still fit stay.
   await page.setViewportSize({ width: 360, height: 640 })
   await expect(page.getByText("ML", { exact: true })).toBeVisible()
   await expect(page.getByText("A", { exact: true })).toBeVisible()
