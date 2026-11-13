@@ -62,6 +62,29 @@ address = "192.0.2.${30 + i}"
   // Phone: 12 tiles make a 5x3 board with ~100 px cells. Long names fall
   // back to short_name, then the initial; names that still fit stay.
   await page.setViewportSize({ width: 360, height: 640 })
+  // DEBUG: remove once the phone case passes.
+  await page.waitForTimeout(1500)
+  await testInfo.attach("phone-debug", {
+    body: await page.screenshot(),
+    contentType: "image/png",
+  })
+  await testInfo.attach("phone-measure", {
+    body: JSON.stringify(
+      await page.evaluate(() =>
+        Array.from(document.querySelectorAll<HTMLElement>("[data-text]")).map(
+          (el) => ({
+            text: el.dataset.text,
+            measured: el.offsetWidth,
+            tile: el.parentElement?.clientWidth,
+            shown: el.parentElement?.innerText,
+          }),
+        ),
+      ),
+      null,
+      2,
+    ),
+    contentType: "application/json",
+  })
   await expect(page.getByText("ML", { exact: true })).toBeVisible()
   await expect(page.getByText("A", { exact: true })).toBeVisible()
   await expect(
