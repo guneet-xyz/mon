@@ -34,6 +34,7 @@ function makeConfig(): Config {
         type: "website",
         key: "w1",
         url: "https://example.com",
+        method: "GET",
         agent: "worker1",
       },
       {
@@ -128,6 +129,7 @@ describe("GET /api/agent/jobs", () => {
       id: "w1",
       cron: "0 */1 * * * *",
       url: "https://example.com",
+      method: "GET",
     })
 
     const container = body.tiles.find((t) => t.kind === "container")

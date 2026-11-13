@@ -1,44 +1,29 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 
-import type { MonitorTile } from "@mon/config/schema"
-
-import { getIncidents } from "@/lib/server/actions/get-incidents"
+import type { Incident } from "@/lib/server/monitors"
+import type { HistoryRange } from "@/lib/server/monitors/history"
 
 dayjs.extend(relativeTime)
+const RANGE_LABEL: Record<HistoryRange, string> = {
+  "24h": "24 hours",
+  "7d": "7 days",
+  "30d": "30 days",
+}
+
 export function Incidents({
-  type,
-  dbKey,
+  incidents,
+  range,
 }: {
-  type: MonitorTile["type"]
-  dbKey: string
+  incidents: Incident[]
+  range: HistoryRange
 }) {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["incidents", type, dbKey],
-    queryFn: async () => await getIncidents(type, dbKey),
-  })
-
-  if (isLoading) {
-    return (
-      <div className="p-4 font-display text-neutral-500">
-        Loading incidents...
-      </div>
-    )
-  }
-
-  if (isError || !data) {
-    throw new Error("Failed to load incidents data")
-  }
-
-  const incidents = data
-
   if (incidents.length === 0) {
     return (
       <div className="font-display text-neutral-500">
-        No incidents in the last 24 hours.
+        No incidents in the last {RANGE_LABEL[range]}.
       </div>
     )
   }

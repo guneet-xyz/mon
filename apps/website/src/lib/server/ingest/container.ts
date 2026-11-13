@@ -17,6 +17,17 @@ export async function insertContainerPing(
       key: dto.key,
       timestamp: new Date(dto.recorded_at),
       error: dto.error,
+      state: dto.state ?? null,
+      health: dto.health ?? null,
+      restartCount: dto.restart_count ?? null,
+      startedAt: dto.started_at ? new Date(dto.started_at) : null,
+      exitCode: dto.exit_code ?? null,
+      oomKilled: dto.oom_killed ?? null,
+      image: dto.image ?? null,
+      imageVersion: dto.image_version ?? null,
+      cpuPercent: dto.cpu_percent ?? null,
+      memoryBytes: dto.memory_bytes ?? null,
+      memoryLimitBytes: dto.memory_limit_bytes ?? null,
     })
     .onConflictDoNothing({ target: containerPings.pingId })
     .returning({ pingId: containerPings.pingId })

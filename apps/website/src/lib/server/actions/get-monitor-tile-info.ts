@@ -5,6 +5,10 @@ import type { MonitorTile } from "@mon/config/schema"
 
 import { env } from "@/env"
 import { getStatus } from "@/lib/server/monitors"
+import {
+  getMonitorDetails,
+  monitorWarnings,
+} from "@/lib/server/monitors/details"
 
 export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
   type: T,
@@ -15,9 +19,14 @@ export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
     return null
   }
 
-  const status = await getStatus(type, dbKey)
+  const [status, details] = await Promise.all([
+    getStatus(type, dbKey),
+    getMonitorDetails(type, dbKey),
+  ])
   return {
     status,
+    details,
+    warnings: monitorWarnings(details),
     config: toPublicTile(config),
   }
 }

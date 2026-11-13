@@ -37,6 +37,13 @@ __export(index_exports, {
   withTestDb: () => withTestDb
 });
 module.exports = __toCommonJS(index_exports);
+var import_child_process = require("child_process");
+var import_http = __toESM(require("http"));
+var import_net = __toESM(require("net"));
+var import_path2 = __toESM(require("path"));
+var import_url2 = require("url");
+var import_postgres_js = require("drizzle-orm/postgres-js");
+var import_postgres = __toESM(require("postgres"));
 
 // ../db/schema.ts
 var schema_exports = {};
@@ -79,7 +86,14 @@ var websitePings = createTable(
       withTimezone: true
     }).notNull(),
     latency: (0, import_pg_core.real)("latency"),
-    error: (0, import_pg_core.varchar)("error", { length: 256 })
+    error: (0, import_pg_core.varchar)("error", { length: 256 }),
+    // Recorded by agents from v0.8.0; null for older pings and agents.
+    statusCode: (0, import_pg_core.smallint)("status_code"),
+    redirectLocation: (0, import_pg_core.varchar)("redirect_location", { length: 512 }),
+    certExpiresAt: (0, import_pg_core.timestamp)("cert_expires_at", {
+      mode: "date",
+      withTimezone: true
+    })
   },
   (t) => [(0, import_pg_core.index)("websites_key_idx").on(t.key)]
 );
@@ -93,7 +107,19 @@ var containerPings = createTable(
       mode: "date",
       withTimezone: true
     }).notNull(),
-    error: (0, import_pg_core.varchar)("error", { length: 256 })
+    error: (0, import_pg_core.varchar)("error", { length: 256 }),
+    // Recorded by agents from v0.8.0; null for older pings and agents.
+    state: (0, import_pg_core.varchar)("state", { length: 16 }),
+    health: (0, import_pg_core.varchar)("health", { length: 16 }),
+    restartCount: (0, import_pg_core.integer)("restart_count"),
+    startedAt: (0, import_pg_core.timestamp)("started_at", { mode: "date", withTimezone: true }),
+    exitCode: (0, import_pg_core.integer)("exit_code"),
+    oomKilled: (0, import_pg_core.boolean)("oom_killed"),
+    image: (0, import_pg_core.varchar)("image", { length: 256 }),
+    imageVersion: (0, import_pg_core.varchar)("image_version", { length: 64 }),
+    cpuPercent: (0, import_pg_core.real)("cpu_percent"),
+    memoryBytes: (0, import_pg_core.bigint)("memory_bytes", { mode: "number" }),
+    memoryLimitBytes: (0, import_pg_core.bigint)("memory_limit_bytes", { mode: "number" })
   },
   (t) => [(0, import_pg_core.index)("containers_key_idx").on(t.key)]
 );
@@ -161,15 +187,6 @@ var githubPings = createTable(
     )
   ]
 );
-
-// index.ts
-var import_child_process = require("child_process");
-var import_postgres_js = require("drizzle-orm/postgres-js");
-var import_http = __toESM(require("http"));
-var import_net = __toESM(require("net"));
-var import_path2 = __toESM(require("path"));
-var import_postgres = __toESM(require("postgres"));
-var import_url2 = require("url");
 
 // fixtures/index.ts
 var import_path = require("path");

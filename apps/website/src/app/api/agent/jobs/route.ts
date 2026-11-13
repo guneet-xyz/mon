@@ -45,6 +45,7 @@ export async function GET(request: Request): Promise<Response> {
           id: tile.key,
           cron,
           url: tile.url,
+          method: tile.method,
         }
       case "container":
         return {

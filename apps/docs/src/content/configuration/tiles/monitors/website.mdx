@@ -1,0 +1,20 @@
+# Website
+
+Checks that a site answers. Use `type = "website"` for this monitor.
+
+| Property | Type   | Description                                                                                                                                            | Required | Default |
+| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------- |
+| `url`    | string | URL to request.                                                                                                                                        | Yes      | -       |
+| `method` | string | `"GET"` or `"HEAD"`. GET reads only the status and headers, never the page; HEAD is slightly cheaper, but some sites reject it and would show as down. | No       | `"GET"` |
+
+The site is up when it answers with a 2xx or 3xx status within 15 seconds; redirects are not followed. For `https://` URLs the agent also reads the certificate's expiry, even when the certificate is invalid or expired, so the board can warn before it runs out.
+
+```toml
+[[tiles]]
+type = "website"
+key = "site-immich"
+name = "Immich"
+url = "https://images.example.com"
+```
+
+See [Monitors](/docs/configuration/tiles/monitors) for the common properties and what the board shows.

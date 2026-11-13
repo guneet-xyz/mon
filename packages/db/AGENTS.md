@@ -18,13 +18,13 @@ Drizzle ORM schema + a singleton `postgres-js` client. All app DB access goes th
 - **`db.delete(table)` / `db.update(table)` without `.where(...)`** is a hard eslint error (`drizzle/enforce-delete-with-where`, `…-update-with-where`). Use `db.delete(table).where(sql\`true\`)` only in migrations, never in app code.
 - **Do not import `drizzle-orm/postgres-js` in apps directly** — go through this package so the connection is singleton.
 - **Do not hardcode connection strings.** `env.DATABASE_URL` is the only sanctioned source.
-- **Do not run `drizzle-kit push` against production** without reviewing the diff — the project has no migration files committed, so `push` is the entire workflow.
+- **Schema changes ship as committed migrations.** Edit `schema.ts`, run `bunx drizzle-kit generate --name <change>` (any `DATABASE_URL` works; it is not contacted), and commit the SQL and `meta/` snapshot. The migrator image applies them on every deployment. Keep them additive (nullable columns) so older agents and websites keep working. Never `drizzle-kit push` against a deployed database.
 
 ## COMMANDS
 
 ```bash
 # from packages/db/
-bunx drizzle-kit push          # apply schema.ts to env.DATABASE_URL
+bunx drizzle-kit generate --name <change>  # write a migration from schema.ts changes
+bunx drizzle-kit push          # apply schema.ts to a throwaway env.DATABASE_URL (tests do this)
 bunx drizzle-kit studio        # browse data
-bunx drizzle-kit generate      # if you switch to migration-file workflow
 ```

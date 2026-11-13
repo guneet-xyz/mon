@@ -18,6 +18,9 @@ export async function insertWebsitePing(
       timestamp: new Date(dto.recorded_at),
       latency: dto.latency_ms,
       error: dto.error,
+      statusCode: dto.status_code ?? null,
+      redirectLocation: dto.redirect_location ?? null,
+      certExpiresAt: dto.cert_expires_at ? new Date(dto.cert_expires_at) : null,
     })
     .onConflictDoNothing({ target: websitePings.pingId })
     .returning({ pingId: websitePings.pingId })

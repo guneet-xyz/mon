@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
+import { tileValue } from "@/lib/client/tile-value"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
@@ -44,6 +45,8 @@ export function HostTile({
         c_span={c_span}
         title={name}
         short_title={config.short_name}
+        bottom_text={tileValue(data.details)}
+        warnings={data.warnings}
         top_text={config.address}
         status={status}
         orientation={orientation}

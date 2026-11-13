@@ -23,3 +23,25 @@ All monitors have the following common properties that you can set:
 > If `name` is not set, the `key` will be used as the monitor name.
 
 > Tiles show the full name whenever it fits, shrinking it slightly if needed. When it doesn't (for example on a phone), they show `short_name`, then `icon`, then the first letter of the name.
+
+## What monitors record
+
+Every check records whether the monitor was up, and when it failed, why. Agents from v0.8.0 also record:
+
+| Monitor   | Recorded on each check                                                                                                             |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Host      | Ping latency.                                                                                                                      |
+| Website   | Response time, HTTP status code, redirect target, and the expiry of the TLS certificate the site presents.                         |
+| Container | State, Docker health check status, restart count, start time, image and version, last exit code, OOM kills, CPU % and memory used. |
+
+Older agents keep working; their checks simply have no details.
+
+## On the board
+
+Each monitor tile shows its current value under its name: latency for hosts and websites, CPU and memory for containers. A warning badge appears when a website's certificate expires within 14 days (or has expired), or a container's health check fails, it is restarting, or it restarted in the last 24 hours. Tiles refresh every minute.
+
+Clicking a tile opens its dialog with:
+
+- **Now**: what the latest check recorded, for example status code and certificate expiry, or container state, uptime, restarts, CPU, memory and image.
+- **Uptime**: the share of successful checks over the last 24 hours, 7 days and 30 days.
+- **History**: charts (latency, or container CPU and memory) and incidents for the chosen range: 24 hours, 7 days or 30 days. Longer ranges are averaged into larger time buckets.

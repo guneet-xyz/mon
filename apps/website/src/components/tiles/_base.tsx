@@ -1,5 +1,6 @@
 "use client"
 
+import { TriangleAlert } from "lucide-react"
 import { useLayoutEffect, useRef, useState } from "react"
 
 import { DynamicIcon } from "@/components/dynamic-icon"
@@ -20,6 +21,8 @@ export function BaseTile({
   title,
   short_title,
   top_text,
+  bottom_text,
+  warnings,
   orientation,
   icon,
   top_right_icon,
@@ -34,6 +37,8 @@ export function BaseTile({
   title?: string // full name, shown whenever it fits
   short_title?: string // shown instead of the name when it does not fit
   top_text?: string
+  bottom_text?: string | null // the monitor's current value, e.g. latency
+  warnings?: string[] // shown as a badge; listed in its tooltip
   orientation?: "horizontal" | "vertical"
   status?: "online" | "offline" | "unknown"
   icon?: string
@@ -147,6 +152,24 @@ export function BaseTile({
       ) : null}
 
       {content}
+
+      {bottom_text ? (
+        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 font-display text-xs whitespace-nowrap text-emerald-700 md:text-sm dark:text-emerald-500">
+          {bottom_text}
+        </div>
+      ) : null}
+
+      {warnings && warnings.length > 0 ? (
+        <div
+          role="img"
+          aria-label={`Warning: ${warnings.join("; ")}`}
+          title={warnings.join("\n")}
+          data-testid="tile-warning"
+          className="absolute right-2 bottom-1.5 text-amber-600 dark:text-amber-400"
+        >
+          <TriangleAlert className="size-4" />
+        </div>
+      ) : null}
 
       {top_right_icon ? (
         <DynamicIcon

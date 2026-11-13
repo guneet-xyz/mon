@@ -2,14 +2,11 @@ import dayjs from "dayjs"
 
 import type { MonitorTile } from "@mon/config/schema"
 
-import { getContainerIncidentPings, getContainerStatus } from "./container"
-import { getGithubIncidentPings, getGithubStatus } from "./github"
-import { getHostIncidentPings, getHostPings, getHostStatus } from "./host"
-import {
-  getWebsiteIncidentPings,
-  getWebsitePings,
-  getWebsiteStatus,
-} from "./website"
+import { getContainerStatus } from "./container"
+import { getGithubStatus } from "./github"
+import { getIncidentPings, type HistoryRange } from "./history"
+import { getHostStatus } from "./host"
+import { getWebsiteStatus } from "./website"
 
 export type IncidentPing = {
   timestamp: Date
@@ -25,8 +22,9 @@ export type Incident = {
 export async function getIncidents(
   type: MonitorTile["type"],
   dbKey: string,
+  range: HistoryRange = "24h",
 ): Promise<Array<Incident>> {
-  const pings = await getIncidentPings(type, dbKey)
+  const pings = await getIncidentPings(type, dbKey, range)
 
   const incidents: Array<Incident> = []
   let current: Incident | null = null
@@ -53,30 +51,6 @@ export async function getIncidents(
   incidents.sort((a, b) => b.start.getTime() - a.start.getTime())
 
   return incidents
-}
-
-function getIncidentPings(
-  type: MonitorTile["type"],
-  dbKey: string,
-): Promise<Array<IncidentPing>> {
-  if (type === "host") return getHostIncidentPings(dbKey)
-  if (type === "website") return getWebsiteIncidentPings(dbKey)
-  if (type === "container") return getContainerIncidentPings(dbKey)
-  if (type === "github") return getGithubIncidentPings(dbKey)
-
-  throw new Error("Unsupported type for getIncidentPings function")
-}
-
-export async function getPings(
-  type: MonitorTile["type"],
-  dbKey: string,
-): Promise<Array<{ timestamp: Date; latency: number }> | null> {
-  if (type === "host") return await getHostPings(dbKey)
-  if (type === "website") return await getWebsitePings(dbKey)
-  if (type === "container") return null
-  if (type === "github") return null
-
-  throw new Error("Unsupported type for getPings function")
 }
 
 export async function getStatus(
