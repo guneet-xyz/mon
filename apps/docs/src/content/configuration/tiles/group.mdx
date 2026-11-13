@@ -1,40 +1,74 @@
 # Group
 
-A group tile sums up several monitors in one tile. Use `type = "group"` to use this tile.
+A group tile sums up several monitors, and other groups, in one tile. Use `type = "group"` to use this tile.
 
 Collapsed, the tile shows the group's name, how many of its members are up (for example `7/8 up`), the combined status and a status line with one segment per member.
 
-Clicking it expands the group in place: it grows from the cell it occupies to its expanded size (shifting back only where it would run off the board), and the group becomes a subgrid of its member tiles. Other tiles stay where they are; only the ones the group now covers move, each to the nearest free cell, and the board grows if it has to. The change is animated so you can follow which tiles moved; the animation is off when your system asks for reduced motion. Each member opens its own monitor dialog. The header of an expanded group collapses it again. Any number of groups can be expanded at once, and the browser remembers which ones are expanded (as it does the theme) across reloads.
+Clicking it expands the group in place: it grows from the cell it occupies to its expanded size (shifting back only where it would run off the board), and the group becomes a subgrid of its member tiles. Other tiles stay where they are; only the ones the group now covers move, each to the nearest free cell, and the board grows if it has to. The change is animated so you can follow which tiles moved; the animation is off when your system asks for reduced motion. Each member opens its own monitor dialog. The header of an expanded group collapses it again. Any number of groups can be expanded at once. A group starts as its `initial_state` says; once you expand or collapse it, your browser remembers that choice (as it does the theme) and uses it instead.
 
 ## Properties
 
 Groups accept the [common tile properties](/docs/configuration/tiles) and these:
 
-| Property     | Type   | Description                                                                                                                               | Required |
-| ------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `key`        | string | Key to identify this group. Must be unique among groups.                                                                                  | Yes      |
-| `members`    | array  | Monitors in this group, in placement order: a monitor `key`, or a [member table](#members). Each key must match exactly one monitor tile. | Yes      |
-| `name`       | string | Name of the group.                                                                                                                        | No       |
-| `short_name` | string | Short name of the group. Shown instead of the name when the name does not fit the tile.                                                   | No       |
-| `icon`       | string | Icon shown when the name does not fit the tile and `short_name` is not set.                                                               | No       |
-| `expanded`   | table  | Size and subgrid of the expanded group. See [Expanded size](#expanded-size).                                                              | No       |
+| Property        | Type   | Description                                                                                                                                         | Required |
+| --------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `key`           | string | Key to identify this group. Must be unique among groups.                                                                                            | Yes      |
+| `members`       | array  | Monitors and groups in this group, in placement order: a `key`, or a [member table](#members). Each key must match exactly one monitor or group.    | Yes      |
+| `name`          | string | Name of the group.                                                                                                                                  | No       |
+| `short_name`    | string | Short name of the group. Shown instead of the name when the name does not fit the tile.                                                             | No       |
+| `icon`          | string | Icon shown when the name does not fit the tile and `short_name` is not set.                                                                         | No       |
+| `expanded`      | table  | Size and subgrid of the expanded group. See [Expanded size](#expanded-size).                                                                        | No       |
+| `initial_state` | string | `"collapsed"` (default) or `"expanded"`: how the group starts in a browser that has not toggled it yet.                                             | No       |
+| `hidden`        | bool   | Leave the group off the board; it is still shown inside the groups that list it. See [Showing members on the board](#showing-members-on-the-board). | No       |
 
 The common `row_span` and `col_span` properties set the collapsed size.
 
-A monitor can belong to any number of groups. Groups cannot contain other groups.
+A monitor or group can belong to any number of groups. Groups can contain other groups ([nested groups](#nested-groups)), but never themselves, directly or through other groups.
 
 ## Expanded size
 
-| Property            | Type   | Description                                       | Default                                                                        |
-| ------------------- | ------ | ------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `expanded.row_span` | number | Rows of the board the expanded group takes.       | Smallest near-square size that fits every member, at least the collapsed size. |
-| `expanded.col_span` | number | Columns of the board the expanded group takes.    | As above.                                                                      |
-| `expanded.rows`     | number | Rows of the subgrid inside the expanded group.    | See below.                                                                     |
-| `expanded.cols`     | number | Columns of the subgrid inside the expanded group. | See below.                                                                     |
+| Property                | Type   | Description                                            | Default                                                                        |
+| ----------------------- | ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| `expanded.row_span`     | number | Rows of the board the expanded group takes.            | Smallest near-square size that fits every member, at least the collapsed size. |
+| `expanded.col_span`     | number | Columns of the board the expanded group takes.         | As above.                                                                      |
+| `expanded.rows`         | number | Rows of the subgrid inside the expanded group.         | See below.                                                                     |
+| `expanded.cols`         | number | Columns of the subgrid inside the expanded group.      | See below.                                                                     |
+| `expanded.min_row_span` | number | Fewest rows of the board the expanded group takes.     | 1 (at least the collapsed size)                                                |
+| `expanded.min_col_span` | number | Fewest columns of the board the expanded group takes.  | 1 (at least the collapsed size)                                                |
+| `expanded.max_row_span` | number | Most rows of the board the expanded group grows to.    | No limit                                                                       |
+| `expanded.max_col_span` | number | Most columns of the board the expanded group grows to. | No limit                                                                       |
+
+"The board" here means the grid the group sits in: the main board, or the subgrid of the group that contains it.
 
 When neither `rows` nor `cols` is set, the subgrid is the grid closest to the number of cells the members need whose cells keep the expanded tile's proportions (`rows / cols` close to `row_span / col_span`). When only one is set, the other is derived from the members. A derived dimension grows if the members don't pack into it; explicit ones never change, and members that don't fit are reported in the group.
 
 If only one of `expanded.row_span` and `expanded.col_span` is set, the other is derived from the members.
+
+When neither `row_span`/`col_span` nor `rows`/`cols` fixes the size, the group starts at the size its members need, within `min_*_span` and `max_*_span`. If its members stop fitting, for example because a nested group expands inside it, it grows up to `max_*_span`, keeping its tiles the size of the board's cells. Past the maximum, its subgrid gains rows and columns instead, so its tiles get smaller.
+
+## Nested groups
+
+A group can list other groups as members. A nested group is shown as a group tile inside its parent's subgrid; clicking it expands it there, in place, the same way groups expand on the board: it grows from its cell, the parent grows to make room (see [Expanded size](#expanded-size)), and only the tiles it covers move. A nested group's `expanded` settings are counted in cells of its parent's subgrid, and its collapsed size is its placement in the parent's `members`.
+
+A group's status and its `n/m up` count cover its direct members; a nested group counts as up when every tile inside it is.
+
+```toml
+[[tiles]]
+type = "group"
+key = "grp-immich"
+name = "Immich"
+members = ["site-immich", "ctr-immich-server"]
+
+[[tiles]]
+type = "group"
+key = "grp-services"
+name = "Services"
+initial_state = "expanded"
+members = ["grp-immich", "grp-nextcloud", "site-blog"]
+
+[tiles.expanded]
+max_col_span = 4
+```
 
 ## Members
 
@@ -42,13 +76,13 @@ A member is either a monitor key or a table with the key and its placement in th
 
 | Property    | Type   | Description                                               | Required |
 | ----------- | ------ | --------------------------------------------------------- | -------- |
-| `key`       | string | Key of the monitor.                                       | Yes      |
+| `key`       | string | Key of the monitor or group.                              | Yes      |
 | `row_start` | number | Subgrid row to start in. Negative counts from the end.    | No       |
 | `col_start` | number | Subgrid column to start in. Negative counts from the end. | No       |
 | `row_span`  | number | Subgrid rows the member spans.                            | No       |
 | `col_span`  | number | Subgrid columns the member spans.                         | No       |
 
-A monitor can have a different placement in each group it belongs to.
+A monitor or group can have a different placement in each group it belongs to.
 
 ## Status
 
@@ -60,16 +94,16 @@ A monitor can have a different placement in each group it belongs to.
 
 ## Showing members on the board
 
-Monitors stay on the board by default, even when they belong to a group. Set `hidden = true` on a monitor to leave it off the board; it is still polled and shown in its expanded groups.
+Monitors and groups stay on the board by default, even when they belong to a group. Set `hidden = true` on one to leave it off the board; a hidden monitor is still polled, and both are still shown in the groups that list them.
 
-To hide grouped monitors by default instead, set `hide_grouped_tiles` in `[options]`. A grouped monitor with `hidden = false` is then still shown:
+To hide grouped monitors and groups by default instead, set `hide_grouped_tiles` in `[options]`. One that sets `hidden = false` is then still shown:
 
 ```toml
 [options]
 hide_grouped_tiles = true
 ```
 
-| `hide_grouped_tiles` | Monitor in a group             | Monitor not in a group       |
+| `hide_grouped_tiles` | Monitor or group in a group    | Not in a group               |
 | -------------------- | ------------------------------ | ---------------------------- |
 | `false` (default)    | Shown unless `hidden = true`   | Shown unless `hidden = true` |
 | `true`               | Hidden unless `hidden = false` | Shown unless `hidden = true` |

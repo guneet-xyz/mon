@@ -302,6 +302,7 @@ describe("ConfigSchema — groups", () => {
       key: "g1",
       name: "App",
       members: [{ key: "w1" }, { key: "c1" }],
+      initial_state: "collapsed",
     })
   })
 
@@ -323,20 +324,11 @@ describe("ConfigSchema — groups", () => {
     expect(result.success).toBe(false)
   })
 
-  test("rejects members that are not monitor keys", () => {
+  test("rejects members that are not monitor or group keys", () => {
     const unknown = ConfigSchema.safeParse({
       tiles: [...tiles, { type: "group", key: "g1", members: ["nope"] }],
     })
     expect(unknown.success).toBe(false)
-
-    const nested = ConfigSchema.safeParse({
-      tiles: [
-        ...tiles,
-        { type: "group", key: "g1", members: ["h1"] },
-        { type: "group", key: "g2", members: ["g1"] },
-      ],
-    })
-    expect(nested.success).toBe(false)
   })
 
   test("rejects a member listed twice in one group", () => {
@@ -522,6 +514,122 @@ describe("ConfigSchema — expanded groups", () => {
     expect(pub.members).toEqual([
       { key: "c1", type: "container" },
       { key: "h1", type: "host", col_span: 2 },
+    ])
+  })
+})
+
+describe("ConfigSchema — nested groups", () => {
+  const tiles = [
+    { type: "host", key: "h1", address: "1.1.1.1" },
+    { type: "website", key: "w1", url: "https://a.com" },
+    { type: "container", key: "c1", container_name: "db" },
+  ]
+
+  test("accepts groups that contain groups", () => {
+    const config = ConfigSchema.parse({
+      tiles: [
+        ...tiles,
+        { type: "group", key: "app", members: ["w1", "c1"] },
+        { type: "group", key: "services", members: ["app", "h1"] },
+      ],
+    })
+    const services = config.tiles.find(
+      (t) => t.type === "group" && t.key === "services",
+    )
+    if (services?.type !== "group") throw new Error("expected a group")
+    expect(getGroupMembers(config, services).map((t) => t.type)).toEqual([
+      "group",
+      "host",
+    ])
+  })
+
+  test("rejects groups that contain each other", () => {
+    expect(
+      ConfigSchema.safeParse({
+        tiles: [...tiles, { type: "group", key: "g1", members: ["g1"] }],
+      }).success,
+    ).toBe(false)
+    expect(
+      ConfigSchema.safeParse({
+        tiles: [
+          ...tiles,
+          { type: "group", key: "a", members: ["b"] },
+          { type: "group", key: "b", members: ["c"] },
+          { type: "group", key: "c", members: ["a", "h1"] },
+        ],
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects a member key shared by a group and a monitor", () => {
+    expect(
+      ConfigSchema.safeParse({
+        tiles: [
+          ...tiles,
+          { type: "group", key: "h1", members: ["w1"] },
+          { type: "group", key: "g", members: ["h1"] },
+        ],
+      }).success,
+    ).toBe(false)
+  })
+
+  test("initial_state defaults to collapsed", () => {
+    const config = ConfigSchema.parse({
+      tiles: [
+        ...tiles,
+        { type: "group", key: "a", members: ["h1"] },
+        { type: "group", key: "b", members: ["w1"], initial_state: "expanded" },
+      ],
+    })
+    expect(
+      config.tiles.flatMap((t) =>
+        t.type === "group" ? [t.initial_state] : [],
+      ),
+    ).toEqual(["collapsed", "expanded"])
+    expect(
+      ConfigSchema.safeParse({
+        tiles: [
+          ...tiles,
+          { type: "group", key: "a", members: ["h1"], initial_state: "open" },
+        ],
+      }).success,
+    ).toBe(false)
+  })
+
+  test("rejects a minimum above the maximum", () => {
+    const parse = (expanded: Record<string, number>) =>
+      ConfigSchema.safeParse({
+        tiles: [
+          ...tiles,
+          { type: "group", key: "a", members: ["h1"], expanded },
+        ],
+      }).success
+    expect(parse({ min_row_span: 2, max_row_span: 3, max_col_span: 4 })).toBe(
+      true,
+    )
+    expect(parse({ min_col_span: 4, max_col_span: 3 })).toBe(false)
+  })
+
+  test("hide_grouped_tiles also hides nested groups", () => {
+    const config = ConfigSchema.parse({
+      options: { hide_grouped_tiles: true },
+      tiles: [
+        ...tiles,
+        { type: "group", key: "app", members: ["w1", "c1"] },
+        { type: "group", key: "shown", members: ["h1"], hidden: false },
+        { type: "group", key: "services", members: ["app", "shown"] },
+      ],
+    })
+    const pub = toPublicConfig(config)
+    expect(pub.tiles.map((t) => ("key" in t ? t.key : t.type))).toEqual([
+      "shown",
+      "services",
+    ])
+    // Nested groups stay available to the browser for the subgrid.
+    expect(Object.keys(pub.groups).sort()).toEqual(["app", "services", "shown"])
+    expect(pub.groups.services!.members).toEqual([
+      { key: "app", type: "group" },
+      { key: "shown", type: "group" },
     ])
   })
 })

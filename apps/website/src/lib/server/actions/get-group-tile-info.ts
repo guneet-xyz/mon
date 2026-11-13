@@ -1,26 +1,53 @@
 "use server"
 
-import { getGroupConfig, toPublicTile } from "@mon/config"
+import {
+  getConfig,
+  getGroupMembers,
+  toPublicTile,
+  type GroupTile,
+  type MonitorTile,
+} from "@mon/config"
 
 import { env } from "@/env"
 import { getStatus } from "@/lib/server/monitors"
-import { groupStatus } from "@/lib/server/monitors/status"
+import { groupStatus, type MonitorStatus } from "@/lib/server/monitors/status"
 
 export async function getGroupTileInfo(dbKey: string) {
-  const found = await getGroupConfig(env.CONFIG_PATH, dbKey)
-  if (!found) {
+  const config = await getConfig(env.CONFIG_PATH)
+  const group = config.tiles.find(
+    (tile): tile is GroupTile => tile.type === "group" && tile.key === dbKey,
+  )
+  if (!group) {
     return null
   }
 
+  // A nested group's status rolls up its own members. The schema rejects
+  // cycles, and each tile's status is looked up once.
+  const statuses = new Map<string, Promise<MonitorStatus>>()
+  const statusOf = (tile: MonitorTile | GroupTile): Promise<MonitorStatus> => {
+    const id = `${tile.type}:${tile.key}`
+    let status = statuses.get(id)
+    if (!status) {
+      status =
+        tile.type === "group"
+          ? Promise.all(getGroupMembers(config, tile).map(statusOf)).then(
+              groupStatus,
+            )
+          : getStatus(tile.type, tile.key)
+      statuses.set(id, status)
+    }
+    return status
+  }
+
   const members = await Promise.all(
-    found.members.map(async (member) => ({
+    getGroupMembers(config, group).map(async (member) => ({
       config: toPublicTile(member),
-      status: await getStatus(member.type, member.key),
+      status: await statusOf(member),
     })),
   )
 
   return {
-    config: toPublicTile(found.group),
+    config: toPublicTile(group),
     status: groupStatus(members.map((member) => member.status)),
     members,
   }

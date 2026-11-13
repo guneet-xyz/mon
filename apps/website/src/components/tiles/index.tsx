@@ -1,4 +1,4 @@
-import type { GeneratedTile } from "@/lib/client/tile-generation"
+import { tileId, type GeneratedTile } from "@/lib/client/tile-generation"
 import { cn } from "@/lib/utils"
 
 import { ContainerTile } from "./container"
@@ -82,7 +82,13 @@ export function Tile({
           >
             {tile.subgrid.success
               ? tile.subgrid.tiles.map((member, index) => (
-                  <Tile key={index} tile={member} enterDelay={index} />
+                  <Tile
+                    key={tileId(member)}
+                    tile={member}
+                    enterDelay={index}
+                    onToggleGroup={onToggleGroup}
+                    flipId={flipId && `${flipId}/${tileId(member)}`}
+                  />
                 ))
               : null}
           </ExpandedGroupTile>

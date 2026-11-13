@@ -63,15 +63,3 @@ export async function getMonitorConfig<T extends MonitorTile["type"]>(
 export async function getMonitors(path: string): Promise<MonitorTile[]> {
   return getMonitorTiles(await getConfig(path))
 }
-
-export async function getGroupConfig(
-  path: string,
-  key: string,
-): Promise<{ group: GroupTile; members: MonitorTile[] } | undefined> {
-  const config = await getConfig(path)
-  const group = config.tiles.find(
-    (tile): tile is GroupTile => tile.type === "group" && tile.key === key,
-  )
-  if (!group) return undefined
-  return { group, members: getGroupMembers(config, group) }
-}

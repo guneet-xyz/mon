@@ -29,6 +29,14 @@ export type GeneratedTile = (
   location: Location
 }
 
+// Stable identity of a tile across layouts, so React moves it instead of
+// remounting it and the animation can follow it.
+export function tileId(tile: GeneratedTile): string {
+  if ("key" in tile) return `${tile.type}:${tile.key}`
+  const { row_start, col_start } = tile.location
+  return `${tile.type}:${row_start}:${col_start}`
+}
+
 // Anything that can be placed on a grid: main-grid tiles and group members.
 type Placeable = PublicTile | PublicGroupMember
 
@@ -235,7 +243,7 @@ function placeTiles({
   return { success: true }
 }
 
-const tileId = (tile: Placeable) =>
+const placeableId = (tile: Placeable) =>
   "key" in tile ? `${tile.type}:${tile.key}` : undefined
 
 // Placement order: empty/hidden placeholders, then tiles with a fixed start,
@@ -247,7 +255,7 @@ function prioritize(
   expanding: ReadonlySet<string> = new Set(),
 ): Array<Array<IndexedTile>> {
   const tiles_input: Array<IndexedTile> = tiles.map((tile, index) => {
-    const id = tileId(tile)
+    const id = placeableId(tile)
     const anchor =
       id !== undefined &&
       tile.row_start === undefined &&
@@ -396,52 +404,134 @@ export function bestSubgrid(
   return best
 }
 
-// Resolves an expanded group's size on the parent grid and its subgrid,
-// filling in whatever `expanded` leaves unset.
-export function resolveGroupLayout(group: PublicGroupTile): {
+export type GroupLayout = {
+  // Size of the expanded group on the grid it sits in.
   row_span: number
   col_span: number
-  rows: number
-  cols: number
-  fixed_rows: boolean
-  fixed_cols: boolean
-} {
-  const area = memberArea(group.members)
-  const expanded = group.expanded ?? {}
-
-  let { row_span, col_span } = expanded
-  if (row_span === undefined && col_span === undefined) {
-    col_span = Math.max(Math.ceil(Math.sqrt(area)), group.col_span ?? 1)
-    row_span = Math.max(Math.ceil(area / col_span), group.row_span ?? 1)
-  }
-  // At most one of the two is still unset here.
-  row_span ??= Math.max(1, Math.ceil(area / col_span!))
-  col_span ??= Math.max(1, Math.ceil(area / row_span))
-
-  let { rows, cols } = expanded
-  if (rows === undefined && cols === undefined) {
-    ;({ rows, cols } = bestSubgrid(area, row_span, col_span))
-  }
-  rows ??= Math.max(1, Math.ceil(area / cols!))
-  cols ??= Math.max(1, Math.ceil(area / rows))
-
-  return {
-    row_span,
-    col_span,
-    rows,
-    cols,
-    fixed_rows: expanded.rows !== undefined,
-    fixed_cols: expanded.cols !== undefined,
-  }
+  subgrid: Subgrid
 }
 
-// Lays out a group's members in its subgrid. A derived dimension grows when
-// members do not pack into the computed grid; explicit ones never change.
-export function layoutSubgrid(group: PublicGroupTile): Subgrid {
-  const layout = resolveGroupLayout(group)
-  const priority_list_of_tiles = prioritize(group.members)
-  let { rows, cols } = layout
-  for (let attempt = 0; attempt < 50; attempt++) {
+const MAX_GROUP_ATTEMPTS = 200
+
+// Lays out an expanded group: its size on the grid it sits in and the subgrid
+// of its members, recursing into nested groups that are expanded too.
+//
+// Sizing, per dimension, unless `expanded` fixes it:
+// - the group starts at the near-square size its members need, at least its
+//   collapsed size and min_*_span, at most max_*_span;
+// - the subgrid is the grid closest to the members' cell count whose cells
+//   keep the group's proportions (bestSubgrid);
+// - if the members do not fit (a nested group expanded inside it), the group
+//   grows up to max_*_span with one subgrid cell per parent cell, and past
+//   that its subgrid gains rows/columns, so its tiles shrink.
+// Fixed rows/cols, or a fixed row_span and col_span, keep their old meaning:
+// the subgrid is derived and only its derived dimension grows.
+//
+// Nested groups expand in place: tiles are anchored to their cells in the
+// subgrid with nested groups collapsed, like the main board.
+export function layoutGroup(
+  group: PublicGroupTile,
+  groups: Readonly<Record<string, PublicGroupTile>>,
+  expandedGroups: ReadonlySet<string>,
+  collapsed: { row_span: number; col_span: number } = {
+    row_span: group.row_span ?? 1,
+    col_span: group.col_span ?? 1,
+  },
+  ancestors: ReadonlySet<string> = new Set(),
+): GroupLayout {
+  const lineage = new Set([...ancestors, group.key])
+
+  // Expanded nested groups take their own expanded size in this subgrid.
+  const childSubgrids = new Map<string, Subgrid>()
+  const members = group.members.map((member): PublicGroupMember => {
+    const nested = member.type === "group" ? groups[member.key] : undefined
+    if (!nested || !expandedGroups.has(member.key) || lineage.has(member.key)) {
+      return member
+    }
+    const child = layoutGroup(
+      nested,
+      groups,
+      expandedGroups,
+      { row_span: member.row_span ?? 1, col_span: member.col_span ?? 1 },
+      lineage,
+    )
+    childSubgrids.set(member.key, child.subgrid)
+    return { ...member, row_span: child.row_span, col_span: child.col_span }
+  })
+  const area = memberArea(members)
+  const expanded = group.expanded ?? {}
+
+  const bounds = (dim: "row" | "col") => {
+    const fixed = expanded[`${dim}_span`]
+    if (fixed !== undefined) return { lo: fixed, hi: fixed }
+    const hi = expanded[`max_${dim}_span`] ?? Infinity
+    const lo = Math.max(
+      expanded[`min_${dim}_span`] ?? 1,
+      collapsed[`${dim}_span`],
+    )
+    return { lo: Math.min(lo, hi), hi }
+  }
+  const clamp = (n: number, { lo, hi }: { lo: number; hi: number }) =>
+    Math.min(Math.max(n, lo), hi)
+  const rowBounds = bounds("row")
+  const colBounds = bounds("col")
+
+  let col_span = clamp(Math.ceil(Math.sqrt(area)), colBounds)
+  let row_span = clamp(Math.ceil(area / col_span), rowBounds)
+  if (rowBounds.lo === rowBounds.hi) {
+    col_span = clamp(Math.ceil(area / row_span), colBounds)
+  }
+
+  const fixedRows = expanded.rows !== undefined
+  const fixedCols = expanded.cols !== undefined
+  const derivedOnly =
+    fixedRows ||
+    fixedCols ||
+    (expanded.row_span !== undefined && expanded.col_span !== undefined)
+
+  let rows: number
+  let cols: number
+  if (fixedRows || fixedCols) {
+    rows = expanded.rows ?? Math.max(1, Math.ceil(area / expanded.cols!))
+    cols = expanded.cols ?? Math.max(1, Math.ceil(area / rows))
+  } else {
+    ;({ rows, cols } = bestSubgrid(area, row_span, col_span))
+  }
+
+  // Anchor tiles to the subgrid with nested groups collapsed.
+  const expandingChildren = [...childSubgrids.keys()]
+  const anchors = new Map<string, Anchor>()
+  if (expandingChildren.length > 0) {
+    const baseline = layoutGroup(
+      group,
+      groups,
+      new Set(
+        [...expandedGroups].filter((key) => !expandingChildren.includes(key)),
+      ),
+      collapsed,
+      ancestors,
+    )
+    if (baseline.subgrid.success) {
+      for (const tile of baseline.subgrid.tiles) {
+        if ("key" in tile) {
+          anchors.set(`${tile.type}:${tile.key}`, {
+            row: tile.location.row_start,
+            col: tile.location.col_start,
+          })
+        }
+      }
+    }
+  }
+  const priority_list_of_tiles = prioritize(
+    members,
+    anchors,
+    new Set(expandingChildren.map((key) => `group:${key}`)),
+  )
+
+  let extraRows = 0
+  let extraCols = 0
+  let lastError = `Could not fit the members of group "${group.key}"`
+  for (let attempt = 0; attempt < MAX_GROUP_ATTEMPTS; attempt++) {
     const result = attemptLayout({
       priority_list_of_tiles,
       rows,
@@ -449,17 +539,45 @@ export function layoutSubgrid(group: PublicGroupTile): Subgrid {
       default_tile: null,
     })
     if (result.success) {
-      return { success: true, rows, cols, tiles: result.tiles }
+      return {
+        row_span,
+        col_span,
+        subgrid: {
+          success: true,
+          rows,
+          cols,
+          tiles: result.tiles.map((tile) =>
+            tile.type === "group" && childSubgrids.has(tile.key)
+              ? { ...tile, subgrid: childSubgrids.get(tile.key) }
+              : tile,
+          ),
+        },
+      }
     }
-    if (layout.fixed_rows && layout.fixed_cols) {
-      return { success: false, error: result.error }
+    lastError = result.error
+
+    if (derivedOnly) {
+      if (fixedRows && fixedCols) break
+      if (!fixedRows) rows++
+      else cols++
+      continue
     }
-    if (!layout.fixed_rows) rows++
-    else cols++
+
+    // Grow the group (one subgrid cell per parent cell) while its bounds
+    // allow, then pack more cells into it.
+    const growCol = col_span < colBounds.hi
+    const growRow = row_span < rowBounds.hi
+    if (growCol && (col_span <= row_span || !growRow)) col_span++
+    else if (growRow) row_span++
+    else if (extraRows * col_span <= extraCols * row_span) extraRows++
+    else extraCols++
+    rows = Math.max(rows, row_span + extraRows)
+    cols = Math.max(cols, col_span + extraCols)
   }
   return {
-    success: false,
-    error: `Could not fit the members of group "${group.key}"`,
+    row_span,
+    col_span,
+    subgrid: { success: false, error: lastError },
   }
 }
 
@@ -489,8 +607,12 @@ export function generateTiles(
   const subgrids = new Map<string, Subgrid>()
   const tiles = config.tiles.map((tile): PublicTile => {
     if (tile.type !== "group" || !expandedGroups.has(tile.key)) return tile
-    const { row_span, col_span } = resolveGroupLayout(tile)
-    subgrids.set(tile.key, layoutSubgrid(tile))
+    const { row_span, col_span, subgrid } = layoutGroup(
+      tile,
+      config.groups,
+      expandedGroups,
+    )
+    subgrids.set(tile.key, subgrid)
     return { ...tile, row_span, col_span }
   })
 
