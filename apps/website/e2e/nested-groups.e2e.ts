@@ -73,6 +73,15 @@ members = ["nest-host-4", "nest-host-5"]
       ),
     )
     .toBe(true)
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          document.getAnimations().filter((a) => a.playState === "running")
+            .length,
+      ),
+    )
+    .toBe(0)
   await testInfo.attach("nested-expanded", {
     body: await page.screenshot(),
     contentType: "image/png",
