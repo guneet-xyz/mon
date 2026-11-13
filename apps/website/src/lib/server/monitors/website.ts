@@ -1,68 +1,17 @@
-import dayjs from "dayjs"
-
-import { and, asc, desc, eq, gte, isNotNull } from "@mon/db/drizzle"
+import { desc, eq } from "@mon/db/drizzle"
 import { websitePings } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
-import type { IncidentPing } from "."
 import { statusFromLatestPing } from "./status"
-
-export async function getWebsiteIncidentPings(
-  dbKey: string,
-): Promise<Array<IncidentPing>> {
-  const pings = (await db
-    .select({
-      timestamp: websitePings.timestamp,
-      error: websitePings.error,
-    })
-    .from(websitePings)
-    .where(
-      and(
-        eq(websitePings.key, dbKey),
-        isNotNull(websitePings.error),
-        gte(websitePings.timestamp, dayjs().subtract(1, "day").toDate()),
-      ),
-    )
-    .orderBy(asc(websitePings.timestamp))) as Array<{
-    timestamp: Date
-    error: string
-  }>
-
-  return pings
-}
 
 export async function getWebsiteStatus(dbKey: string) {
   const pings = await db
-    .select()
+    .select({ timestamp: websitePings.timestamp, error: websitePings.error })
     .from(websitePings)
-    .where(and(eq(websitePings.key, dbKey)))
+    .where(eq(websitePings.key, dbKey))
     .orderBy(desc(websitePings.timestamp))
     .limit(1)
 
   return statusFromLatestPing(pings[0])
-}
-
-export async function getWebsitePings(
-  dbKey: string,
-): Promise<Array<{ timestamp: Date; latency: number }>> {
-  const pings = (await db
-    .select({
-      timestamp: websitePings.timestamp,
-      latency: websitePings.latency,
-    })
-    .from(websitePings)
-    .where(
-      and(
-        eq(websitePings.key, dbKey),
-        isNotNull(websitePings.latency),
-        gte(websitePings.timestamp, dayjs().subtract(1, "day").toDate()),
-      ),
-    )
-    .orderBy(asc(websitePings.timestamp))) as Array<{
-    timestamp: Date
-    latency: number
-  }>
-
-  return pings
 }
