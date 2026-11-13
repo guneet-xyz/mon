@@ -139,7 +139,8 @@ export function BaseTile({
           aria-hidden
           data-text={title}
           className={cn(
-            "pointer-events-none invisible absolute before:content-[attr(data-text)]",
+            // w-max: an absolute element would otherwise shrink to the tile width.
+            "pointer-events-none invisible absolute w-max before:content-[attr(data-text)]",
             TITLE_CLASS,
           )}
         />
