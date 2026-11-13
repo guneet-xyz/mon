@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/guneet-xyz/mon/compare/v0.7.0...v0.8.0) (2026-11-13)
+
+
+### Features
+
+* record and present richer monitor data ([#61](https://github.com/guneet-xyz/mon/issues/61)) ([49d8964](https://github.com/guneet-xyz/mon/commit/49d8964cc12ba23c011cd9f621be8a353e27cf0f)), closes [#60](https://github.com/guneet-xyz/mon/issues/60)
+
 ## [0.7.0](https://github.com/guneet-xyz/mon/compare/v0.6.0...v0.7.0) (2026-11-13)
 
 
