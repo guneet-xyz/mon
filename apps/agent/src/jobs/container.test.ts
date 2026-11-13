@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, mock } from "bun:test"
 
 import type { ContainerJobTile } from "@mon/contracts"
 
-import { dockerRequest, pingContainer } from "./container"
+import { cpuPercent, dockerRequest, pingContainer } from "./container"
 
 describe("pingContainer", () => {
   let mockFetch: any
@@ -167,5 +167,112 @@ describe("pingContainer", () => {
       server.stop(true)
       rmSync(dir, { recursive: true, force: true })
     }
+  })
+
+  it("records state details from the inspect response", async () => {
+    mockFetch = mock(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url.includes("/stats")
+          ? {}
+          : {
+              RestartCount: 2,
+              Config: {
+                Image: "cr.guneet.dev/mon/agent:v0.8.0",
+                Labels: { "org.opencontainers.image.version": "0.8.0" },
+              },
+              State: {
+                Status: "running",
+                Health: { Status: "healthy" },
+                StartedAt: "2026-11-13T10:00:00.123456789Z",
+                ExitCode: 0,
+                OOMKilled: false,
+              },
+            },
+    }))
+
+    const result = await pingContainer(tile, { fetch: mockFetch })
+
+    expect(result).toMatchObject({
+      error: null,
+      state: "running",
+      health: "healthy",
+      restart_count: 2,
+      started_at: "2026-11-13T10:00:00.123Z",
+      exit_code: 0,
+      oom_killed: false,
+      image: "cr.guneet.dev/mon/agent:v0.8.0",
+      image_version: "0.8.0",
+    })
+  })
+
+  it("keeps exit details for stopped containers", async () => {
+    mockFetch = mock(async () => ({
+      ok: true,
+      json: async () => ({
+        State: {
+          Status: "exited",
+          ExitCode: 137,
+          OOMKilled: true,
+          StartedAt: "0001-01-01T00:00:00Z",
+        },
+      }),
+    }))
+    const result = await pingContainer(tile, { fetch: mockFetch })
+    expect(result).toMatchObject({
+      error: "container is offline",
+      state: "exited",
+      exit_code: 137,
+      oom_killed: true,
+      started_at: null,
+    })
+    // No stats request for a stopped container.
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("computes CPU % across polls and memory like docker stats", async () => {
+    let total = 1_000_000_000
+    let system = 100_000_000_000
+    mockFetch = mock(async (url: string) => ({
+      ok: true,
+      json: async () =>
+        url.includes("/stats")
+          ? {
+              cpu_stats: {
+                cpu_usage: { total_usage: total },
+                system_cpu_usage: system,
+                online_cpus: 4,
+              },
+              memory_stats: {
+                usage: 300_000_000,
+                limit: 8_000_000_000,
+                stats: { inactive_file: 50_000_000 },
+              },
+            }
+          : { State: { Status: "running" } },
+    }))
+    const statsTile = { ...tile, id: "stats-container" }
+
+    const first = await pingContainer(statsTile, { fetch: mockFetch })
+    expect(first.cpu_percent).toBeNull()
+    expect(first.memory_bytes).toBe(250_000_000)
+    expect(first.memory_limit_bytes).toBe(8_000_000_000)
+
+    // 0.5 s of CPU over 10 s of system time across 4 CPUs = 20%.
+    total += 500_000_000
+    system += 10_000_000_000
+    const second = await pingContainer(statsTile, { fetch: mockFetch })
+    expect(second.cpu_percent).toBeCloseTo(20)
+  })
+
+  it("skips CPU % when the counter went backwards", () => {
+    expect(
+      cpuPercent(
+        { container: 10, system: 10 },
+        { container: 5, system: 20 },
+        2,
+      ),
+    ).toBeNull()
+    expect(cpuPercent(undefined, { container: 5, system: 20 }, 2)).toBeNull()
   })
 })

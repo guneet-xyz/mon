@@ -1,12 +1,15 @@
 import { sql } from "drizzle-orm"
 import {
   bigint,
+  boolean,
   check,
   index,
+  integer,
   pgEnum,
   pgTableCreator,
   real,
   serial,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -44,6 +47,13 @@ export const websitePings = createTable(
     }).notNull(),
     latency: real("latency"),
     error: varchar("error", { length: 256 }),
+    // Recorded by agents from v0.8.0; null for older pings and agents.
+    statusCode: smallint("status_code"),
+    redirectLocation: varchar("redirect_location", { length: 512 }),
+    certExpiresAt: timestamp("cert_expires_at", {
+      mode: "date",
+      withTimezone: true,
+    }),
   },
   (t) => [index("websites_key_idx").on(t.key)],
 )
@@ -59,6 +69,18 @@ export const containerPings = createTable(
       withTimezone: true,
     }).notNull(),
     error: varchar("error", { length: 256 }),
+    // Recorded by agents from v0.8.0; null for older pings and agents.
+    state: varchar("state", { length: 16 }),
+    health: varchar("health", { length: 16 }),
+    restartCount: integer("restart_count"),
+    startedAt: timestamp("started_at", { mode: "date", withTimezone: true }),
+    exitCode: integer("exit_code"),
+    oomKilled: boolean("oom_killed"),
+    image: varchar("image", { length: 256 }),
+    imageVersion: varchar("image_version", { length: 64 }),
+    cpuPercent: real("cpu_percent"),
+    memoryBytes: bigint("memory_bytes", { mode: "number" }),
+    memoryLimitBytes: bigint("memory_limit_bytes", { mode: "number" }),
   },
   (t) => [index("containers_key_idx").on(t.key)],
 )

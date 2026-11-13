@@ -99,6 +99,8 @@ const _ConfigSchema = z.object({
         MonitorSchema.extend({
           type: z.literal("website"),
           url: z.string(),
+          // GET reads only the headers; HEAD is cheaper but some sites reject it.
+          method: z.enum(["GET", "HEAD"]).default("GET"),
         }),
         MonitorSchema.extend({
           type: z.literal("container"),

@@ -14,6 +14,8 @@ export const WebsiteJobTileSchema = z.object({
   id: z.string(),
   cron: z.string(),
   url: z.string(),
+  // Optional for websites older than v0.8.0, which never send it.
+  method: z.enum(["GET", "HEAD"]).optional(),
 })
 
 export const ContainerJobTileSchema = z.object({
@@ -63,6 +65,10 @@ export const WebsitePingDTOSchema = z.object({
   key: z.string(),
   latency_ms: z.number().nullable(),
   error: z.string().nullable(),
+  // Sent by agents from v0.8.0. Optional so older agents keep working.
+  status_code: z.number().int().nullable().optional(),
+  redirect_location: z.string().max(512).nullable().optional(),
+  cert_expires_at: z.string().datetime().nullable().optional(),
 })
 
 export const ContainerPingDTOSchema = z.object({
@@ -73,6 +79,18 @@ export const ContainerPingDTOSchema = z.object({
   key: z.string(),
   // no latency_ms — container_ping table has no latency column
   error: z.string().nullable(),
+  // Sent by agents from v0.8.0. Optional so older agents keep working.
+  state: z.string().max(16).nullable().optional(),
+  health: z.string().max(16).nullable().optional(),
+  restart_count: z.number().int().nullable().optional(),
+  started_at: z.string().datetime().nullable().optional(),
+  exit_code: z.number().int().nullable().optional(),
+  oom_killed: z.boolean().nullable().optional(),
+  image: z.string().max(256).nullable().optional(),
+  image_version: z.string().max(64).nullable().optional(),
+  cpu_percent: z.number().nullable().optional(),
+  memory_bytes: z.number().int().nullable().optional(),
+  memory_limit_bytes: z.number().int().nullable().optional(),
 })
 
 export const GithubPingDTOSchema = z
