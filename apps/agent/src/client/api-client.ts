@@ -1,4 +1,8 @@
-import { IngestSuccessResponseSchema, JobsResponseSchema } from "@mon/contracts"
+import {
+  IngestSuccessResponseSchema,
+  JobTileSchema,
+  type JobsResponse,
+} from "@mon/contracts"
 import type {
   ContainerPingDTO,
   GithubCheckRunDTO,
@@ -7,6 +11,26 @@ import type {
   IngestSuccessResponse,
   WebsitePingDTO,
 } from "@mon/contracts"
+
+// Jobs this agent does not understand (a newer website's job kinds, or an
+// invalid tile) are skipped, so one of them never stops the others.
+export function parseJobs(body: unknown): JobsResponse {
+  if (
+    !body ||
+    typeof body !== "object" ||
+    !("tiles" in body) ||
+    !Array.isArray(body.tiles)
+  ) {
+    throw new Error("Malformed jobs response: no tiles array")
+  }
+  const tiles: JobsResponse["tiles"] = []
+  for (const tile of body.tiles as unknown[]) {
+    const result = JobTileSchema.safeParse(tile)
+    if (result.success) tiles.push(result.data)
+    else console.warn("[agent] Skipping a job this agent cannot run:", tile)
+  }
+  return { tiles }
+}
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -52,7 +76,7 @@ export class WebsiteApiClient {
     }
     if (res.status === 401) throw new UnauthorizedError()
     if (!res.ok) throw new UnreachableError(`HTTP ${res.status}`)
-    return JobsResponseSchema.parse(await res.json())
+    return parseJobs(await res.json())
   }
 
   async pushHostPing(dto: HostPingDTO): Promise<IngestSuccessResponse> {
