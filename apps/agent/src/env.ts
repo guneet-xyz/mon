@@ -1,6 +1,8 @@
 import { createEnv } from "@t3-oss/env-core"
 import { z } from "zod"
 
+import { resolveAgentToken } from "./token"
+
 export const env = createEnv({
   server: {
     NODE_ENV: z
@@ -14,7 +16,7 @@ export const env = createEnv({
   },
   clientPrefix: "NEXT_PUBLIC_",
   client: {},
-  runtimeEnv: process.env,
+  runtimeEnv: { ...process.env, AGENT_TOKEN: resolveAgentToken(process.env) },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
 })
