@@ -7,7 +7,7 @@ import { useState } from "react"
 import type { MonitorTile } from "@mon/config/schema"
 
 import { Incidents } from "@/components/dialogs/incidents"
-import { SeriesChart } from "@/components/dialogs/series-chart"
+import { SeriesChart, type ChartLine } from "@/components/dialogs/series-chart"
 import { StatusDot } from "@/components/status-dot"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ import {
 import { monitorSummary } from "@/lib/client/monitor-summary"
 import { getMonitorHistory } from "@/lib/server/actions/get-monitor-history"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
-import type { HistoryRange } from "@/lib/server/monitors/history"
+import type { HistoryRange, SeriesPoint } from "@/lib/server/monitors/history"
 
 const RANGES: Array<{ value: HistoryRange; label: string }> = [
   { value: "24h", label: "24 h" },
@@ -79,6 +79,33 @@ function StatGrid({
       ))}
     </dl>
   )
+}
+
+const CPU_LINE: ChartLine = {
+  key: "cpu",
+  label: "CPU",
+  color: "#0ea5e9",
+  value: (p) => p.cpu,
+}
+const MEMORY_LINE: ChartLine = {
+  key: "memory",
+  label: "Memory",
+  color: "#a855f7",
+  value: (p) => p.memory,
+}
+const DISK_COLORS = ["#f59e0b", "#14b8a6", "#ec4899", "#6366f1", "#84cc16"]
+
+// One line per disk the machine reported in this range.
+function diskLines(series: SeriesPoint[]): ChartLine[] {
+  const names = [
+    ...new Set(series.flatMap((point) => Object.keys(point.disks ?? {}))),
+  ].sort()
+  return names.map((name, index) => ({
+    key: `disk-${index}`,
+    label: name,
+    color: DISK_COLORS[index % DISK_COLORS.length]!,
+    value: (p) => p.disks?.[name] ?? null,
+  }))
 }
 
 const panel =
@@ -189,9 +216,15 @@ export function MonitorDialog({
             <div className={panel}>
               <SeriesChart
                 points={series}
-                dataKey="latency"
+                lines={[
+                  {
+                    key: "latency",
+                    label: "Latency",
+                    color: "#22c55e",
+                    value: (p) => p.latency,
+                  },
+                ]}
                 label="Latency"
-                color="#22c55e"
                 range={range}
                 format={formatLatency}
               />
@@ -205,9 +238,8 @@ export function MonitorDialog({
               <div className={panel}>
                 <SeriesChart
                   points={series}
-                  dataKey="cpu"
+                  lines={[CPU_LINE]}
                   label="CPU"
-                  color="#0ea5e9"
                   range={range}
                   format={formatPercent}
                 />
@@ -217,11 +249,48 @@ export function MonitorDialog({
               <div className={panel}>
                 <SeriesChart
                   points={series}
-                  dataKey="memory"
+                  lines={[MEMORY_LINE]}
                   label="Memory"
-                  color="#a855f7"
                   range={range}
                   format={formatBytes}
+                />
+              </div>
+            </Section>
+          </>
+        ) : null}
+
+        {series && type === "agent" ? (
+          <>
+            <Section title="CPU">
+              <div className={panel}>
+                <SeriesChart
+                  points={series}
+                  lines={[CPU_LINE]}
+                  label="CPU"
+                  range={range}
+                  format={formatPercent}
+                />
+              </div>
+            </Section>
+            <Section title="Memory">
+              <div className={panel}>
+                <SeriesChart
+                  points={series}
+                  lines={[MEMORY_LINE]}
+                  label="Memory"
+                  range={range}
+                  format={formatBytes}
+                />
+              </div>
+            </Section>
+            <Section title="Disks">
+              <div className={panel}>
+                <SeriesChart
+                  points={series}
+                  lines={diskLines(series)}
+                  label="Disk usage"
+                  range={range}
+                  format={formatPercent}
                 />
               </div>
             </Section>

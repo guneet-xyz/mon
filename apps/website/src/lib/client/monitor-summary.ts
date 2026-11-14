@@ -7,6 +7,7 @@ import {
   formatDuration,
   formatLatency,
   formatPercent,
+  formatSeconds,
 } from "./format"
 
 export type Stat = { label: string; value: string; detail?: string }
@@ -86,6 +87,31 @@ export function monitorSummary(
             details.oomKilled ? "killed: out of memory" : undefined,
           )
         : null,
+    )
+  }
+
+  if (details.type === "agent") {
+    const ofTotal = (used: number, total: number) =>
+      `${formatBytes(used)} of ${formatBytes(total)}`
+    stats.push(
+      stat("CPU", formatPercent(details.cpu)),
+      details.memory !== null && details.memoryTotal
+        ? stat(
+            "Memory",
+            formatPercent((details.memory / details.memoryTotal) * 100),
+            ofTotal(details.memory, details.memoryTotal),
+          )
+        : null,
+      details.uptimeSeconds === null
+        ? null
+        : stat("Up for", formatSeconds(details.uptimeSeconds)),
+      ...details.disks.map((disk) =>
+        stat(
+          `Disk ${disk.name}`,
+          formatPercent(disk.total > 0 ? (disk.used / disk.total) * 100 : 0),
+          ofTotal(disk.used, disk.total),
+        ),
+      ),
     )
   }
 

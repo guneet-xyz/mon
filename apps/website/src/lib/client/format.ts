@@ -36,10 +36,11 @@ export function formatUptime(ratio: number | null | undefined): string | null {
 
 // Rough duration between two times, e.g. "6 d 3 h", "4 h 12 min", "35 s".
 export function formatDuration(from: Date, to: Date = new Date()): string {
-  const seconds = Math.max(
-    0,
-    Math.floor((to.getTime() - from.getTime()) / 1000),
-  )
+  return formatSeconds((to.getTime() - from.getTime()) / 1000)
+}
+
+export function formatSeconds(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds))
   const days = Math.floor(seconds / 86_400)
   const hours = Math.floor((seconds % 86_400) / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)

@@ -11,23 +11,37 @@ import {
 } from "@/components/ui/chart"
 import type { HistoryRange, SeriesPoint } from "@/lib/server/monitors/history"
 
-// One downsampled series from a monitor's history, e.g. latency or CPU.
+export type ChartLine = {
+  // Recharts data key: letters, digits and dashes only.
+  key: string
+  label: string
+  color: string
+  value: (point: SeriesPoint) => number | null
+}
+
+// Downsampled series from a monitor's history: one line (latency, CPU) or
+// several (a machine's disks).
 export function SeriesChart({
   points,
-  dataKey,
+  lines,
   label,
-  color,
   range,
   format,
 }: {
   points: SeriesPoint[]
-  dataKey: "latency" | "cpu" | "memory"
+  lines: ChartLine[]
   label: string
-  color: string
   range: HistoryRange
   format: (value: number) => string | null
 }) {
-  const data = points.filter((point) => point[dataKey] !== null)
+  const data = points
+    .map((point) => ({
+      timestamp: point.timestamp,
+      ...Object.fromEntries(lines.map((line) => [line.key, line.value(point)])),
+    }))
+    .filter((row) =>
+      lines.some((line) => (row as Record<string, unknown>)[line.key] !== null),
+    )
   if (data.length === 0) {
     return (
       <div className="p-4 font-display text-neutral-500">
@@ -36,8 +50,9 @@ export function SeriesChart({
     )
   }
 
-  const config: ChartConfig = { [dataKey]: { label, color } }
-  const fill = `fill-${dataKey}`
+  const config: ChartConfig = Object.fromEntries(
+    lines.map((line) => [line.key, { label: line.label, color: line.color }]),
+  )
 
   return (
     <ChartContainer
@@ -46,10 +61,19 @@ export function SeriesChart({
     >
       <AreaChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
         <defs>
-          <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.6} />
-            <stop offset="95%" stopColor={color} stopOpacity={0.05} />
-          </linearGradient>
+          {lines.map((line) => (
+            <linearGradient
+              key={line.key}
+              id={`fill-${line.key}`}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="1"
+            >
+              <stop offset="5%" stopColor={line.color} stopOpacity={0.5} />
+              <stop offset="95%" stopColor={line.color} stopOpacity={0.05} />
+            </linearGradient>
+          ))}
         </defs>
         <CartesianGrid vertical={false} />
         <XAxis
@@ -82,19 +106,32 @@ export function SeriesChart({
                   ? dayjs(timestamp).format("YYYY-MM-DD HH:mm")
                   : ""
               }}
-              formatter={(value) =>
-                typeof value === "number" ? (format(value) ?? "") : "N/A"
-              }
+              // Called as (value, name, ...); the declared type omits name.
+              formatter={(value: unknown, ...rest: unknown[]) => {
+                const formatted =
+                  typeof value === "number" ? (format(value) ?? "") : "N/A"
+                const name = rest[0]
+                const label =
+                  typeof name === "string" ? config[name]?.label : undefined
+                return lines.length > 1 && typeof label === "string"
+                  ? `${label}: ${formatted}`
+                  : formatted
+              }}
             />
           }
         />
-        <Area
-          isAnimationActive={false}
-          dataKey={dataKey}
-          type="monotone"
-          fill={`url(#${fill})`}
-          stroke={color}
-        />
+        {lines.map((line) => (
+          <Area
+            key={line.key}
+            isAnimationActive={false}
+            dataKey={line.key}
+            name={line.key}
+            type="monotone"
+            fill={`url(#fill-${line.key})`}
+            stroke={line.color}
+            connectNulls
+          />
+        ))}
       </AreaChart>
     </ChartContainer>
   )
