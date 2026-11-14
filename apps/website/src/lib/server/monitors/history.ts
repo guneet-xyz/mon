@@ -4,6 +4,7 @@ import {
   containerPings,
   githubPings,
   hostPings,
+  systemPings,
   websitePings,
 } from "@mon/db/schema"
 
@@ -29,6 +30,7 @@ const TABLES = {
   website: websitePings,
   container: containerPings,
   github: githubPings,
+  agent: systemPings,
 }
 
 // Raw SQL parameters must be strings for postgres-js; cast them back.
@@ -41,6 +43,8 @@ export type SeriesPoint = {
   cpu: number | null
   memory: number | null
   memoryLimit: number | null
+  // Agents: percent used per disk name.
+  disks: Record<string, number> | null
 }
 
 // Bucketed averages for charts. Hosts and websites chart latency; containers
@@ -69,6 +73,7 @@ export async function getSeries(
       cpu: null,
       memory: null,
       memoryLimit: null,
+      disks: null,
     }))
   }
 
@@ -93,10 +98,109 @@ export async function getSeries(
       cpu: row.cpu,
       memory: row.memory,
       memoryLimit: row.memory_limit,
+      disks: null,
     }))
   }
 
+  if (type === "agent") {
+    const t = systemPings
+    const [rows, diskRows] = await Promise.all([
+      db.execute<{
+        bucket: Date
+        cpu: number | null
+        memory: number | null
+        memory_limit: number | null
+      }>(sql`
+        select ${binned(t.timestamp)} as bucket,
+          avg(${t.cpuPercent})::float8 as cpu,
+          avg(${t.memoryBytes})::float8 as memory,
+          max(${t.memoryTotalBytes})::float8 as memory_limit
+        from ${t}
+        where ${t.key} = ${key} and ${t.timestamp} >= ${from}
+        group by 1 order by 1`),
+      db.execute<{ bucket: Date; name: string; percent: number | null }>(sql`
+        select ${binned(t.timestamp)} as bucket, disk->>'name' as name,
+          avg((disk->>'usedBytes')::float8 / nullif((disk->>'totalBytes')::float8, 0) * 100)::float8 as percent
+        from ${t} cross join lateral jsonb_array_elements(${t.disks}) as disk
+        where ${t.key} = ${key} and ${t.timestamp} >= ${from}
+        group by 1, 2 order by 1, 2`),
+    ])
+    const disks = new Map<number, Record<string, number>>()
+    for (const row of diskRows) {
+      if (row.percent === null) continue
+      const at = new Date(row.bucket).getTime()
+      disks.set(at, { ...disks.get(at), [row.name]: row.percent })
+    }
+    return rows.map((row) => {
+      const timestamp = new Date(row.bucket)
+      return {
+        timestamp,
+        latency: null,
+        cpu: row.cpu,
+        memory: row.memory,
+        memoryLimit: row.memory_limit,
+        disks: disks.get(timestamp.getTime()) ?? null,
+      }
+    })
+  }
+
   return null
+}
+
+// When an agent reported, for finding the gaps between its reports.
+export async function getReportTimestamps(
+  key: string,
+  range: HistoryRange,
+  now = new Date(),
+): Promise<Date[]> {
+  const t = systemPings
+  const rows = await db.execute<{ timestamp: Date }>(sql`
+    select ${t.timestamp} as timestamp from ${t}
+    where ${t.key} = ${key} and ${t.timestamp} >= ${since(range, now)}
+    order by ${t.timestamp}`)
+  return rows.map((row) => new Date(row.timestamp))
+}
+
+const COVERAGE_BUCKET_MS = 5 * 60_000
+
+// An agent's uptime: the share of completed 5-minute intervals with a
+// successful report, since its first report in the range (a dead machine
+// records nothing, so counting its reports alone would always say 100%).
+async function getAgentUptime(key: string, now: Date): Promise<Uptime> {
+  const t = systemPings
+  // The interval in progress has not had its chance to report yet.
+  const current = now.getTime() - (now.getTime() % COVERAGE_BUCKET_MS)
+  const cutoff = sql`${new Date(current).toISOString()}::timestamptz`
+  const ranges = Object.keys(HISTORY_RANGES) as HistoryRange[]
+  const result: Partial<Uptime> = {}
+  for (const range of ranges) {
+    const [row] = await db.execute<{
+      seen: number
+      seen_now: boolean
+      first: Date | null
+    }>(sql`
+      select
+        count(distinct date_bin('5 minutes'::interval, ${t.timestamp}, timestamp with time zone '2000-01-01'))
+          filter (where ${t.error} is null and ${t.timestamp} < ${cutoff})::int as seen,
+        bool_or(${t.error} is null and ${t.timestamp} >= ${cutoff}) as seen_now,
+        min(${t.timestamp}) as first
+      from ${t}
+      where ${t.key} = ${key} and ${t.timestamp} >= ${since(range, now)}`)
+    if (!row?.first) {
+      result[range] = null
+      continue
+    }
+    const first = new Date(row.first).getTime()
+    const start = first - (first % COVERAGE_BUCKET_MS)
+    const expected = Math.floor((current - start) / COVERAGE_BUCKET_MS)
+    // An agent that only started reporting in this interval.
+    if (expected === 0) {
+      result[range] = row.seen_now ? 1 : 0
+      continue
+    }
+    result[range] = Math.min(1, row.seen / expected)
+  }
+  return result as Uptime
 }
 
 export type Uptime = Record<HistoryRange, number | null>
@@ -107,6 +211,7 @@ export async function getUptime(
   key: string,
   now = new Date(),
 ): Promise<Uptime> {
+  if (type === "agent") return getAgentUptime(key, now)
   const t = TABLES[type]
   const result = await db.execute<{
     total_24h: number

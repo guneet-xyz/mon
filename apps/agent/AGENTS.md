@@ -4,11 +4,11 @@ Bun-runtime cron poller. Reads tiles from `@mon/config`, schedules one job per m
 
 ## WHERE TO LOOK
 
-| Task                    | Location                                                                                                                                                                                                                |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Add a new monitor type  | [src/jobs/](file:///Users/guneet/projects/mon/apps/agent/src/jobs) — one file per tile type, exported as `schedule<Type>Job(tile)`; wire into [src/index.ts](file:///Users/guneet/projects/mon/apps/agent/src/index.ts) |
-| Change polling schedule | inline cron string in each `scheduleJob(...)` call                                                                                                                                                                      |
-| Graceful shutdown       | [src/index.ts](file:///Users/guneet/projects/mon/apps/agent/src/index.ts#L34-L43) — `SIGINT`/`SIGTERM`/`SIGKILL` (note: `SIGKILL` is uncatchable, present anyway)                                                       |
+| Task                    | Location                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add a new monitor type  | [src/jobs/](file:///Users/guneet/projects/mon/apps/agent/src/jobs) — one file per job kind (`system.ts` serves `agent` tiles: the agent's own machine from `/proc` and `statfs`); wire into [src/index.ts](file:///Users/guneet/projects/mon/apps/agent/src/index.ts). `parseJobs` skips job kinds an older agent does not know, so new kinds are safe to roll out. |
+| Change polling schedule | inline cron string in each `scheduleJob(...)` call                                                                                                                                                                                                                                                                                                                  |
+| Graceful shutdown       | [src/index.ts](file:///Users/guneet/projects/mon/apps/agent/src/index.ts#L34-L43) — `SIGINT`/`SIGTERM`/`SIGKILL` (note: `SIGKILL` is uncatchable, present anyway)                                                                                                                                                                                                   |
 
 ## CONVENTIONS
 

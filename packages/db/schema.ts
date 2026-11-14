@@ -5,6 +5,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTableCreator,
   real,
@@ -83,6 +84,29 @@ export const containerPings = createTable(
     memoryLimitBytes: bigint("memory_limit_bytes", { mode: "number" }),
   },
   (t) => [index("containers_key_idx").on(t.key)],
+)
+
+export type SystemDisk = { name: string; usedBytes: number; totalBytes: number }
+
+// What an agent reports about the machine it runs on.
+export const systemPings = createTable(
+  "system_ping",
+  {
+    pingId: uuid("ping_id").primaryKey().defaultRandom(),
+    agentId: text("agent_id"),
+    key: varchar("key", { length: 64 }).notNull(),
+    timestamp: timestamp("timestamp", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    error: varchar("error", { length: 256 }),
+    cpuPercent: real("cpu_percent"),
+    memoryBytes: bigint("memory_bytes", { mode: "number" }),
+    memoryTotalBytes: bigint("memory_total_bytes", { mode: "number" }),
+    uptimeSeconds: integer("uptime_seconds"),
+    disks: jsonb("disks").$type<SystemDisk[]>(),
+  },
+  (t) => [index("system_pings_key_idx").on(t.key)],
 )
 
 export const ghCheckRunStatusEnum = pgEnum("gh_check_run_status", [

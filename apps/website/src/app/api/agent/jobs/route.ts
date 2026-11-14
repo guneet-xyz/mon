@@ -63,6 +63,13 @@ export async function GET(request: Request): Promise<Response> {
           repo: tile.repo,
           ...(tile.github_token ? { github_token: tile.github_token } : {}),
         }
+      case "agent":
+        return {
+          kind: "system",
+          id: tile.key,
+          cron,
+          disks: tile.disks,
+        }
     }
   })
 

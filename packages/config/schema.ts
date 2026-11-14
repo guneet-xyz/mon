@@ -112,6 +112,20 @@ const _ConfigSchema = z.object({
           repo: z.string().regex(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/),
           github_token: z.string().optional(), // per-tile GitHub PAT; agent must not use env.GITHUB_TOKEN
         }),
+        // The machine an agent runs on: `agent` reports its own CPU, memory and
+        // uptime, and the usage of each disk path (inside its container, e.g. a
+        // read-only bind mount of a host filesystem).
+        MonitorSchema.extend({
+          type: z.literal("agent"),
+          disks: z
+            .array(
+              z.object({
+                path: z.string().min(1),
+                name: z.string().min(1).max(64),
+              }),
+            )
+            .default([]),
+        }),
         KeyedTileSchema.extend({
           type: z.literal("group"),
           members: z.array(GroupMemberSchema).min(1),
@@ -378,7 +392,8 @@ export function isMonitorTile(tile: Tile): tile is MonitorTile {
     tile.type === "host" ||
     tile.type === "website" ||
     tile.type === "container" ||
-    tile.type === "github"
+    tile.type === "github" ||
+    tile.type === "agent"
   )
 }
 

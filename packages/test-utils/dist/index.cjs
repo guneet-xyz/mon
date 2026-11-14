@@ -55,6 +55,7 @@ __export(schema_exports, {
   githubCheckRun: () => githubCheckRun,
   githubPings: () => githubPings,
   hostPings: () => hostPings,
+  systemPings: () => systemPings,
   websitePings: () => websitePings
 });
 var import_drizzle_orm = require("drizzle-orm");
@@ -122,6 +123,25 @@ var containerPings = createTable(
     memoryLimitBytes: (0, import_pg_core.bigint)("memory_limit_bytes", { mode: "number" })
   },
   (t) => [(0, import_pg_core.index)("containers_key_idx").on(t.key)]
+);
+var systemPings = createTable(
+  "system_ping",
+  {
+    pingId: (0, import_pg_core.uuid)("ping_id").primaryKey().defaultRandom(),
+    agentId: (0, import_pg_core.text)("agent_id"),
+    key: (0, import_pg_core.varchar)("key", { length: 64 }).notNull(),
+    timestamp: (0, import_pg_core.timestamp)("timestamp", {
+      mode: "date",
+      withTimezone: true
+    }).notNull(),
+    error: (0, import_pg_core.varchar)("error", { length: 256 }),
+    cpuPercent: (0, import_pg_core.real)("cpu_percent"),
+    memoryBytes: (0, import_pg_core.bigint)("memory_bytes", { mode: "number" }),
+    memoryTotalBytes: (0, import_pg_core.bigint)("memory_total_bytes", { mode: "number" }),
+    uptimeSeconds: (0, import_pg_core.integer)("uptime_seconds"),
+    disks: (0, import_pg_core.jsonb)("disks").$type()
+  },
+  (t) => [(0, import_pg_core.index)("system_pings_key_idx").on(t.key)]
 );
 var ghCheckRunStatusEnum = (0, import_pg_core.pgEnum)("gh_check_run_status", [
   "queued",

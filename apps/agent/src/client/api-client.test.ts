@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from "bun:test"
 
 import {
+  parseJobs,
   UnauthorizedError,
   UnreachableError,
   WebsiteApiClient,
@@ -144,5 +145,23 @@ describe("WebsiteApiClient.pushHostPing", () => {
         error: "timeout",
       }),
     ).rejects.toBeInstanceOf(UnreachableError)
+  })
+})
+
+describe("parseJobs", () => {
+  it("skips job kinds this agent does not know", () => {
+    const jobs = parseJobs({
+      tiles: [
+        { kind: "host", id: "h", cron: "0 * * * * *", address: "1.1.1.1" },
+        { kind: "from-the-future", id: "x", cron: "0 * * * * *" },
+        { kind: "website", id: "w", cron: "0 * * * * *" }, // missing url
+      ],
+    })
+    expect(jobs.tiles.map((t) => t.id)).toEqual(["h"])
+  })
+
+  it("rejects a response without a tiles array", () => {
+    expect(() => parseJobs({})).toThrow()
+    expect(() => parseJobs(null)).toThrow()
   })
 })

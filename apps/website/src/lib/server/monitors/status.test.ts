@@ -1,6 +1,13 @@
 import { describe, expect, it } from "bun:test"
 
-import { groupStatus, STALE_AFTER_MS, statusFromLatestPing } from "./status"
+import {
+  agentStatusFromLatestReport,
+  groupStatus,
+  NO_REPORT,
+  reportGaps,
+  STALE_AFTER_MS,
+  statusFromLatestPing,
+} from "./status"
 
 const now = new Date("2026-11-10T12:00:00Z")
 const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000)
@@ -55,5 +62,50 @@ describe("groupStatus", () => {
 
   it("is unknown without members", () => {
     expect(groupStatus([])).toBe("unknown")
+  })
+})
+
+describe("agentStatusFromLatestReport", () => {
+  it("is offline once the agent goes quiet", () => {
+    expect(agentStatusFromLatestReport(undefined, now)).toBe("unknown")
+    expect(
+      agentStatusFromLatestReport(
+        { timestamp: minutesAgo(1), error: null },
+        now,
+      ),
+    ).toBe("online")
+    expect(
+      agentStatusFromLatestReport(
+        { timestamp: minutesAgo(4), error: null },
+        now,
+      ),
+    ).toBe("offline")
+    expect(
+      agentStatusFromLatestReport(
+        { timestamp: minutesAgo(1), error: "no system data" },
+        now,
+      ),
+    ).toBe("offline")
+  })
+})
+
+describe("reportGaps", () => {
+  it("finds silences longer than the stale threshold", () => {
+    const gaps = reportGaps(
+      [minutesAgo(30), minutesAgo(29), minutesAgo(20), minutesAgo(19)],
+      now,
+    )
+    expect(gaps).toEqual([
+      { start: minutesAgo(29), end: minutesAgo(20), error: NO_REPORT },
+      // Still silent now.
+      { start: minutesAgo(19), end: now, error: NO_REPORT },
+    ])
+  })
+
+  it("finds nothing while the agent keeps reporting", () => {
+    expect(
+      reportGaps([minutesAgo(3), minutesAgo(2), minutesAgo(1)], now),
+    ).toEqual([])
+    expect(reportGaps([], now)).toEqual([])
   })
 })

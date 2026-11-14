@@ -1,6 +1,7 @@
 import { tileId, type GeneratedTile } from "@/lib/client/tile-generation"
 import { cn } from "@/lib/utils"
 
+import { AgentTile } from "./agent"
 import { ContainerTile } from "./container"
 import { EmptyTile } from "./empty"
 import { GithubTile } from "./github"
@@ -26,6 +27,18 @@ export function Tile({
     return (
       <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
         <ContainerTile
+          dbKey={tile.key}
+          r_span={tile.location.row_span}
+          c_span={tile.location.col_span}
+        />
+      </Container>
+    )
+  }
+
+  if (tile.type === "agent") {
+    return (
+      <Container {...tile.location} flipId={flipId} enterDelay={enterDelay}>
+        <AgentTile
           dbKey={tile.key}
           r_span={tile.location.row_span}
           c_span={tile.location.col_span}

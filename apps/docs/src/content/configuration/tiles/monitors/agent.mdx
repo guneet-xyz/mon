@@ -1,0 +1,45 @@
+# Agent
+
+Shows the machine an agent runs on, as the agent itself reports it. Use `type = "agent"` for this monitor.
+
+| Property | Type   | Description                                                                                                                                       | Required | Default     |
+| -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------- |
+| `agent`  | string | The agent that reports, i.e. the machine this tile shows.                                                                                         | No       | `"default"` |
+| `disks`  | array  | Disks to report, as `{ path, name }`: `path` inside the agent's environment (for a container, a mount of the host's filesystem), `name` as shown. | No       | `[]`        |
+
+Every minute the agent reports CPU % (measured between reports, so it appears from the second report on), memory used and total, how long the machine has been up, and for each disk how full it is. Sizes and percentages match `df`: blocks reserved for root are not counted.
+
+The tile shows `CPU · MEM · DISK` (the fullest disk) and the machine's uptime. It turns **offline when the agent has not reported for 3 minutes**: unlike other monitors, silence means the machine or the agent is down. Uptime counts the 5-minute intervals in which the agent reported, and gaps in its reports are listed as incidents. A warning badge appears when a disk or the memory is 90% full or more, or a configured disk is missing from the report.
+
+## Running the agent in a container
+
+Inside a container, `/proc` already describes the host, so CPU, memory and uptime need nothing extra. For disks, mount the host's filesystems read-only into the agent and list those paths:
+
+```yaml
+# compose.yml (agent service)
+volumes:
+  - type: bind
+    source: /
+    target: /host/root
+    read_only: true
+  - type: bind
+    source: /mnt
+    target: /host/mnt
+    read_only: true
+```
+
+```toml
+[[tiles]]
+type = "agent"
+key = "agent-musashi"
+name = "Musashi"
+agent = "musashi"
+disks = [
+  { path = "/host/root", name = "/" },
+  { path = "/host/mnt", name = "/mnt" },
+]
+```
+
+A read-only mount still lets the agent read every file on that filesystem. Only mount what you would trust the agent with.
+
+See [Monitors](/docs/configuration/tiles/monitors) for the common properties and what the board shows.

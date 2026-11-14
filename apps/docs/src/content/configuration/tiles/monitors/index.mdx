@@ -28,11 +28,12 @@ All monitors have the following common properties that you can set:
 
 Every check records whether the monitor was up, and when it failed, why. Agents from v0.8.0 also record:
 
-| Monitor   | Recorded on each check                                                                                                             |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Host      | Ping latency.                                                                                                                      |
-| Website   | Response time, HTTP status code, redirect target, and the expiry of the TLS certificate the site presents.                         |
-| Container | State, Docker health check status, restart count, start time, image and version, last exit code, OOM kills, CPU % and memory used. |
+| Monitor   | Recorded on each check                                                                                                                                   |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Host      | Ping latency.                                                                                                                                            |
+| Agent     | The agent's own machine: CPU %, memory used and total, uptime, and usage of each configured disk. See [Agent](/docs/configuration/tiles/monitors/agent). |
+| Website   | Response time, HTTP status code, redirect target, and the expiry of the TLS certificate the site presents.                                               |
+| Container | State, Docker health check status, restart count, start time, image and version, last exit code, OOM kills, CPU % and memory used.                       |
 
 Older agents keep working; their checks simply have no details.
 

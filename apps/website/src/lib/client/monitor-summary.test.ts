@@ -88,3 +88,27 @@ describe("monitorSummary", () => {
     expect(monitorSummary({ type: "github" }, now)).toEqual([])
   })
 })
+
+describe("monitorSummary for agents", () => {
+  it("summarises the machine", () => {
+    expect(
+      monitorSummary(
+        {
+          type: "agent",
+          cpu: 12.3,
+          memory: 4_000_000_000,
+          memoryTotal: 8_000_000_000,
+          uptimeSeconds: 6 * 86_400 + 3 * 3600,
+          disks: [{ name: "/", used: 26_000_000_000, total: 28_000_000_000 }],
+          missingDisks: [],
+        },
+        now,
+      ),
+    ).toEqual([
+      { label: "CPU", value: "12%" },
+      { label: "Memory", value: "50%", detail: "4.0 GB of 8.0 GB" },
+      { label: "Up for", value: "6 d 3 h" },
+      { label: "Disk /", value: "93%", detail: "26 GB of 28 GB" },
+    ])
+  })
+})

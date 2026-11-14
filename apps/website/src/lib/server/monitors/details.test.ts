@@ -63,4 +63,33 @@ describe("monitorWarnings", () => {
   it("never warns about hosts", () => {
     expect(monitorWarnings({ type: "host", latency: 5 }, now)).toEqual([])
   })
+
+  it("warns about full disks, missing disks and high memory", () => {
+    const agent = (
+      overrides: Partial<Extract<MonitorDetails, { type: "agent" }>>,
+    ) =>
+      monitorWarnings(
+        {
+          type: "agent",
+          cpu: 5,
+          memory: 4_000_000_000,
+          memoryTotal: 8_000_000_000,
+          uptimeSeconds: 3600,
+          disks: [
+            { name: "/", used: 26_000_000_000, total: 28_000_000_000 },
+            { name: "/mnt", used: 40_000_000_000, total: 63_000_000_000 },
+          ],
+          missingDisks: [],
+          ...overrides,
+        },
+        now,
+      )
+    expect(agent({})).toEqual(["Disk / 93% full"])
+    expect(agent({ disks: [], missingDisks: ["/"] })).toEqual([
+      "Disk / not reported",
+    ])
+    expect(agent({ disks: [], memory: 7_400_000_000 })).toEqual([
+      "Memory 93% used",
+    ])
+  })
 })
