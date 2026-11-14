@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/guneet-xyz/mon/compare/v0.9.0...v0.10.0) (2026-11-14)
+
+
+### Features
+
+* **agent:** read the token from AGENT_TOKEN_FILE ([#67](https://github.com/guneet-xyz/mon/issues/67)) ([d54356c](https://github.com/guneet-xyz/mon/commit/d54356c184d3189f731e2e322a71c7800b175e59)), closes [#66](https://github.com/guneet-xyz/mon/issues/66)
+
 ## [0.9.0](https://github.com/guneet-xyz/mon/compare/v0.8.0...v0.9.0) (2026-11-14)
 
 
