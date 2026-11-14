@@ -38,6 +38,8 @@ echo "$token"
 echo -n "$token" | sha256sum
 ```
 
+The agent reads the token from `AGENT_TOKEN`, or, when that is not set, from the file named by `AGENT_TOKEN_FILE` (for example a Docker Compose secret mounted at `/run/secrets/agent_token`), which keeps the token out of the container's environment.
+
 The plaintext token is never stored on the website side, only its hash. The agent sends it in an `Authorization: Bearer <token>` header.
 
 ### Assigning tiles to agents
