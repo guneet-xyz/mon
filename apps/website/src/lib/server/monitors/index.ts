@@ -4,8 +4,14 @@ import type { MonitorTile } from "@mon/config/schema"
 
 import { getContainerStatus } from "./container"
 import { getGithubStatus } from "./github"
-import { getIncidentPings, type HistoryRange } from "./history"
+import {
+  getIncidentPings,
+  getReportTimestamps,
+  type HistoryRange,
+} from "./history"
 import { getHostStatus } from "./host"
+import { reportGaps } from "./status"
+import { getAgentStatus } from "./system"
 import { getWebsiteStatus } from "./website"
 
 export type IncidentPing = {
@@ -48,6 +54,12 @@ export async function getIncidents(
     }
   }
 
+  // A silent agent records nothing, so its incidents are the gaps between
+  // its reports.
+  if (type === "agent") {
+    incidents.push(...reportGaps(await getReportTimestamps(dbKey, range)))
+  }
+
   incidents.sort((a, b) => b.start.getTime() - a.start.getTime())
 
   return incidents
@@ -61,6 +73,7 @@ export async function getStatus(
   if (type === "website") return await getWebsiteStatus(dbKey)
   if (type === "container") return await getContainerStatus(dbKey)
   if (type === "github") return await getGithubStatus(dbKey)
+  if (type === "agent") return await getAgentStatus(dbKey)
 
   throw new Error("Unsupported type for getStatus function")
 }

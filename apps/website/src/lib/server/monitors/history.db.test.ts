@@ -1,6 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test"
 
-import { containerPings, hostPings, websitePings } from "@mon/db/schema"
+import {
+  containerPings,
+  hostPings,
+  systemPings,
+  websitePings,
+} from "@mon/db/schema"
 import { createTestDb, type TestDb } from "@mon/test-utils"
 
 import type * as Monitors from "."
@@ -75,6 +80,26 @@ beforeAll(async () => {
     { key: "c2", timestamp: at(60), restartCount: 4, state: "running" },
     { key: "c2", timestamp: at(1), restartCount: 0, state: "running" },
   ])
+
+  // An agent reporting every minute for the last 30 minutes, except for a
+  // 10-minute silence (20 to 10 minutes ago).
+  const reports = []
+  for (let m = 30; m >= 1; m--) {
+    if (m < 20 && m > 10) continue
+    reports.push({
+      key: "a",
+      timestamp: at(m),
+      cpuPercent: m <= 5 ? 50 : 10,
+      memoryBytes: 4_000_000_000,
+      memoryTotalBytes: 8_000_000_000,
+      uptimeSeconds: 100_000 + (30 - m) * 60,
+      disks: [
+        { name: "/", usedBytes: 93, totalBytes: 100 },
+        { name: "/mnt", usedBytes: 25, totalBytes: 100 },
+      ],
+    })
+  }
+  await testDb.db.insert(systemPings).values(reports)
 }, 120_000)
 
 afterAll(() => {
@@ -162,6 +187,59 @@ describe("monitor details", () => {
     expect(await details.getMonitorDetails("host", "missing", now)).toEqual({
       type: "host",
       latency: null,
+    })
+  })
+})
+
+describe("agent tiles", () => {
+  it("charts CPU, memory and each disk", async () => {
+    const series = await history.getSeries("agent", "a", "24h", now)
+    expect(series?.at(-1)).toMatchObject({
+      cpu: 50,
+      memory: 4_000_000_000,
+      memoryLimit: 8_000_000_000,
+      disks: { "/": 93, "/mnt": 25 },
+    })
+  })
+
+  it("counts silent 5-minute intervals against uptime", async () => {
+    const uptime = await history.getUptime("agent", "a", now)
+    // First report at 11:30; intervals 11:30-11:55 = 6, the silence leaves
+    // 11:45 empty.
+    expect(uptime["24h"]).toBeCloseTo(5 / 6)
+    expect(uptime["7d"]).toBe(uptime["24h"])
+    expect(await history.getUptime("agent", "nobody", now)).toEqual({
+      "24h": null,
+      "7d": null,
+      "30d": null,
+    })
+  })
+
+  it("finds the silence between reports", async () => {
+    const { reportGaps, NO_REPORT } = await import("./status")
+    const gaps = reportGaps(
+      await history.getReportTimestamps("a", "24h", now),
+      now,
+    )
+    expect(gaps).toEqual([{ start: at(20), end: at(10), error: NO_REPORT }])
+  })
+
+  it("reports the latest machine state and missing disks", async () => {
+    expect(
+      await details.getMonitorDetails("agent", "a", now, {
+        disks: ["/", "/mnt", "/data"],
+      }),
+    ).toEqual({
+      type: "agent",
+      cpu: 50,
+      memory: 4_000_000_000,
+      memoryTotal: 8_000_000_000,
+      uptimeSeconds: 100_000 + 29 * 60,
+      disks: [
+        { name: "/", used: 93, total: 100 },
+        { name: "/mnt", used: 25, total: 100 },
+      ],
+      missingDisks: ["/data"],
     })
   })
 })

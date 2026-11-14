@@ -21,7 +21,12 @@ export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
 
   const [status, details] = await Promise.all([
     getStatus(type, dbKey),
-    getMonitorDetails(type, dbKey),
+    getMonitorDetails(type, dbKey, new Date(), {
+      disks:
+        "disks" in config
+          ? config.disks.map((disk: { name: string }) => disk.name)
+          : undefined,
+    }),
   ])
   return {
     status,

@@ -1,10 +1,16 @@
 import type { MonitorTile } from "@mon/config/schema"
 import { and, asc, desc, eq, gte, isNotNull } from "@mon/db/drizzle"
-import { containerPings, hostPings, websitePings } from "@mon/db/schema"
+import {
+  containerPings,
+  hostPings,
+  systemPings,
+  websitePings,
+} from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
 export const CERT_WARNING_DAYS = 14
+export const USAGE_WARNING_PERCENT = 90
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export type MonitorDetails =
@@ -32,6 +38,16 @@ export type MonitorDetails =
       memory: number | null
       memoryLimit: number | null
     }
+  | {
+      type: "agent"
+      cpu: number | null
+      memory: number | null
+      memoryTotal: number | null
+      uptimeSeconds: number | null
+      disks: Array<{ name: string; used: number; total: number }>
+      // Disks the tile configures that the latest report did not include.
+      missingDisks: string[]
+    }
   | { type: "github" }
 
 // What the latest check recorded. Fields stay null until an agent from
@@ -40,7 +56,34 @@ export async function getMonitorDetails(
   type: MonitorTile["type"],
   key: string,
   now = new Date(),
+  expected: { disks?: string[] } = {},
 ): Promise<MonitorDetails> {
+  if (type === "agent") {
+    const [row] = await db
+      .select()
+      .from(systemPings)
+      .where(eq(systemPings.key, key))
+      .orderBy(desc(systemPings.timestamp))
+      .limit(1)
+    const disks = (row?.disks ?? []).map((disk) => ({
+      name: disk.name,
+      used: disk.usedBytes,
+      total: disk.totalBytes,
+    }))
+    const reported = new Set(disks.map((disk) => disk.name))
+    return {
+      type,
+      cpu: row?.cpuPercent ?? null,
+      memory: row?.memoryBytes ?? null,
+      memoryTotal: row?.memoryTotalBytes ?? null,
+      uptimeSeconds: row?.uptimeSeconds ?? null,
+      disks,
+      missingDisks: row
+        ? (expected.disks ?? []).filter((name) => !reported.has(name))
+        : [],
+    }
+  }
+
   if (type === "host") {
     const [row] = await db
       .select({ latency: hostPings.latency })
@@ -135,6 +178,20 @@ export function monitorWarnings(
       warnings.push(
         `Restarted ${details.restarts24h} ${details.restarts24h === 1 ? "time" : "times"} in 24 h`,
       )
+  }
+  if (details.type === "agent") {
+    for (const disk of details.disks) {
+      const percent = disk.total > 0 ? (disk.used / disk.total) * 100 : 0
+      if (percent >= USAGE_WARNING_PERCENT)
+        warnings.push(`Disk ${disk.name} ${Math.round(percent)}% full`)
+    }
+    for (const name of details.missingDisks)
+      warnings.push(`Disk ${name} not reported`)
+    if (details.memory !== null && details.memoryTotal) {
+      const percent = (details.memory / details.memoryTotal) * 100
+      if (percent >= USAGE_WARNING_PERCENT)
+        warnings.push(`Memory ${Math.round(percent)}% used`)
+    }
   }
   return warnings
 }
