@@ -34,11 +34,20 @@ export const GithubJobTileSchema = z.object({
   github_token: z.string().optional(),
 })
 
+// The agent's own machine. Disk paths are inside the agent's container.
+export const SystemJobTileSchema = z.object({
+  kind: z.literal("system"),
+  id: z.string(),
+  cron: z.string(),
+  disks: z.array(z.object({ path: z.string(), name: z.string() })),
+})
+
 export const JobTileSchema = z.discriminatedUnion("kind", [
   HostJobTileSchema,
   WebsiteJobTileSchema,
   ContainerJobTileSchema,
   GithubJobTileSchema,
+  SystemJobTileSchema,
 ])
 
 export const JobsResponseSchema = z.object({
@@ -91,6 +100,28 @@ export const ContainerPingDTOSchema = z.object({
   cpu_percent: z.number().nullable().optional(),
   memory_bytes: z.number().int().nullable().optional(),
   memory_limit_bytes: z.number().int().nullable().optional(),
+})
+
+export const SystemPingDTOSchema = z.object({
+  kind: z.literal("system"),
+  ping_id: z.string().uuid(),
+  agent_id: z.string().min(1),
+  recorded_at: z.string().datetime(),
+  key: z.string(),
+  error: z.string().nullable(),
+  cpu_percent: z.number().nullable(),
+  memory_used_bytes: z.number().int().nullable(),
+  memory_total_bytes: z.number().int().nullable(),
+  uptime_seconds: z.number().int().nullable(),
+  disks: z
+    .array(
+      z.object({
+        name: z.string().max(64),
+        used_bytes: z.number().int(),
+        total_bytes: z.number().int(),
+      }),
+    )
+    .max(32),
 })
 
 export const GithubPingDTOSchema = z
@@ -163,6 +194,7 @@ export type HostJobTile = z.infer<typeof HostJobTileSchema>
 export type WebsiteJobTile = z.infer<typeof WebsiteJobTileSchema>
 export type ContainerJobTile = z.infer<typeof ContainerJobTileSchema>
 export type GithubJobTile = z.infer<typeof GithubJobTileSchema>
+export type SystemJobTile = z.infer<typeof SystemJobTileSchema>
 export type JobTile = z.infer<typeof JobTileSchema>
 export type JobsResponse = z.infer<typeof JobsResponseSchema>
 
@@ -170,6 +202,7 @@ export type HostPingDTO = z.infer<typeof HostPingDTOSchema>
 export type WebsitePingDTO = z.infer<typeof WebsitePingDTOSchema>
 export type ContainerPingDTO = z.infer<typeof ContainerPingDTOSchema>
 export type GithubPingDTO = z.infer<typeof GithubPingDTOSchema>
+export type SystemPingDTO = z.infer<typeof SystemPingDTOSchema>
 export type GithubCheckRunDTO = z.infer<typeof GithubCheckRunDTOSchema>
 export type IngestSuccessResponse = z.infer<typeof IngestSuccessResponseSchema>
 export type IngestErrorResponse = z.infer<typeof IngestErrorResponseSchema>

@@ -4,6 +4,7 @@ import { WebsiteApiClient } from "./client/api-client"
 import { pingContainer as defaultPingContainer } from "./jobs/container"
 import { pingGithub as defaultPingGithub } from "./jobs/github"
 import { pingHost as defaultPingHost } from "./jobs/host"
+import { reportSystem as defaultReportSystem } from "./jobs/system"
 import { pingWebsite as defaultPingWebsite } from "./jobs/website"
 
 export interface ExecuteJobDeps {
@@ -11,6 +12,7 @@ export interface ExecuteJobDeps {
   pingWebsite?: typeof defaultPingWebsite
   pingContainer?: typeof defaultPingContainer
   pingGithub?: typeof defaultPingGithub
+  reportSystem?: typeof defaultReportSystem
 }
 
 export async function executeJob(
@@ -22,6 +24,7 @@ export async function executeJob(
   const pingWebsite = deps.pingWebsite ?? defaultPingWebsite
   const pingContainer = deps.pingContainer ?? defaultPingContainer
   const pingGithub = deps.pingGithub ?? defaultPingGithub
+  const reportSystem = deps.reportSystem ?? defaultReportSystem
 
   try {
     switch (tile.kind) {
@@ -48,6 +51,11 @@ export async function executeJob(
         for (const ping of pings) {
           await client.pushGithubPing(ping)
         }
+        break
+      }
+      case "system": {
+        const dto = await reportSystem(tile)
+        await client.pushSystemPing(dto)
         break
       }
     }

@@ -9,6 +9,7 @@ import type {
   GithubPingDTO,
   HostPingDTO,
   IngestSuccessResponse,
+  SystemPingDTO,
   WebsitePingDTO,
 } from "@mon/contracts"
 
@@ -97,6 +98,10 @@ export class WebsiteApiClient {
     dto: GithubPingDTO | GithubCheckRunDTO,
   ): Promise<IngestSuccessResponse> {
     return this._push("/api/agent/pings/github", dto)
+  }
+
+  async pushSystemPing(dto: SystemPingDTO): Promise<IngestSuccessResponse> {
+    return this._push("/api/agent/pings/system", dto)
   }
 
   private async _push(
