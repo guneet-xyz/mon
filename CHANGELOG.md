@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/guneet-xyz/mon/compare/v0.8.0...v0.9.0) (2026-11-14)
+
+
+### Features
+
+* agent tiles report their machine's CPU, memory and disk ([#64](https://github.com/guneet-xyz/mon/issues/64)) ([adf4a33](https://github.com/guneet-xyz/mon/commit/adf4a33c941ca0f38db0d3700d45369a3e0f6dc5)), closes [#63](https://github.com/guneet-xyz/mon/issues/63)
+
 ## [0.8.0](https://github.com/guneet-xyz/mon/compare/v0.7.0...v0.8.0) (2026-11-13)
 
 
