@@ -40,7 +40,7 @@ function authHeaders() {
 function validDto() {
   return {
     kind: "host" as const,
-    ping_id: "11111111-1111-1111-1111-111111111111",
+    ping_id: "11111111-1111-4111-8111-111111111111",
     agent_id: AGENT_ID,
     recorded_at: "2026-05-18T12:00:00.000Z",
     key: "host-1",
