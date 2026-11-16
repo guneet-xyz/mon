@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/guneet-xyz/mon/compare/v0.10.0...v0.10.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* **deps:** resolve open Dependabot security alerts ([#70](https://github.com/guneet-xyz/mon/issues/70)) ([d56f04b](https://github.com/guneet-xyz/mon/commit/d56f04be0aec79230c441295ac74bbdb25ff8ac7)), closes [#69](https://github.com/guneet-xyz/mon/issues/69)
+
 ## [0.10.0](https://github.com/guneet-xyz/mon/compare/v0.9.0...v0.10.0) (2026-11-14)
 
 
