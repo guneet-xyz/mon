@@ -40,7 +40,7 @@ function authHeaders() {
 function validGithubPingDto() {
   return {
     kind: "github_ping" as const,
-    ping_id: "11111111-1111-1111-1111-111111111111",
+    ping_id: "11111111-1111-4111-8111-111111111111",
     agent_id: AGENT_ID,
     recorded_at: "2026-05-18T12:00:00.000Z",
     key: "github-1",
@@ -53,7 +53,7 @@ function validGithubPingDto() {
 function validGithubCheckRunDto() {
   return {
     kind: "github_check_run" as const,
-    ping_id: "22222222-2222-2222-2222-222222222222",
+    ping_id: "22222222-2222-4222-8222-222222222222",
     agent_id: AGENT_ID,
     recorded_at: "2026-05-18T12:00:00.000Z",
     key: "github-1",

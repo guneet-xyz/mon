@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@mon/db": "*",
-    "drizzle-orm": "^0.44.2",
+    "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
