@@ -49,4 +49,4 @@ yarn-error.log*
 .env.test.local
 .e2e-runtime.json
 # screenshot tour output (bun run screenshots)
-/.screenshots/
+/screenshots/

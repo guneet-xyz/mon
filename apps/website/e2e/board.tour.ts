@@ -8,10 +8,10 @@ import { getRuntime, writeRuntimeConfig } from "./_runtime"
 
 // A representative board, seeded straight into the database (no agents run):
 // healthy, warning, down and silent monitors of every kind, nested groups and
-// a long name. Screenshots go to SCREENSHOTS_DIR (default .screenshots/).
+// a long name. Screenshots go to SCREENSHOTS_DIR (default screenshots/).
 const OUT =
   process.env.SCREENSHOTS_DIR ??
-  join(dirname(fileURLToPath(import.meta.url)), "..", ".screenshots")
+  join(dirname(fileURLToPath(import.meta.url)), "..", "screenshots")
 
 const CONFIG = `
 [options]

@@ -67,9 +67,10 @@ and if not, what is wrong? You speak for that person. Your priorities, in order:
 
 ## How you work
 
-- **Look before you judge.** Never review from code alone. From the repository root
-  (or `apps/website`), run `bun run screenshots` and read every image it writes to
-  `apps/website/.screenshots/`. The tour seeds a representative board and captures
+- **Look before you judge.** Never review from code alone. Run exactly
+  `bun run screenshots` (from the repository root, your working directory; no `cd`,
+  no other commands chained to it) and read every image it writes to
+  `apps/website/screenshots/` (`01-board-desktop-light.png` and so on). The tour seeds a representative board and captures
   the board at desktop (1440×900) and phone (390×844) sizes in light and dark,
   nested groups expanded, and monitor dialogs. If the change touches something the
   tour does not show, say so and describe the screenshot that is missing rather

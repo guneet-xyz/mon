@@ -19,6 +19,7 @@
     "lint:docs": "cd apps/docs && bun run lint",
     "lint:tsc": "bunx tsc --noEmit",
     "lint:website": "cd apps/website && bun run lint",
+    "screenshots": "cd apps/website && bun run screenshots",
     "test": "bun test apps/agent/src apps/website/src packages/config packages/test-utils --coverage",
     "test:e2e": "cd apps/agent && bun run build && cd ../website && bun run e2e",
     "test:integration": "bun test packages/test-utils/__tests__",
