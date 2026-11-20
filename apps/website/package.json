@@ -8,6 +8,7 @@
     "dev": "next dev",
     "e2e": "bun run scripts/run-e2e.ts",
     "lint": "eslint .",
+    "screenshots": "bun run scripts/run-e2e.ts --config playwright.screenshots.config.ts",
     "start": "next start",
     "test": "bun test src"
   },
