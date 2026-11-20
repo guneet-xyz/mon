@@ -120,6 +120,18 @@ jobs:
           path: apps/website/playwright-report/
           retention-days: 14
           if-no-files-found: warn
+      # The screenshot tour the product-owner agent reviews; uploaded so PR
+      # reviewers can see the board too.
+      - name: Screenshot tour
+        run: cd apps/website && bun run screenshots
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screenshots
+          path: apps/website/.screenshots/
+          retention-days: 14
+          if-no-files-found: warn
 
   # Builds all four images (they share the dependency-install layers) and runs
   # the same smoke test that gates release publication.

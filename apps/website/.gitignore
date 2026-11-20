@@ -48,3 +48,5 @@ yarn-error.log*
 # e2e wrapper runtime artifacts
 .env.test.local
 .e2e-runtime.json
+# screenshot tour output (bun run screenshots)
+/.screenshots/
