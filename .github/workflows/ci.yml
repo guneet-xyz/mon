@@ -94,7 +94,9 @@ jobs:
           if-no-files-found: warn
 
   e2e:
-    runs-on: ubuntu-latest
+    # Playwright's browser install supports specific Ubuntu releases;
+    # ubuntu-latest moved to 26.04 before Playwright 1.60 supported it.
+    runs-on: ubuntu-24.04
     needs: test
     environment: linting
     steps:
