@@ -1,32 +1,36 @@
 # apps/agent
 
-Bun-runtime cron poller. Reads tiles from `@mon/config`, schedules one job per monitor tile, writes pings to Postgres via `@mon/db`. Bundled with esbuild to a single CJS file for deploy.
+Bun-runtime agent. Polls the website's `GET /api/agent/jobs` for the tiles assigned to it, runs each check and pushes every result to `POST /api/agent/pings/<kind>`. It has no config file and no database access; its only workspace dependency is `@mon/contracts`. Bundled with esbuild to a single CJS file for deploy.
 
 ## WHERE TO LOOK
 
-| Task                    | Location                                                                                                                                                                                                                                                                                                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Add a new monitor type  | [src/jobs/](file:///Users/guneet/projects/mon/apps/agent/src/jobs) — one file per job kind (`system.ts` serves `agent` tiles: the agent's own machine from `/proc` and `statfs`); wire into [src/index.ts](file:///Users/guneet/projects/mon/apps/agent/src/index.ts). `parseJobs` skips job kinds an older agent does not know, so new kinds are safe to roll out. |
-| Change polling schedule | inline cron string in each `scheduleJob(...)` call                                                                                                                                                                                                                                                                                                                  |
-| Graceful shutdown       | [src/index.ts](file:///Users/guneet/projects/mon/apps/agent/src/index.ts#L34-L43) — `SIGINT`/`SIGTERM`/`SIGKILL` (note: `SIGKILL` is uncatchable, present anyway)                                                                                                                                                                                                   |
+| Task                    | Location                                                                                                                                                                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Env vars                | [src/env.ts](src/env.ts) (`WEBSITE_URL`, `AGENT_ID`, `AGENT_TOKEN`, `AGENT_POLL_INTERVAL_SECONDS`, `GITHUB_API_BASE_URL`) and [src/token.ts](src/token.ts) (`AGENT_TOKEN_FILE` fallback)                                                                                    |
+| Add a new monitor type  | [src/jobs/](src/jobs) — one file per job kind (`system.ts` serves `agent` tiles: the agent's own machine from `/proc` and `statfs`); dispatch it in [src/index.ts](src/index.ts) `executeJob` and add a push method in [src/client/api-client.ts](src/client/api-client.ts) |
+| Website API client      | [src/client/api-client.ts](src/client/api-client.ts) — bearer token + `X-Agent-Id` headers; `parseJobs` skips job kinds this agent does not know, so new kinds are safe to roll out                                                                                         |
+| Polling and job running | [src/client/pull-loop.ts](src/client/pull-loop.ts) (fetches the job list every `AGENT_POLL_INTERVAL_SECONDS`, backs off 5 s → 5 min while the website is unreachable, exits `78` on `401`) and [src/scheduler.ts](src/scheduler.ts) (runs each job on its interval)         |
+| Graceful shutdown       | [src/main.ts](src/main.ts) — `SIGINT`/`SIGTERM` abort the pull loop                                                                                                                                                                                                         |
 
 ## CONVENTIONS
 
-- **One job file per tile type** (`host.ts`, `website.ts`, `container.ts`, `github.ts`); export a single `scheduleXJob(tile)` and register it in `main()`.
-- **Cron uses 6-field strings** (`"0 * * * * *"`) — node-schedule treats the leading field as seconds.
-- **Job name = `${type}-${tile.key}`** — used by node-schedule for cancellation; keep unique.
-- **All ping functions return `{ success: true, ... } | { success: false, error: string }`**. The job wrapper handles DB insert for both branches.
-- **DB writes are unconditional** — every tick produces a row (latency on success, `error` on failure). No "only insert on change" optimization.
+- **One job file per job kind** (`host.ts`, `website.ts`, `container.ts`, `github.ts`, `system.ts`), each exporting a function that takes the job tile from `@mon/contracts` and returns the ping DTO(s) for it.
+- **Job functions return a DTO with `error: null` or an error string** — they don't throw for expected failures. `executeJob` pushes the DTO either way and catches anything else, so one failing job never stops the loop.
+- **Every run pushes a result**, success or failure. No "only push on change" optimization; the website deduplicates on `ping_id`.
+- **The job's `id` is the tile key.** DTOs carry it as `key`, plus `ping_id`, `agent_id` and `recorded_at`.
+- **Inject dependencies for tests** (`deps` arguments such as `execa`, `fetch`, readers) rather than mocking modules.
+- **The website decides what to run and how often** (the job list and each job's `interval_seconds`; `cron` is still sent for older agents but not read). Don't add agent-side config.
 
 ## ANTI-PATTERNS
 
-- **Do not throw inside the scheduled callback.** node-schedule will swallow it and the job stays scheduled but invisible. Catch and log instead.
-- **Do not import from `apps/website/*`** — the agent must stay stateless and decoupled from the UI.
-- **Do not add long-running async loops inside a job** — they overlap with the next tick. Keep work synchronous per invocation or guard with a "running" flag.
+- **Do not import `@mon/config`, `@mon/db` or anything from `apps/website/*`.** The agent only talks to the website over HTTP, using the shapes in `@mon/contracts`.
+- **Do not throw out of `executeJob` or the pull loop** for expected failures; log and carry on. Only the `401` path exits.
+- **Do not add required fields to job tiles or DTOs without a fallback** — agents and websites are upgraded independently.
 
 ## NOTES
 
-- **Build target**: `bunx esbuild src/index.ts --bundle --platform=node --outfile=dist/agent.cjs`. Workspace `@mon/*` deps are inlined; runtime needs only `execa` and `node-schedule` if you ever switch to non-bundled mode (currently bundled).
-- **`host.ts` exit codes** `2` (unreachable) and `68` (timeout) are macOS-specific `ping` semantics; CI/Linux containers may differ — verify on the deploy target before relying on these.
-- **One file has a non-aliased import**: [`jobs/host.ts`](file:///Users/guneet/projects/mon/apps/agent/src/jobs/host.ts#L5-L6) uses `"packages/config/schema"` instead of `@mon/config/schema`. Inconsistent with siblings — prefer `@mon/*` when editing.
+- **Build target**: `bunx esbuild src/main.ts --bundle --platform=node --outfile=dist/agent.cjs`. Workspace `@mon/*` deps are inlined.
+- **The image** (`apps/agent/Dockerfile`) is `oven/bun:1-alpine` with `curl`, `docker` (CLI, for container tiles via the mounted socket) and `iputils-ping`.
+- **`host.ts` exit codes** `2` (unreachable) and `68` (timeout) are macOS-specific `ping` semantics; Linux `ping` (the image's `iputils-ping`) differs — verify on the deploy target before relying on these.
+- **Jobs import `../env`** (a relative parent import). The agent has no eslint and no `@/` alias, so this is the accepted pattern here.
 - **No `tsconfig.json` of its own** — picks up root config; root `tsc --noEmit` covers it.

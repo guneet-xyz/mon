@@ -94,11 +94,11 @@ A monitor with no check for 3 minutes, or for three of its intervals if that is 
 A agent polls the website to learn its job list:
 
 ```bash
-curl -H "Authorization: Bearer $AGENT_TOKEN" \
+curl -H "Authorization: Bearer $AGENT_TOKEN" -H "X-Agent-Id: default" \
   https://mon.example.com/api/agent/jobs
 ```
 
-The response is a JSON array of tiles assigned to the agent identified by the token.
+The response is a JSON object whose `tiles` array lists the jobs assigned to that agent. The website answers `401` when the agent id is unknown or the token doesn't match its `token_hash`.
 
 ### Migration checklist
 

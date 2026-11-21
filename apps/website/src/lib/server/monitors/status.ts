@@ -70,18 +70,17 @@ export function groupFailures(
 ): Array<{ start: Date; end: Date; error: string }> {
   const stepMs = Math.max(60, intervalSeconds) * 1000
   const incidents: Array<{ start: Date; end: Date; error: string }> = []
-  let current: (typeof incidents)[number] | null = null
 
   for (const ping of pings) {
     const end = new Date(ping.timestamp.getTime() + stepMs)
+    const current = incidents.at(-1)
     if (
       current?.error === ping.error &&
       ping.timestamp.getTime() - current.end.getTime() < 2 * stepMs
     ) {
       current.end = end
     } else {
-      current = { start: ping.timestamp, end, error: ping.error }
-      incidents.push(current)
+      incidents.push({ start: ping.timestamp, end, error: ping.error })
     }
   }
   return incidents
