@@ -220,6 +220,9 @@ Both `agent` and `website` need:
 | `CONFIG_PATH`  | no               | `/etc/mon/config.toml` | Path to the TOML config inside the container.    |
 | `GITHUB_TOKEN` | only if gh tiles | —                      | A PAT with read access to the repos you monitor. |
 | `NODE_ENV`     | no               | `development`          | Set to `production` in real deployments.         |
+| `NTFY_URL`     | no               | —                      | Website: ntfy topic URL. Or `NTFY_URL_FILE`.     |
+| `NTFY_TOKEN`   | no               | —                      | Website: ntfy token. Or `NTFY_TOKEN_FILE`.       |
+| `WEBHOOK_URL`  | no               | —                      | Website: webhook URL. Or `WEBHOOK_URL_FILE`.     |
 
 The docs site builds to a fully static set of pages and needs **no runtime env vars**.
 

@@ -17,6 +17,7 @@ export type {
   NonMonitorTile,
   Tile,
   Agent,
+  NotificationSettings,
   Host,
   Container,
   Website,

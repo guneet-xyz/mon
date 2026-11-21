@@ -20,6 +20,7 @@ src/
     └── server/
         ├── actions/            # "use server" RPC entry points
         └── monitors/           # status per type; history.ts (series, uptime, incidents per range), details.ts (latest details, warnings)
+        └── notifications/      # alert loop started from src/instrumentation.ts: rules.ts (pure decisions), evaluate.ts (DB state), channels.ts (ntfy, webhook)
 ```
 
 ## WHERE TO LOOK
@@ -41,6 +42,7 @@ src/
 - **shadcn `ui/` is generated code** — match existing variants (cva, `className` last in props) and rerun `npx shadcn` rather than hand-editing.
 - **Icons**: `lucide-react` for fixed UI chrome, `@iconify/react` (via `DynamicIcon`) for user-configurable tile icons.
 - **Data fetching in client components: TanStack Query** with `queryKey: ["monitor-config", type, dbKey]` (shared by a tile and its dialog). Server actions are the `queryFn`. Every query refetches every 60 s (`QueryProvider` default), so a board left open stays current.
+- **Notifications run in the website server**, not on ingest: `src/instrumentation.ts` starts a 30 s loop only when a channel env var (`NTFY_URL`, `WEBHOOK_URL`, or their `_FILE` forms) is set. State lives in `mon_notification_state`; every write is a conditional update on `revision`, and only the instance whose update succeeds sends.
 - **Raw SQL in `lib/server/monitors/history.ts`**: postgres-js cannot take `Date` parameters inside `sql` templates; pass ISO strings cast to `timestamptz`.
 
 ## ANTI-PATTERNS

@@ -469,3 +469,108 @@ export async function createMockGithubServer(opts?: {
     stop: entry.stop,
   }
 }
+
+export type NotifyScenario =
+  | { kind: "ok" }
+  | { kind: "http_error"; status: number }
+  // Fails `times` requests with `status`, then succeeds.
+  | { kind: "flaky"; times: number; status: number }
+
+export interface NotifyRequest {
+  method: string
+  path: string
+  headers: Record<string, string>
+  body: string
+  json: unknown
+}
+
+export interface MockNotifyServer {
+  url: string
+  setScenario(s: NotifyScenario): void
+  // Every request received, including failed ones.
+  requests: NotifyRequest[]
+  // Requests that were answered with a 2xx.
+  delivered: NotifyRequest[]
+  stop: () => Promise<void>
+}
+
+// Stands in for an ntfy server or a webhook receiver: records every request
+// body and answers according to the scenario.
+export async function createMockNotifyServer(opts?: {
+  port?: number
+}): Promise<MockNotifyServer> {
+  registerExitHandlers()
+
+  const port = opts?.port ?? (await getFreePort())
+  const requests: NotifyRequest[] = []
+  const delivered: NotifyRequest[] = []
+  let scenario: NotifyScenario = { kind: "ok" }
+  let failures = 0
+
+  const server = http.createServer((req, res) => {
+    const chunks: Buffer[] = []
+    req.on("data", (chunk: Buffer) => chunks.push(chunk))
+    req.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8")
+      const headers: Record<string, string> = {}
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (typeof v === "string") headers[k] = v
+        else if (Array.isArray(v)) headers[k] = v.join(",")
+      }
+      let json: unknown = null
+      try {
+        json = JSON.parse(body)
+      } catch {
+        // not JSON
+      }
+      const request = {
+        method: req.method ?? "GET",
+        path: req.url ?? "/",
+        headers,
+        body,
+        json,
+      }
+      requests.push(request)
+
+      let status = 200
+      if (scenario.kind === "http_error") status = scenario.status
+      if (scenario.kind === "flaky" && failures < scenario.times) {
+        failures++
+        status = scenario.status
+      }
+      if (status < 300) delivered.push(request)
+      res.writeHead(status, { "content-type": "application/json" })
+      res.end(status < 300 ? '{"id":"mock"}' : `{"error":${status}}`)
+    })
+  })
+
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject)
+    server.listen(port, "127.0.0.1", () => resolve())
+  })
+
+  let stopped = false
+  const entry = {
+    stop: async () => {
+      if (stopped) return
+      stopped = true
+      await new Promise<void>((resolve) => {
+        server.closeAllConnections?.()
+        server.close(() => resolve())
+      })
+      activeServers.delete(entry)
+    },
+  }
+  activeServers.add(entry)
+
+  return {
+    url: `http://127.0.0.1:${port}`,
+    setScenario(s) {
+      scenario = s
+      failures = 0
+    },
+    requests,
+    delivered,
+    stop: entry.stop,
+  }
+}

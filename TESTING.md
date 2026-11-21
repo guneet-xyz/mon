@@ -52,7 +52,7 @@ apps/
 packages/
 ├── config/*.test.ts                   # getConfig, getMonitors, getMonitorConfig
 └── test-utils/
-    ├── index.ts                       # createTestDb, createMockGithubServer, createMockHttpHost, fixturePath
+    ├── index.ts                       # createTestDb, createMockGithubServer, createMockHttpHost, createMockNotifyServer, fixturePath
     ├── fixtures/                      # *.toml fixtures
     └── __tests__/                     # integration tests for the helpers themselves
 ```
@@ -100,7 +100,7 @@ Import path conventions inside `e2e/`:
 
 ## 6. Using mock servers
 
-`packages/test-utils/index.ts` exposes two in-process HTTP servers for E2E. They are NOT Docker containers; they listen on ephemeral ports and stop with the test.
+`packages/test-utils/index.ts` exposes in-process HTTP servers for E2E and integration tests. They are NOT Docker containers; they listen on ephemeral ports and stop with the test.
 
 ### Mock GitHub API
 
@@ -132,6 +132,18 @@ await host.stop()
 ```
 
 Both helpers register exit handlers so a `Ctrl-C` during a test doesn't leak listeners.
+
+### Mock notification receiver (ntfy or webhook)
+
+```ts
+import { createMockNotifyServer } from "@mon/test-utils"
+
+const ntfy = await createMockNotifyServer()
+ntfy.setScenario({ kind: "flaky", times: 2, status: 503 }) // or "ok" | "http_error"
+// ... point a channel at `${ntfy.url}/topic`
+ntfy.delivered // requests answered with 2xx, with parsed `json` bodies
+await ntfy.stop()
+```
 
 ## 7. Anti-patterns
 
