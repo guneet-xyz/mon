@@ -301,6 +301,9 @@ test("board tour", async ({ browser }) => {
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: theme })
     await page.goto("/")
     await page.getByTestId("empty-board").waitFor()
+    // The theme applies once the page hydrates.
+    await page.waitForLoadState("networkidle")
+    await page.waitForTimeout(800)
     await shot(page, `${next()}-empty-board-${size}-${theme}`)
     await page.close()
   }

@@ -4,11 +4,8 @@ import { ClientOnly } from "@/components/client-only"
 import { env } from "@/env"
 import { getConfigState } from "@/lib/server/config-cache"
 
-import {
-  ConfigErrorBanner,
-  ConfigUnavailable,
-  EmptyBoard,
-} from "./_components/config-status"
+import { ConfigErrorBanner } from "./_components/config-error-banner"
+import { ConfigUnavailable, EmptyBoard } from "./_components/config-status"
 import { TileGrid } from "./tile-grid"
 
 export const dynamic = "force-dynamic"
@@ -26,7 +23,9 @@ export default async function HomePage() {
           <TileGrid config={toPublicConfig(config)} />
         </ClientOnly>
       )}
-      {error ? <ConfigErrorBanner summary={error.summary} /> : null}
+      <ClientOnly>
+        <ConfigErrorBanner initialSummary={error?.summary ?? null} />
+      </ClientOnly>
     </>
   )
 }

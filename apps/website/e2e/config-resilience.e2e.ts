@@ -1,4 +1,9 @@
-import { expect, test, type APIRequestContext } from "@playwright/test"
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Page,
+} from "@playwright/test"
 
 import { hashToken } from "@/lib/server/agent-auth"
 
@@ -38,6 +43,10 @@ async function jobKeys(request: APIRequestContext): Promise<string[]> {
   return body.tiles.map((tile) => tile.id).sort()
 }
 
+async function refresh(page: Page) {
+  await page.evaluate(() => window.dispatchEvent(new Event("visibilitychange")))
+}
+
 test("a broken config keeps the last good board and shows a banner", async ({
   page,
   request,
@@ -56,6 +65,13 @@ test("a broken config keeps the last good board and shows a banner", async ({
   ])
 
   await writeRuntimeConfig(configPath, BROKEN)
+
+  // An open board picks up the error when it next refreshes (every minute,
+  // or when the tab becomes visible again).
+  await refresh(page)
+  await expect(page.getByTestId("config-error-banner")).toBeVisible({
+    timeout: 15_000,
+  })
 
   await page.reload()
   const banner = page.getByTestId("config-error-banner")
@@ -81,6 +97,10 @@ test("a broken config keeps the last good board and shows a banner", async ({
     configPath,
     `[agents.default]\ntoken_hash = "${hashToken(TOKEN)}"\n`,
   )
+  await refresh(page)
+  await expect(page.getByTestId("config-error-banner")).toHaveCount(0, {
+    timeout: 15_000,
+  })
   await page.reload()
   await expect(page.getByTestId("empty-board")).toBeVisible({
     timeout: 15_000,
