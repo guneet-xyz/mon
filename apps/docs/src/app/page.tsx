@@ -23,7 +23,11 @@ export default function HomePage() {
         A monitor wall thats straight to the point.
       </h2>
       <div className="z-10 flex flex-wrap items-center justify-center gap-4 pt-4 pb-8 md:gap-8">
-        <Link href="https://demo.mon.guneet.dev" target="_blank">
+        <Link
+          href="https://mon.guneet.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <Button className="group cursor-pointer">
             <DuotoneHoverIcon
               className="mr-2 ml-1"
@@ -40,7 +44,7 @@ export default function HomePage() {
               regular={<PiBracketsAngle />}
               hover={<PiBracketsAngleDuotone />}
             />
-            Demo Code
+            Source Code
           </Button>
         </Link>
         <Link href="/docs">
