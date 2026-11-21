@@ -44,6 +44,8 @@ export default defineConfig({
     command: `bun run dev -- --port ${E2E_PORT}`,
     url: BASE_URL,
     reuseExistingServer: false,
+    // next dev compiles on first request; slow on a busy machine.
+    timeout: 180_000,
     env: {
       NODE_ENV: "test",
       SKIP_ENV_VALIDATION: "1",

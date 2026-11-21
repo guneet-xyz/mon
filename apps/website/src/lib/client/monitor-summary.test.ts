@@ -85,7 +85,7 @@ describe("monitorSummary", () => {
 
   it("leaves out values that were not recorded", () => {
     expect(monitorSummary({ type: "host", latency: null }, now)).toEqual([])
-    expect(monitorSummary({ type: "github" }, now)).toEqual([])
+    expect(monitorSummary({ type: "github", checks: [] }, now)).toEqual([])
   })
 })
 

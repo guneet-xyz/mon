@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
-import { tileValue } from "@/lib/client/tile-value"
+import { monitorState } from "@/lib/client/monitor-state"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 import { getLatestRuns } from "@/lib/server/actions/github/latest-runs"
+import type { Tone } from "@/lib/tile-state"
 
 import { BaseTile } from "./_base"
 import { LoadingTile } from "./loading"
@@ -48,14 +49,15 @@ export function GithubTile({
     orientation = "vertical"
   }
 
-  const statusLine = latestRuns.map((run) => {
+  const statusLine = latestRuns.map((run): Tone => {
     if (run.status === "completed") {
-      if (run.conclusion === "success") return "online"
-      if (run.conclusion === "failure") return "offline"
+      if (run.conclusion === "success") return "ok"
+      if (run.conclusion === "failure") return "down"
     }
     return "unknown"
   })
-  console.log("statusLine", statusLine)
+
+  const { tone, message } = monitorState(data, "github")
 
   return (
     <MonitorDialog dbKey={dbKey} type="github">
@@ -64,8 +66,10 @@ export function GithubTile({
         c_span={c_span}
         title={name}
         short_title={config.short_name}
-        bottom_text={tileValue(data.details)}
-        warnings={data.warnings}
+        tone={tone}
+        bottom_text={message}
+        bottom_detail={data.warnings.join("\n") || undefined}
+        label={message ? `${name}: ${message}` : name}
         top_text={config.repo}
         statusLine={statusLine}
         status={status}

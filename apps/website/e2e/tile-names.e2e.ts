@@ -59,8 +59,10 @@ address = "192.0.2.${30 + i}"
     contentType: "image/png",
   })
 
-  // Phone: 12 tiles make a 5x3 board with ~100 px cells. Long names fall
-  // back to short_name, then the initial; names that still fit stay.
+  // Phone: 12 tiles make a 5x3 board with ~100 px cells. Names wrap at
+  // spaces and shrink a little; a name that still does not fit falls back to
+  // short_name, and without one is shown small and broken inside words, but
+  // never as an initial.
   await page.setViewportSize({ width: 360, height: 640 })
   // Full names must not widen the board's columns past the window.
   await expect
@@ -70,11 +72,13 @@ address = "192.0.2.${30 + i}"
       ),
     )
     .toBe(true)
-  await expect(page.getByText("ML", { exact: true })).toBeVisible()
-  await expect(page.getByText("A", { exact: true })).toBeVisible()
+  await expect(
+    page.getByText(/^(Immich machine learning|ML)$/).first(),
+  ).toBeVisible()
   await expect(
     page.getByText("Audiobookshelf (public)", { exact: true }),
-  ).toHaveCount(0)
+  ).toBeVisible()
+  await expect(page.getByText("A", { exact: true })).toHaveCount(0)
   await expect(page.getByText("Forgejo", { exact: true })).toBeVisible()
   await testInfo.attach("phone", {
     body: await page.screenshot(),

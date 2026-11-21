@@ -9,8 +9,17 @@ import {
 } from "@mon/config"
 
 import { env } from "@/env"
-import { getStatus } from "@/lib/server/monitors"
+import { getMonitorState } from "@/lib/server/monitors/state"
 import { groupStatus, type MonitorStatus } from "@/lib/server/monitors/status"
+import {
+  groupTone,
+  summarize,
+  toneOf,
+  type GroupSummary,
+  type Tone,
+} from "@/lib/tile-state"
+
+type MonitorResult = { status: MonitorStatus; warnings: number }
 
 export async function getGroupTileInfo(dbKey: string) {
   const config = await getConfig(env.CONFIG_PATH)
@@ -21,34 +30,67 @@ export async function getGroupTileInfo(dbKey: string) {
     return null
   }
 
-  // A nested group's status rolls up its own members. The schema rejects
-  // cycles, and each tile's status is looked up once.
-  const statuses = new Map<string, Promise<MonitorStatus>>()
-  const statusOf = (tile: MonitorTile | GroupTile): Promise<MonitorStatus> => {
+  // Each monitor is looked up once, however often it appears in the group.
+  const monitors = new Map<string, Promise<MonitorResult>>()
+  const monitorOf = (tile: MonitorTile): Promise<MonitorResult> => {
     const id = `${tile.type}:${tile.key}`
-    let status = statuses.get(id)
-    if (!status) {
-      status =
-        tile.type === "group"
-          ? Promise.all(getGroupMembers(config, tile).map(statusOf)).then(
-              groupStatus,
-            )
-          : getStatus(tile.type, tile.key)
-      statuses.set(id, status)
+    let result = monitors.get(id)
+    if (!result) {
+      result = getMonitorState(tile).then(({ status, warnings }) => ({
+        status,
+        warnings: warnings.length,
+      }))
+      monitors.set(id, result)
     }
-    return status
+    return result
   }
 
-  const members = await Promise.all(
-    getGroupMembers(config, group).map(async (member) => ({
-      config: toPublicTile(member),
-      status: await statusOf(member),
-    })),
-  )
+  // The distinct monitors in a group, nested groups included. The schema
+  // rejects cycles.
+  const monitorsIn = (tile: MonitorTile | GroupTile): MonitorTile[] => {
+    if (tile.type !== "group") return [tile]
+    const seen = new Map<string, MonitorTile>()
+    for (const member of getGroupMembers(config, tile)) {
+      for (const monitor of monitorsIn(member)) {
+        seen.set(`${monitor.type}:${monitor.key}`, monitor)
+      }
+    }
+    return [...seen.values()]
+  }
+
+  const summaryOf = async (
+    tile: MonitorTile | GroupTile,
+  ): Promise<{ status: MonitorStatus; tone: Tone; summary: GroupSummary }> => {
+    const results = await Promise.all(monitorsIn(tile).map(monitorOf))
+    const summary = summarize(results)
+    if (tile.type !== "group") {
+      const [result] = results
+      return {
+        status: result!.status,
+        tone: toneOf(result!.status, result!.warnings),
+        summary,
+      }
+    }
+    return {
+      status: groupStatus(results.map((result) => result.status)),
+      tone: groupTone(summary),
+      summary,
+    }
+  }
+
+  const [own, members] = await Promise.all([
+    summaryOf(group),
+    Promise.all(
+      getGroupMembers(config, group).map(async (member) => ({
+        config: toPublicTile(member),
+        ...(await summaryOf(member)),
+      })),
+    ),
+  ])
 
   return {
     config: toPublicTile(group),
-    status: groupStatus(members.map((member) => member.status)),
+    ...own,
     members,
   }
 }

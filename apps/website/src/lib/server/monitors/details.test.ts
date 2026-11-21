@@ -36,14 +36,12 @@ describe("monitorWarnings", () => {
   it("warns about certificates expiring within 14 days", () => {
     expect(monitorWarnings(website(days(30)), now)).toEqual([])
     expect(monitorWarnings(website(days(13.5)), now)).toEqual([
-      "Certificate expires in 13 days",
+      "Cert expires in 13 days",
     ])
     expect(monitorWarnings(website(days(1.2)), now)).toEqual([
-      "Certificate expires in 1 day",
+      "Cert expires in 1 day",
     ])
-    expect(monitorWarnings(website(days(-1)), now)).toEqual([
-      "Certificate expired",
-    ])
+    expect(monitorWarnings(website(days(-1)), now)).toEqual(["Cert expired"])
     expect(monitorWarnings(website(null), now)).toEqual([])
   })
 
@@ -58,6 +56,37 @@ describe("monitorWarnings", () => {
     expect(monitorWarnings(container({ restarts24h: 1 }), now)).toEqual([
       "Restarted 1 time in 24 h",
     ])
+  })
+
+  it("warns about failed GitHub checks", () => {
+    const check = (name: string, conclusion: string | null) => ({
+      name,
+      status: "completed",
+      conclusion,
+    })
+    const github = (checks: ReturnType<typeof check>[]): MonitorDetails => ({
+      type: "github",
+      checks,
+    })
+    expect(monitorWarnings(github([check("build", "success")]), now)).toEqual(
+      [],
+    )
+    expect(
+      monitorWarnings(
+        github([check("build", "success"), check("e2e", "failure")]),
+        now,
+      ),
+    ).toEqual(["Check e2e failed"])
+    expect(
+      monitorWarnings(
+        github([
+          check("build", "timed_out"),
+          check("e2e", "failure"),
+          check("lint", "success"),
+        ]),
+        now,
+      ),
+    ).toEqual(["2 of 3 checks failed"])
   })
 
   it("never warns about hosts", () => {

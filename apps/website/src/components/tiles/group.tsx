@@ -1,24 +1,22 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Minimize2 } from "lucide-react"
+import { CircleHelp, CircleX, Minimize2, TriangleAlert } from "lucide-react"
 
 import { StatusDot } from "@/components/status-dot"
 import type { Subgrid } from "@/lib/client/tile-generation"
 import { getGroupTileInfo } from "@/lib/server/actions/get-group-tile-info"
+import { groupMessage, upCount, type Tone } from "@/lib/tile-state"
 import { cn } from "@/lib/utils"
 
 import { BaseTile } from "./_base"
 import { LoadingTile } from "./loading"
 
 function useGroupInfo(dbKey: string) {
-  const { data, isFetched } = useQuery({
+  return useQuery({
     queryKey: ["group-config", dbKey],
     queryFn: async () => await getGroupTileInfo(dbKey),
   })
-  const statuses = data?.members.map((member) => member.status) ?? []
-  const up = statuses.filter((status) => status === "online").length
-  return { data, isFetched, statuses, up }
 }
 
 export function GroupTile({
@@ -32,14 +30,15 @@ export function GroupTile({
   c_span: number
   onExpand: () => void
 }) {
-  const { data, isFetched, statuses, up } = useGroupInfo(dbKey)
+  const { data, isFetched } = useGroupInfo(dbKey)
   if (!isFetched || !data) {
     return <LoadingTile r_span={r_span} c_span={c_span} />
   }
 
-  const { config, status, members } = data
+  const { config, status, tone, summary, members } = data
 
   const name = config.name ?? config.key
+  const message = groupMessage(summary)
 
   let orientation: "horizontal" | "vertical" = "horizontal"
 
@@ -53,16 +52,33 @@ export function GroupTile({
       c_span={c_span}
       title={name}
       short_title={config.short_name}
-      top_text={`${up}/${members.length} up`}
+      // The problem is the headline; the count is still there for context.
+      top_text={tone === "ok" ? undefined : upCount(summary)}
+      bottom_text={message}
+      large_bottom
+      tone={tone}
       status={status}
       orientation={orientation}
       icon={config.icon}
       top_right_icon="mdi:view-grid-outline"
-      statusLine={statuses}
+      statusLine={members.map((member) => member.tone)}
       label={`Expand ${name}`}
       onClick={onExpand}
     />
   )
+}
+
+const HEADER_TONE: Record<Tone, string> = {
+  ok: "text-emerald-800 dark:text-emerald-200",
+  warning: "text-amber-800 dark:text-amber-300",
+  down: "text-rose-800 dark:text-rose-300",
+  unknown: "text-stone-700 dark:text-stone-300",
+}
+
+const HEADER_ICON = {
+  warning: TriangleAlert,
+  down: CircleX,
+  unknown: CircleHelp,
 }
 
 export function ExpandedGroupTile({
@@ -76,30 +92,59 @@ export function ExpandedGroupTile({
   onCollapse: () => void
   children: React.ReactNode
 }) {
-  const { data, statuses, up } = useGroupInfo(dbKey)
-  const name = data?.config.name ?? dbKey
+  const { data } = useGroupInfo(dbKey)
+  // Blank until loaded rather than the raw key.
+  const name = data ? (data.config.name ?? data.config.key) : ""
+  const Icon = data && data.tone !== "ok" ? HEADER_ICON[data.tone] : null
 
   return (
     <div
       data-testid="expanded-group"
       className={cn(
-        "flex h-full w-full flex-col overflow-hidden rounded-xl",
+        "@container flex h-full w-full flex-col overflow-hidden rounded-xl",
         "border-2 border-dashed border-emerald-700 dark:border-emerald-900",
         "bg-emerald-100/40 dark:bg-emerald-950/30",
       )}
     >
       <button
         type="button"
-        aria-label={`Collapse ${name}`}
+        aria-label={`Collapse ${name || dbKey}`}
         onClick={onCollapse}
-        className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-1 text-left font-display text-emerald-900 transition-colors hover:bg-emerald-300/40 dark:text-emerald-100 dark:hover:bg-emerald-900/40"
+        className="flex shrink-0 cursor-pointer flex-wrap items-center gap-x-2 px-3 py-1 text-left font-display text-sm text-emerald-900 transition-colors outline-none hover:bg-emerald-300/40 focus-visible:ring-4 focus-visible:ring-sky-500 focus-visible:ring-inset @min-[20rem]:text-base dark:text-emerald-100 dark:hover:bg-emerald-900/40 dark:focus-visible:ring-sky-400"
       >
-        {data ? <StatusDot status={data.status} className="shrink-0" /> : null}
-        <span className="truncate">{name}</span>
-        <span className="ml-auto shrink-0 text-xs text-emerald-700 dark:text-emerald-500">
-          {data ? `${up}/${statuses.length} up` : null}
+        {/* On narrow groups the counts wrap under the name. */}
+        <span className="flex min-w-0 items-center gap-2">
+          {data ? (
+            <StatusDot status={data.status} className="shrink-0" />
+          ) : null}
+          <span className="truncate">{name}</span>
         </span>
-        <Minimize2 className="size-4 shrink-0" />
+        <span className="ml-auto flex min-w-0 items-center gap-2">
+          {data ? (
+            <span
+              className={cn(
+                "flex min-w-0 items-center gap-1 font-semibold",
+                HEADER_TONE[data.tone],
+              )}
+            >
+              {Icon ? <Icon aria-hidden className="size-4 shrink-0" /> : null}
+              <span className="truncate">
+                {data.tone === "ok" ? (
+                  upCount(data.summary)
+                ) : (
+                  <>
+                    {groupMessage(data.summary)}
+                    {/* The count is context; narrow groups leave it out. */}
+                    <span className="hidden @min-[26rem]:inline">
+                      {` · ${upCount(data.summary)}`}
+                    </span>
+                  </>
+                )}
+              </span>
+            </span>
+          ) : null}
+          <Minimize2 className="size-4 shrink-0" />
+        </span>
       </button>
       {subgrid.success ? (
         <div

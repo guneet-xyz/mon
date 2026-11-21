@@ -1,6 +1,16 @@
 import dayjs from "dayjs"
 
 import type { MonitorTile } from "@mon/config/schema"
+import { sql } from "@mon/db/drizzle"
+import {
+  containerPings,
+  githubPings,
+  hostPings,
+  systemPings,
+  websitePings,
+} from "@mon/db/schema"
+
+import { db } from "@/lib/server/db"
 
 import { getContainerStatus } from "./container"
 import { getGithubStatus } from "./github"
@@ -10,7 +20,12 @@ import {
   type HistoryRange,
 } from "./history"
 import { getHostStatus } from "./host"
-import { reportGaps } from "./status"
+import {
+  agentStatusFromLatestReport,
+  reportGaps,
+  statusFromLatestPing,
+  type MonitorStatus,
+} from "./status"
 import { getAgentStatus } from "./system"
 import { getWebsiteStatus } from "./website"
 
@@ -76,4 +91,35 @@ export async function getStatus(
   if (type === "agent") return await getAgentStatus(dbKey)
 
   throw new Error("Unsupported type for getStatus function")
+}
+
+export type LatestCheck = { timestamp: Date; error: string | null }
+
+// The monitor's most recent check (an agent's most recent report).
+export async function getLatestCheck(
+  type: MonitorTile["type"],
+  dbKey: string,
+): Promise<LatestCheck | null> {
+  const t = {
+    host: hostPings,
+    website: websitePings,
+    container: containerPings,
+    github: githubPings,
+    agent: systemPings,
+  }[type]
+  const [row] = await db.execute<LatestCheck>(sql`
+    select ${t.timestamp} as timestamp, ${t.error} as error from ${t}
+    where ${t.key} = ${dbKey}
+    order by ${t.timestamp} desc limit 1`)
+  return row ? { timestamp: new Date(row.timestamp), error: row.error } : null
+}
+
+export function statusFromCheck(
+  type: MonitorTile["type"],
+  check: LatestCheck | null,
+  now: Date = new Date(),
+): MonitorStatus {
+  return type === "agent"
+    ? agentStatusFromLatestReport(check ?? undefined, now)
+    : statusFromLatestPing(check ?? undefined, now)
 }

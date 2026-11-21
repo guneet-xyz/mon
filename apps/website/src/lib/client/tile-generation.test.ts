@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test"
 
 import type { Tile } from "@mon/config/schema"
 
+import { trimFillers } from "./tile-generation"
+
 function makeTile(overrides: Partial<Tile> & { type: string }): Tile {
   return {
     type: overrides.type,
@@ -248,5 +250,40 @@ describe("tile-generation grid placement", () => {
     expect(result.success).toBe(true)
     expect(result.location?.row_start).toBe(5)
     expect(result.location?.col_start).toBe(1)
+  })
+})
+
+describe("trimFillers", () => {
+  const at = (row_start: number, col_start: number) => ({
+    row_start,
+    col_start,
+    row_span: 1,
+    col_span: 1,
+  })
+  const filler = (row: number, col: number) =>
+    ({ type: "empty", filler: true, location: at(row, col) }) as const
+  const host = (row: number, col: number) =>
+    ({ type: "host", key: `h${row}${col}`, location: at(row, col) }) as const
+
+  it("drops fillers after the last tile and the rows they leave", () => {
+    const tiles = [
+      host(1, 1),
+      filler(1, 2),
+      host(2, 1),
+      filler(2, 2),
+      filler(3, 1),
+      filler(3, 2),
+    ]
+    const trimmed = trimFillers(tiles, 3)
+    expect(trimmed.rows).toBe(2)
+    expect(trimmed.tiles).toEqual([host(1, 1), filler(1, 2), host(2, 1)])
+  })
+
+  it("keeps empty tiles from the config", () => {
+    const empty = { type: "empty", location: at(2, 1) } as const
+    expect(trimFillers([host(1, 1), empty], 2)).toEqual({
+      tiles: [host(1, 1), empty],
+      rows: 2,
+    })
   })
 })

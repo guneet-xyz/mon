@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 
 import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
 import { formatSeconds } from "@/lib/client/format"
-import { tileValue } from "@/lib/client/tile-value"
+import { monitorState } from "@/lib/client/monitor-state"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
@@ -43,6 +43,8 @@ export function AgentTile({
       ? `up ${formatSeconds(details.uptimeSeconds)}`
       : undefined
 
+  const { tone, message } = monitorState(data, "agent")
+
   return (
     <MonitorDialog dbKey={dbKey} type="agent">
       <BaseTile
@@ -50,8 +52,10 @@ export function AgentTile({
         c_span={c_span}
         title={name}
         short_title={config.short_name}
-        bottom_text={tileValue(details)}
-        warnings={data.warnings}
+        tone={tone}
+        bottom_text={message}
+        bottom_detail={data.warnings.join("\n") || undefined}
+        label={message ? `${name}: ${message}` : name}
         top_text={uptime}
         status={status}
         orientation={c_span === 1 && r_span > 1 ? "vertical" : "horizontal"}

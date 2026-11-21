@@ -7,11 +7,13 @@ import {
   websitePings,
 } from "@mon/db/schema"
 
+import { getLatestRuns } from "@/lib/server/actions/github/latest-runs"
 import { db } from "@/lib/server/db"
 
 export const CERT_WARNING_DAYS = 14
 export const USAGE_WARNING_PERCENT = 90
 const DAY_MS = 24 * 60 * 60 * 1000
+const FAILED_CONCLUSIONS = new Set(["failure", "timed_out", "action_required"])
 
 export type MonitorDetails =
   | { type: "host"; latency: number | null }
@@ -48,7 +50,15 @@ export type MonitorDetails =
       // Disks the tile configures that the latest report did not include.
       missingDisks: string[]
     }
-  | { type: "github" }
+  | {
+      type: "github"
+      // The check runs on the latest commit, by name.
+      checks: Array<{
+        name: string
+        status: string
+        conclusion: string | null
+      }>
+    }
 
 // What the latest check recorded. Fields stay null until an agent from
 // v0.8.0 or later has checked the monitor.
@@ -152,7 +162,15 @@ export async function getMonitorDetails(
     }
   }
 
-  return { type }
+  const runs = await getLatestRuns(key)
+  return {
+    type,
+    checks: runs.map((run) => ({
+      name: run.name,
+      status: run.status,
+      conclusion: run.conclusion,
+    })),
+  }
 }
 
 // Problems worth flagging on a tile even while the monitor is up.
@@ -165,11 +183,9 @@ export function monitorWarnings(
     const days = Math.floor(
       (details.certExpiresAt.getTime() - now.getTime()) / DAY_MS,
     )
-    if (days < 0) warnings.push("Certificate expired")
+    if (days < 0) warnings.push("Cert expired")
     else if (days < CERT_WARNING_DAYS)
-      warnings.push(
-        `Certificate expires in ${days} ${days === 1 ? "day" : "days"}`,
-      )
+      warnings.push(`Cert expires in ${days} ${days === 1 ? "day" : "days"}`)
   }
   if (details.type === "container") {
     if (details.health === "unhealthy") warnings.push("Health check failing")
@@ -177,6 +193,16 @@ export function monitorWarnings(
     if (details.restarts24h)
       warnings.push(
         `Restarted ${details.restarts24h} ${details.restarts24h === 1 ? "time" : "times"} in 24 h`,
+      )
+  }
+  if (details.type === "github") {
+    const failed = details.checks.filter((check) =>
+      FAILED_CONCLUSIONS.has(check.conclusion ?? ""),
+    )
+    if (failed.length === 1) warnings.push(`Check ${failed[0]!.name} failed`)
+    else if (failed.length > 1)
+      warnings.push(
+        `${failed.length} of ${details.checks.length} checks failed`,
       )
   }
   if (details.type === "agent") {

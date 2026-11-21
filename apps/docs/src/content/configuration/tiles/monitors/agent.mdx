@@ -9,7 +9,7 @@ Shows the machine an agent runs on, as the agent itself reports it. Use `type = 
 
 Every minute the agent reports CPU % (measured between reports, so it appears from the second report on), memory used and total, how long the machine has been up, and for each disk how full it is. Sizes and percentages match `df`: blocks reserved for root are not counted.
 
-The tile shows `CPU · MEM · DISK` (the fullest disk) and the machine's uptime. It turns **offline when the agent has not reported for 3 minutes**: unlike other monitors, silence means the machine or the agent is down. Uptime counts the 5-minute intervals in which the agent reported, and gaps in its reports are listed as incidents. A warning badge appears when a disk or the memory is 90% full or more, or a configured disk is missing from the report.
+The tile shows `CPU · MEM · DISK` (the fullest disk) and the machine's uptime. It turns **offline when the agent has not reported for 3 minutes**: unlike other monitors, silence means the machine or the agent is down, and the tile says `No report for 25 min` instead of its last numbers. Uptime counts the 5-minute intervals in which the agent reported, and gaps in its reports are listed as incidents. A warning appears when a disk or the memory is 90% full or more, or a configured disk is missing from the report.
 
 ## Running the agent in a container
 
