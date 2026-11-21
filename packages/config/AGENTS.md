@@ -1,6 +1,6 @@
 # packages/config
 
-The **single source of truth** for tile shape. Loads `/etc/mon/config.toml` (path from `env.CONFIG_PATH`), parses with `smol-toml`, validates with Zod, returns typed config. Consumed by both agent and website.
+The **single source of truth** for tile shape. `getConfig(path)` loads the TOML file (the website passes `env.CONFIG_PATH`, default `/etc/mon/config.toml`), parses with `smol-toml`, validates with Zod and returns typed config. Only the website (and tests) consume it: agents never see the config, they get job tiles from the website (`getAgentAssignments()` picks each agent's tiles). The user-facing reference is the docs site ([apps/docs/src/content/configuration/](../../apps/docs/src/content/configuration)); keep it in step with `schema.ts`.
 
 ## CONVENTIONS
 
@@ -12,12 +12,12 @@ The **single source of truth** for tile shape. Loads `/etc/mon/config.toml` (pat
 - **`getConfig()` auto-creates** the config dir + empty file if missing. This is intentional — first-run UX. Don't add a "file not found" error path.
 - **`findMonitorTile<T>(config, type, key)`** (used by `getMonitorConfig`) uses an `as Extract<...>` cast on the `.find()` return — this is the **only** sanctioned cast in the package because TS can't narrow `.find` against discriminated unions. Don't replicate the pattern elsewhere.
 - **`describeConfigError(error)`** turns a `getConfig()` failure into a public-safe `summary` and log `details`. smol-toml messages quote the offending lines (which may hold a `github_token`), so never log or show a raw parse error.
-- **`package.json` `"main": "src/index.ts"`** — but source is at the package root (`./index.ts`), not `./src/`. The `"main"` value is stale-but-harmless because Bun/Next resolve workspace TS directly. Don't add a `src/` folder to "match" it; fix the `"main"` instead if you touch the manifest.
-- **Uses `zod/v4` import path** — schema.ts pins the v4 subpath explicitly. Other workspaces import from `"zod"` (v3-compatible API surface). Both work; don't mix in one file.
+- **Source is at the package root** (`./index.ts`, `"main": "index.ts"`); don't add a `src/` folder.
+- **Uses `zod/v4` import path** — schema.ts pins the v4 subpath explicitly. Other workspaces import from `"zod"` (also v4). Both work; don't mix in one file.
 
 ## ANTI-PATTERNS
 
-- **Do not read `env.CONFIG_PATH` and `parse()` directly** in app code — call `getConfig()` so defaults, auto-create, and validation all run.
+- **Do not read the file and `parse()` it directly** in app code — call `getConfig()` (or the website's `getCachedConfig()`) so defaults, auto-create, and validation all run.
 - **Do not put runtime logic, fetchers, or side effects here.** This package is pure schema + a thin file loader.
-- **Do not depend on `@mon/db`** — the agent and website wire config↔DB themselves; keeping config DB-free lets the docs site and scripts import it cheaply.
+- **Do not depend on `@mon/db`** — the website wires config↔DB itself; keeping config DB-free keeps it cheap to import from tests and scripts.
 - **Never pass a raw `Config` or tile to the browser.** Use `toPublicConfig()` / `toPublicTile()`, which drop `agents` (token hashes) and the server-only tile fields (`github_token`, `agent`, `interval_seconds`, `docker_socket`). New secret or internal fields must be added to `SERVER_ONLY_TILE_FIELDS`.

@@ -7,11 +7,11 @@
 #   - postgres   : Postgres 16, data persisted to ./data/postgres
 #   - migrator   : runs `drizzle-kit migrate` against postgres, then exits
 #   - website    : Next.js status board on http://localhost:3000
-#   - agent      : Bun cron poller that talks to website
+#   - agent      : pulls jobs from the website and pushes results back
 #
 # Bind mounts (all under test/data, gitignored):
 #   ./data/postgres   -> /var/lib/postgresql/data
-#   ./data/config.toml -> /etc/mon/config.toml  (auto-created empty by website on first run)
+#   ./data/config     -> /etc/mon  (config.toml; auto-created empty by website on first run)
 #
 # AGENT_TOKEN below is a dev-only token. Its sha256 must match the
 # `token_hash` of the `default` agent in config.toml when you add tiles.
