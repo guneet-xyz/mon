@@ -42,7 +42,7 @@ export type Observation = {
   warnings: string[] | null
 }
 
-// Warning messages carry numbers that change every check ("Disk / 91% full",
+// Warning messages carry numbers that change every check ("Disk (/) 91% full",
 // "Certificate expires in 13 days"). The key leaves them out so the same
 // warning is only notified once.
 export function warningKey(message: string): string {

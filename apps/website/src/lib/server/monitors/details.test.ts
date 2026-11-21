@@ -115,9 +115,9 @@ describe("monitorWarnings", () => {
         },
         now,
       )
-    expect(agent({})).toEqual(["Disk / 93% full"])
+    expect(agent({})).toEqual(["Disk (/) 93% full"])
     expect(agent({ disks: [], missingDisks: ["/"] })).toEqual([
-      "Disk / not reported",
+      "Disk (/) not reported",
     ])
     expect(agent({ disks: [], memory: 7_400_000_000 })).toEqual([
       "Memory 93% used",

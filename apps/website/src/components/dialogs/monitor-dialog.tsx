@@ -1,16 +1,16 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { TriangleAlert } from "lucide-react"
+import dayjs from "dayjs"
+import { CircleHelp, CircleX, TriangleAlert } from "lucide-react"
 import { useState } from "react"
 
-import type { MonitorTile } from "@mon/config/schema"
+import type { MonitorTile, PublicTile } from "@mon/config/schema"
 
 import { Incidents } from "@/components/dialogs/incidents"
 import { MonitorLink } from "@/components/dialogs/monitor-link"
 import { SeriesChart, type ChartLine } from "@/components/dialogs/series-chart"
 import { StatusDot } from "@/components/status-dot"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,16 +20,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-  formatBytes,
-  formatLatency,
-  formatPercent,
-  formatUptime,
-} from "@/lib/client/format"
-import { monitorSummary } from "@/lib/client/monitor-summary"
+import { formatBytes, formatLatency, formatPercent } from "@/lib/client/format"
+import { monitorState } from "@/lib/client/monitor-state"
+import { monitorSummary, uptimeStats } from "@/lib/client/monitor-summary"
 import { getMonitorHistory } from "@/lib/server/actions/get-monitor-history"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 import type { HistoryRange, SeriesPoint } from "@/lib/server/monitors/history"
+import { cn } from "@/lib/utils"
+
+// "14:05" today, "20 Nov 14:05" before.
+function formatWhen(date: Date, now: Date = new Date()): string {
+  return dayjs(date).format(
+    dayjs(date).isSame(now, "day") ? "HH:mm" : "D MMM HH:mm",
+  )
+}
 
 const RANGES: Array<{ value: HistoryRange; label: string }> = [
   { value: "24h", label: "24 h" },
@@ -52,6 +56,27 @@ function Section({
   )
 }
 
+// Cards in the dialog: solid and light on white, dashed on dark.
+const CARD =
+  "rounded-xl border border-neutral-200 bg-neutral-50 dark:border-dashed dark:border-neutral-500/50 dark:bg-neutral-900/30"
+
+const TYPE_LABEL: Record<MonitorTile["type"], string> = {
+  host: "Host",
+  website: "Website",
+  container: "Container",
+  agent: "Machine",
+  github: "GitHub repository",
+}
+
+// What the monitor watches, in words. Websites and repositories also get a
+// link (MonitorLink) under it.
+function subtitle(config: PublicTile | undefined, type: MonitorTile["type"]) {
+  if (config?.type === "host") return `${TYPE_LABEL[type]} · ${config.address}`
+  if (config?.type === "container")
+    return `${TYPE_LABEL[type]} · ${config.container_name}`
+  return TYPE_LABEL[type]
+}
+
 function StatGrid({
   stats,
 }: {
@@ -60,17 +85,16 @@ function StatGrid({
   return (
     <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="min-w-0 rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 px-3 py-2"
-        >
-          <dt className="text-xs text-neutral-500">{stat.label}</dt>
+        <div key={stat.label} className={cn("min-w-0 px-3 py-2", CARD)}>
+          <dt className="text-xs text-neutral-600 dark:text-neutral-400">
+            {stat.label}
+          </dt>
           <dd className="truncate font-display" title={stat.value}>
             {stat.value}
           </dd>
           {stat.detail ? (
             <dd
-              className="truncate text-xs text-neutral-500"
+              className="truncate text-xs text-neutral-600 dark:text-neutral-400"
               title={stat.detail}
             >
               {stat.detail}
@@ -109,8 +133,10 @@ function diskLines(series: SeriesPoint[]): ChartLine[] {
   }))
 }
 
-const panel =
-  "rounded-xl border border-dashed border-neutral-500/50 bg-neutral-900/30 p-4 text-neutral-500"
+const panel = cn(
+  "p-4 text-neutral-600 dark:text-neutral-500",
+  "rounded-xl border border-neutral-200 bg-neutral-50 dark:border-dashed dark:border-neutral-500/50 dark:bg-neutral-900/30",
+)
 
 export function MonitorDialog({
   type,
@@ -139,28 +165,46 @@ export function MonitorDialog({
   const summary = monitorSummary(info?.details)
   const warnings = info?.warnings ?? []
   const series = history?.series ?? null
+  const state = info ? monitorState(info, type) : null
+  // Old values are labelled as such, not shown as current.
+  const nowTitle =
+    info?.stale && info.lastCheck
+      ? `${type === "agent" ? "Last reported" : "Last checked"} ${formatWhen(info.lastCheck.timestamp)}`
+      : "Now"
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[90vh] w-full !max-w-none overflow-y-auto p-4 sm:w-auto sm:max-w-3xl sm:min-w-[36rem] sm:p-8">
-        <DialogHeader>
+        <DialogHeader className="text-left">
           <DialogTitle className="flex items-center gap-2">
             {info ? (
               <StatusDot status={info.status} warning={warnings.length > 0} />
             ) : null}
             {config?.name ?? dbKey}
           </DialogTitle>
-          <DialogDescription asChild>
-            <div className="flex justify-between gap-4">
-              <span>{dbKey}</span>
-              <Badge variant="default" className="uppercase">
-                {type}
-              </Badge>
-            </div>
-          </DialogDescription>
+          <DialogDescription>{subtitle(config, type)}</DialogDescription>
         </DialogHeader>
         <MonitorLink config={config} />
+
+        {state && (state.tone === "down" || state.tone === "unknown") ? (
+          <div
+            data-testid="monitor-problem"
+            className={cn(
+              "mt-2 flex items-center gap-2 rounded-xl border p-3 text-sm font-medium",
+              state.tone === "down"
+                ? "border-rose-600/50 bg-rose-500/10 text-rose-800 dark:text-rose-300"
+                : "border-stone-500/50 bg-stone-500/10 text-stone-700 dark:text-stone-300",
+            )}
+          >
+            {state.tone === "down" ? (
+              <CircleX className="size-4 shrink-0" />
+            ) : (
+              <CircleHelp className="size-4 shrink-0" />
+            )}
+            {state.message}
+          </div>
+        ) : null}
 
         {warnings.length > 0 ? (
           <ul
@@ -177,18 +221,13 @@ export function MonitorDialog({
         ) : null}
 
         {summary.length > 0 ? (
-          <Section title="Now">
+          <Section title={nowTitle}>
             <StatGrid stats={summary} />
           </Section>
         ) : null}
 
         <Section title="Uptime">
-          <StatGrid
-            stats={RANGES.map(({ value, label }) => ({
-              label,
-              value: formatUptime(history?.uptime[value]) ?? "—",
-            }))}
-          />
+          <StatGrid stats={uptimeStats(history?.uptime, history?.firstCheck)} />
         </Section>
 
         <div

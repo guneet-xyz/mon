@@ -112,4 +112,4 @@ The website checks every monitor every 30 seconds, using the same status logic a
 
 - **First start:** the current states are recorded without sending anything, so turning notifications on (or adding a monitor) doesn't send a storm of alerts for problems that already existed. A monitor that was already down sends a recovery message when it comes back.
 - **Several website instances:** each change is recorded with a conditional update, and only the instance whose update succeeds sends the notification.
-- **Warnings** are compared without their numbers, so `Disk / 91% full` turning into `Disk / 92% full` is not a new warning, but a warning that clears and comes back is.
+- **Warnings** are compared without their numbers, so `Disk (/) 91% full` turning into `Disk (/) 92% full` is not a new warning, but a warning that clears and comes back is.

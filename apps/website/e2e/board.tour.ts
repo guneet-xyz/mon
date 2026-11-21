@@ -327,6 +327,22 @@ test("board tour", async ({ browser }) => {
 
   await dark.close()
 
+  // Dialogs on a phone: a silent agent and a site that is down.
+  const phone = await browser.newPage({ viewport: VIEWPORTS.phone })
+  await open(phone, "light")
+  for (const name of ["Gamma", "Down site"]) {
+    await phone.getByText(name, { exact: true }).first().click()
+    await phone.getByRole("dialog").waitFor()
+    await phone.waitForLoadState("networkidle")
+    await phone.waitForTimeout(600)
+    await shot(
+      phone,
+      `${next()}-dialog-${name.toLowerCase().replace(/\W+/g, "-")}-phone`,
+    )
+    await phone.keyboard.press("Escape")
+  }
+  await phone.close()
+
   // Loading: tiles whose data has not arrived yet (server actions held).
   const loading = await browser.newPage({ viewport: VIEWPORTS.phone })
   await loading.route("**/*", (route) =>

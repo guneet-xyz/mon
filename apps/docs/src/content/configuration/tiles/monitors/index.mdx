@@ -44,17 +44,18 @@ Each monitor tile shows its current value under its name: latency for hosts and 
 
 When something is wrong, the whole tile changes and says what the problem is in place of the value, so it reads at a distance and without relying on colour:
 
-| Tile    | Looks like                         | Says, for example                                       |
-| ------- | ---------------------------------- | ------------------------------------------------------- |
-| Down    | Red, thick border, crossed circle  | `Down · HTTP 503`, `No report for 25 min`               |
-| Warning | Amber, thick border, warning sign  | `Certificate expires in 5 days`, `Disk / 93% full (+1)` |
-| No data | Grey, dashed border, question mark | `No data yet`, `No check for 2 h`                       |
+| Tile    | Looks like                         | Says, for example                                         |
+| ------- | ---------------------------------- | --------------------------------------------------------- |
+| Down    | Red, thick border, crossed circle  | `Down · HTTP 503`, `No report for 25 min`                 |
+| Warning | Amber, thick border, warning sign  | `Certificate expires in 5 days`, `Disk (/) 93% full (+1)` |
+| No data | Grey, dashed border, question mark | `No data yet`, `No check for 2 h`                         |
 
 A warning appears when a website's certificate expires within 14 days (or has expired), a container's health check fails, it is restarting, or it restarted in the last 24 hours, or one of a GitHub repo's checks failed; agents add their own (see [Agent](/docs/configuration/tiles/monitors/agent)). When there are several, the tile shows the first and how many more (`(+1)`); hover it, or open the dialog, for the full list. Tiles refresh every minute.
 
 Clicking a tile opens its dialog with:
 
 - **Link**: website dialogs link to the monitored URL and GitHub dialogs to the repository, opening in a new tab.
-- **Now**: what the latest check recorded, for example status code and certificate expiry, container state, uptime, restarts, CPU, memory and image, or the result of each GitHub check.
-- **Uptime**: the share of successful checks over the last 24 hours, 7 days and 30 days.
+- **Problem**: what is wrong, as on the tile (`Down · HTTP 503`, `No report for 25 min`), and every warning.
+- **Now**: what the latest check recorded, for example status code and certificate expiry, container state, uptime, restarts, CPU, memory and image, or the result of each GitHub check. When the latest check is too old to count, this section is titled `Last checked 14:05` (`Last reported` for agents) so old values aren't read as current.
+- **Uptime**: the share of successful checks over the last 24 hours, 7 days and 30 days. A range the monitor's history doesn't cover yet says so, for example `Only 26 h of data` under 7 days.
 - **History**: charts (latency, or container CPU and memory) and incidents for the chosen range: 24 hours, 7 days or 30 days. Longer ranges are averaged into larger time buckets.

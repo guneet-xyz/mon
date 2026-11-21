@@ -117,7 +117,7 @@ col_span = 2
       .getByText("Live Machine", { exact: true })
       .click()
     const dialog = page.getByRole("dialog")
-    await expect(dialog.getByText("Disk /")).toBeVisible()
+    await expect(dialog.getByText("Disk (/)")).toBeVisible()
     await expect(dialog.getByText("Up for")).toBeVisible()
     await expect(dialog.getByRole("heading", { name: "Disks" })).toBeVisible()
     await expect(dialog.getByRole("heading", { name: "Memory" })).toBeVisible()

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { monitorSummary } from "./monitor-summary"
+import { monitorSummary, uptimeStats } from "./monitor-summary"
 
 const now = new Date("2026-11-13T12:00:00.000Z")
 
@@ -108,7 +108,28 @@ describe("monitorSummary for agents", () => {
       { label: "CPU", value: "12%" },
       { label: "Memory", value: "50%", detail: "4.0 GB of 8.0 GB" },
       { label: "Up for", value: "6 d 3 h" },
-      { label: "Disk /", value: "93%", detail: "26 GB of 28 GB" },
+      { label: "Disk (/)", value: "93%", detail: "26 GB of 28 GB" },
+    ])
+  })
+})
+
+describe("uptimeStats", () => {
+  it("says when a range is only partly covered", () => {
+    const first = new Date(now.getTime() - 26 * 60 * 60 * 1000)
+    expect(
+      uptimeStats({ "24h": 1, "7d": 0.995, "30d": 0.995 }, first, now),
+    ).toEqual([
+      { label: "24 h", value: "100%" },
+      { label: "7 d", value: "99.50%", detail: "Only 26 h of data" },
+      { label: "30 d", value: "99.50%", detail: "Only 26 h of data" },
+    ])
+  })
+
+  it("shows a dash without checks", () => {
+    expect(uptimeStats(undefined, null, now).map((s) => s.value)).toEqual([
+      "—",
+      "—",
+      "—",
     ])
   })
 })

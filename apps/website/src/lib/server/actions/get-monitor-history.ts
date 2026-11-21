@@ -6,6 +6,7 @@ import type { MonitorTile } from "@mon/config/schema"
 import { getCachedConfig } from "@/lib/server/config-cache"
 import { getIncidents } from "@/lib/server/monitors"
 import {
+  getFirstCheck,
   getSeries,
   getUptime,
   isHistoryRange,
@@ -25,10 +26,11 @@ export async function getMonitorHistory(
   if (!config) return null
   const intervalSeconds = monitorIntervalSeconds(board, config)
 
-  const [series, uptime, incidents] = await Promise.all([
+  const [series, uptime, incidents, firstCheck] = await Promise.all([
     getSeries(type, dbKey, range),
     getUptime(type, dbKey, new Date(), intervalSeconds),
     getIncidents(type, dbKey, range, intervalSeconds),
+    getFirstCheck(type, dbKey),
   ])
-  return { series, uptime, incidents }
+  return { series, uptime, incidents, firstCheck }
 }

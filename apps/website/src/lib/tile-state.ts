@@ -58,6 +58,11 @@ export function groupMessage(summary: GroupSummary): string {
   return parts.join(" · ")
 }
 
+// "Disk (/)": a bare mount path after "Disk" reads like a fraction.
+export function diskLabel(name: string): string {
+  return `Disk (${name})`
+}
+
 export function upCount(summary: GroupSummary): string {
   return `${summary.up}/${summary.total} up`
 }
