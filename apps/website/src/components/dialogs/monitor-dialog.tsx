@@ -7,6 +7,7 @@ import { useState } from "react"
 import type { MonitorTile } from "@mon/config/schema"
 
 import { Incidents } from "@/components/dialogs/incidents"
+import { MonitorLink } from "@/components/dialogs/monitor-link"
 import { SeriesChart, type ChartLine } from "@/components/dialogs/series-chart"
 import { StatusDot } from "@/components/status-dot"
 import { Badge } from "@/components/ui/badge"
@@ -157,6 +158,7 @@ export function MonitorDialog({
             </div>
           </DialogDescription>
         </DialogHeader>
+        <MonitorLink config={config} />
 
         {warnings.length > 0 ? (
           <ul

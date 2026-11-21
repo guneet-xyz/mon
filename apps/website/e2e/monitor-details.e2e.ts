@@ -204,6 +204,11 @@ col_span = 2
     await expect(
       page.getByRole("dialog").getByText("200", { exact: true }),
     ).toBeVisible()
+    // ...and links to the monitored site in a new tab.
+    const link = page.getByRole("dialog").getByTestId("monitor-link")
+    await expect(link).toHaveAttribute("href", `${site.url}/`)
+    await expect(link).toHaveAttribute("target", "_blank")
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer")
   } finally {
     agent.kill("SIGTERM")
     removeContainers()

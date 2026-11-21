@@ -1,6 +1,6 @@
 # apps/docs
 
-Next.js 15 + Nextra v4 MDX documentation site. Built with Pagefind for static search.
+Next.js 16 + Nextra v4 MDX documentation site: the user-facing config reference (`src/content/configuration/`). Built with Pagefind for static search.
 
 ## STRUCTURE
 
@@ -20,9 +20,10 @@ src/
 ## CONVENTIONS
 
 - **Content = filesystem.** Every `.mdx` under `src/content/` becomes a route via the `[[...mdxPath]]` catch-all. Adding a doc page = drop in a file; no router config.
-- **`contentDirBasePath: "/docs"`** ([next.config.js](file:///Users/guneet/projects/mon/apps/docs/next.config.js#L8-L10)) — URLs are prefixed with `/docs`. Don't change without auditing links.
+- **`contentDirBasePath: "/docs"`** ([next.config.js](next.config.js)) — URLs are prefixed with `/docs`. Don't change without auditing links.
 - **Pagefind index is built post-build** (`postbuild` script) into `public/_pagefind`. Search will be empty in `dev` — that's expected.
-- **Next 15 here**, Next 14 in `apps/website`. They are intentionally divergent; eslint configs differ accordingly (`eslint-config-next@15.1.4`).
+- **Next 16, same version as `apps/website`.** Keep `next` and `eslint-config-next` in step across the two.
+- **Keep the content in step with `packages/config/schema.ts`.** The root README links here instead of repeating the schema.
 - **Own `components/ui/`** copied from shadcn — do NOT import from `apps/website`. The docs site is independently deployable.
 
 ## ANTI-PATTERNS
@@ -35,4 +36,5 @@ src/
 
 - **Standalone Docker output** with `outputFileTracingRoot` to monorepo root — same Docker contract as website.
 - **README.md is the create-t3-app template** and unrelated. Ignore.
+- **`nextra-theme-docs` is patched** (`patches/nextra-theme-docs@4.6.1.patch`, via `patchedDependencies` in the root `package.json`).
 - **Nextra theme (`nextra-theme-docs`) drives the chrome** — sidebar/TOC come from `_meta.{ts,js,json}` files if added; currently none exist, so ordering is alphabetical.
