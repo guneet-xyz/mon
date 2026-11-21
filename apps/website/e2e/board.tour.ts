@@ -339,14 +339,37 @@ test("board tour", async ({ browser }) => {
   await shot(loading, `${next()}-loading-phone`)
   await loading.close()
 
-  // Empty: a board without monitors.
-  await writeRuntimeConfig(runtime.configPath, `[[tiles]]\ntype = "logo"\n`)
-  const empty = await browser.newPage({ viewport: VIEWPORTS.desktop })
-  await empty.addInitScript(() => localStorage.setItem("theme", "dark"))
-  await empty.goto("/")
-  await empty.getByText("Nothing to show yet").waitFor()
-  await shot(empty, `${next()}-empty-board`)
-  await empty.close()
+  // A broken config file: the last good board stays up under a banner.
+  await writeRuntimeConfig(runtime.configPath, `${CONFIG}\n[[tiles]\n`)
+  for (const [size, theme] of [
+    ["desktop", "light"],
+    ["desktop", "dark"],
+    ["phone", "light"],
+  ] as const) {
+    const page = await browser.newPage({ viewport: VIEWPORTS[size] })
+    await open(page, theme)
+    await page.getByTestId("config-error-banner").waitFor()
+    await shot(page, `${next()}-config-error-${size}-${theme}`)
+    await page.close()
+  }
+
+  // A config without tiles explains what to do.
+  await writeRuntimeConfig(runtime.configPath, "")
+  for (const [size, theme] of [
+    ["desktop", "light"],
+    ["phone", "dark"],
+  ] as const) {
+    const page = await browser.newPage({ viewport: VIEWPORTS[size] })
+    await page.addInitScript((t) => localStorage.setItem("theme", t), theme)
+    await page.emulateMedia({ reducedMotion: "reduce", colorScheme: theme })
+    await page.goto("/")
+    await page.getByTestId("empty-board").waitFor()
+    // The theme applies once the page hydrates.
+    await page.waitForLoadState("networkidle")
+    await page.waitForTimeout(800)
+    await shot(page, `${next()}-empty-board-${size}-${theme}`)
+    await page.close()
+  }
 
   console.log(`[tour] ${n} screenshots in ${OUT}`)
 })

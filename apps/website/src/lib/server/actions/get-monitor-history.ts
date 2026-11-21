@@ -1,9 +1,9 @@
 "use server"
 
-import { findMonitor, getConfig, monitorIntervalSeconds } from "@mon/config"
+import { findMonitor, monitorIntervalSeconds } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
-import { env } from "@/env"
+import { getCachedConfig } from "@/lib/server/config-cache"
 import { getIncidents } from "@/lib/server/monitors"
 import {
   getSeries,
@@ -20,7 +20,7 @@ export async function getMonitorHistory(
   range: HistoryRange,
 ) {
   if (!isHistoryRange(range)) return null
-  const board = await getConfig(env.CONFIG_PATH)
+  const board = await getCachedConfig()
   const config = findMonitor(board, type, dbKey)
   if (!config) return null
   const intervalSeconds = monitorIntervalSeconds(board, config)

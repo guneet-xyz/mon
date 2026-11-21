@@ -1,7 +1,6 @@
 "use server"
 
 import {
-  getConfig,
   getGroupMembers,
   monitorIntervalSeconds,
   toPublicTile,
@@ -9,7 +8,7 @@ import {
   type MonitorTile,
 } from "@mon/config"
 
-import { env } from "@/env"
+import { getCachedConfig } from "@/lib/server/config-cache"
 import { getMonitorState } from "@/lib/server/monitors/state"
 import { groupStatus, type MonitorStatus } from "@/lib/server/monitors/status"
 import {
@@ -23,7 +22,7 @@ import {
 type MonitorResult = { status: MonitorStatus; warnings: number }
 
 export async function getGroupTileInfo(dbKey: string) {
-  const config = await getConfig(env.CONFIG_PATH)
+  const config = await getCachedConfig()
   const group = config.tiles.find(
     (tile): tile is GroupTile => tile.type === "group" && tile.key === dbKey,
   )

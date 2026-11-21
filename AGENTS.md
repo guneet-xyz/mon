@@ -55,7 +55,7 @@ mon/
 
 - **No relative parent imports in the website.** `eslint` flags `../*` and `../**/*` (warn) — use `@/*` or `@mon/*` instead. See [apps/website/eslint.config.mjs](apps/website/eslint.config.mjs).
 - **Drizzle `delete`/`update` without `where`** is a hard `error` via `eslint-plugin-drizzle`.
-- **Do not parse the TOML yourself** — load it through `@mon/config` (`getConfig()`, or the website's config cache in `lib/server/config-cache.ts`), which creates a missing file and Zod-validates. Reading the TOML directly skips defaults and validation.
+- **Do not parse the TOML yourself** — load it through `@mon/config` (`getConfig()`; in the website always the config cache in `lib/server/config-cache.ts`, which keeps the last good config when the file breaks), which creates a missing file and Zod-validates. Reading the TOML directly skips defaults and validation.
 - **Do not introduce `@/`-style aliases in `apps/docs` or `apps/agent`** — only `apps/website` defines that path mapping.
 - **Do not break older agents or websites.** Agents and websites upgrade independently: new job kinds and DTO fields must be optional or skippable (the agent's `parseJobs` skips job kinds it does not know), and migrations must be additive.
 - **`as Type` casts on Zod parses** are unnecessary — schemas return inferred types; cast only on the `findMonitor` discriminated-extract pattern.

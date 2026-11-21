@@ -2,6 +2,14 @@
 
 Configuration is done using the `/etc/mon/config.toml` file. Read more on [TOML](https://toml.io/en/) syntax.
 
+## Editing the config
+
+The website picks up changes to the file within a few seconds; reload the board to see them. If the file is missing, the website creates an empty one, and a board with no tiles shows how to add the first one.
+
+If an edit leaves the file invalid (broken TOML, or a value the schema rejects), the website keeps using the last config that loaded successfully. The board keeps working, agents keep their jobs, and a banner at the bottom of the board says there's a config error and where it is (for example `Invalid TOML at line 12, column 5`). The website log lists each problem. Neither ever quotes the file, so tokens stay private. Boards that are already open show the banner within a minute, and it goes away within a minute of fixing the file.
+
+If the file is already invalid when the website starts, there's no earlier config to fall back on. The board then shows a short error page instead of the tiles, the website logs the problems at startup, and agents keep retrying the jobs API until the file is fixed.
+
 ## Distributed agents
 
 `mon` supports running multiple agents across different networks (home, office, cloud, etc.) that all report back to a single website. Each tile is assigned to exactly one agent by name; agents authenticate to the website with a bearer token whose SHA-256 hash is declared in the config.
