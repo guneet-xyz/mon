@@ -13,8 +13,10 @@ cp test/config.toml.example test/data/config/config.toml
 docker compose -f test/compose.yml up --build
 ```
 
-- Website: http://localhost:3000
-- Postgres: `postgres://mon:mon@localhost:5432/mon`
+- Website: http://localhost:5000
+- Postgres is only reachable inside the stack (`postgres://mon:mon@postgres:5432/mon`); it publishes no port.
+
+The website reads `test/data/config/config.toml`. Edit it while the stack runs; the agent picks up its new job list on its next poll, no restart needed.
 
 Stop & wipe:
 
