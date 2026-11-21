@@ -135,7 +135,7 @@ test("group tile sums up its members and expands into a subgrid", async ({
   await group.getByText("127.0.0.1").click()
   await expect(
     page.getByRole("dialog").filter({ hasText: "Latency" }),
-  ).toContainText("grp-host-hidden")
+  ).toContainText("Host · 127.0.0.1")
   await page.keyboard.press("Escape")
 
   // The expanded state survives a reload, and so does collapsing it.

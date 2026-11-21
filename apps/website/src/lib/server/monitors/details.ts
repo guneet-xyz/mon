@@ -9,6 +9,7 @@ import {
 
 import { getLatestRuns } from "@/lib/server/actions/github/latest-runs"
 import { db } from "@/lib/server/db"
+import { diskLabel } from "@/lib/tile-state"
 
 export const CERT_WARNING_DAYS = 14
 export const USAGE_WARNING_PERCENT = 90
@@ -211,10 +212,10 @@ export function monitorWarnings(
     for (const disk of details.disks) {
       const percent = disk.total > 0 ? (disk.used / disk.total) * 100 : 0
       if (percent >= USAGE_WARNING_PERCENT)
-        warnings.push(`Disk ${disk.name} ${Math.round(percent)}% full`)
+        warnings.push(`${diskLabel(disk.name)} ${Math.round(percent)}% full`)
     }
     for (const name of details.missingDisks)
-      warnings.push(`Disk ${name} not reported`)
+      warnings.push(`${diskLabel(name)} not reported`)
     if (details.memory !== null && details.memoryTotal) {
       const percent = (details.memory / details.memoryTotal) * 100
       if (percent >= USAGE_WARNING_PERCENT)

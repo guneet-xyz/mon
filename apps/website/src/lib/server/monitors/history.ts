@@ -214,6 +214,20 @@ async function getAgentUptime(
 
 export type Uptime = Record<HistoryRange, number | null>
 
+// The oldest check in the longest range, so the dialog can say when a range
+// is not covered yet (a monitor added yesterday has no 7-day uptime).
+export async function getFirstCheck(
+  type: MonitorTile["type"],
+  key: string,
+  now = new Date(),
+): Promise<Date | null> {
+  const t = TABLES[type]
+  const [row] = await db.execute<{ first: Date | null }>(sql`
+    select min(${t.timestamp}) as first from ${t}
+    where ${t.key} = ${key} and ${t.timestamp} >= ${since("30d", now)}`)
+  return row?.first ? new Date(row.first) : null
+}
+
 // Share of checks that succeeded in each range, or null without checks.
 export async function getUptime(
   type: MonitorTile["type"],
