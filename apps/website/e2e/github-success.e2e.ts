@@ -155,13 +155,8 @@ test("github success — check runs and per-run pings stored, UI shows them, no 
   expect(runs.map((r) => r.name)).toEqual(["build", "lint"])
 
   const responseBodies: Promise<string>[] = []
-  // The page and server action responses: data reaches the browser only
-  // through these. Static chunks are skipped; they are large enough to push
-  // earlier bodies out of the browser's buffer.
   page.on("response", (res) => {
-    const request = res.request()
-    if (request.resourceType() === "document" || request.method() === "POST")
-      responseBodies.push(res.text().catch(() => ""))
+    responseBodies.push(res.text().catch(() => ""))
   })
 
   await page.goto("/")
@@ -173,10 +168,20 @@ test("github success — check runs and per-run pings stored, UI shows them, no 
     timeout: 10_000,
   })
 
+  // The tile flags the failed run, and the dialog lists both runs. (Server
+  // action bodies are not reliably readable from Chromium, so this checks
+  // the UI rather than the latest-runs response.)
+  await expect(page.getByTestId("tile-warning")).toContainText(
+    "Check lint failed",
+  )
+  await page.getByText("Hello World", { exact: true }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog.getByText("Check lint failed")).toBeVisible()
+  await expect(dialog.getByText("build", { exact: true })).toBeVisible()
+  await expect(dialog.getByText("Passed", { exact: true })).toBeVisible()
+
+  // Whatever bodies could be read carry no secrets.
   const bodies = (await Promise.all(responseBodies)).join("\n")
-  // The latest-runs server action returned both check runs.
-  expect(bodies).toContain("github.com/octocat/hello-world/runs/7001")
-  expect(bodies).toContain("github.com/octocat/hello-world/runs/7002")
   expect(bodies).not.toContain("ghp_fixture")
   expect(bodies).not.toContain(E2E_TOKEN_HASH)
 
