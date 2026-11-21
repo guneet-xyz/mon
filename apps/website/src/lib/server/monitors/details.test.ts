@@ -41,7 +41,9 @@ describe("monitorWarnings", () => {
     expect(monitorWarnings(website(days(1.2)), now)).toEqual([
       "Certificate expires in 1 day",
     ])
-    expect(monitorWarnings(website(days(-1)), now)).toEqual(["Certificate expired"])
+    expect(monitorWarnings(website(days(-1)), now)).toEqual([
+      "Certificate expired",
+    ])
     expect(monitorWarnings(website(null), now)).toEqual([])
   })
 
