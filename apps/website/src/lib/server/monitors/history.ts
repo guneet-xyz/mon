@@ -161,15 +161,24 @@ export async function getReportTimestamps(
   return rows.map((row) => new Date(row.timestamp))
 }
 
-const COVERAGE_BUCKET_MS = 5 * 60_000
+const BUCKET_ORIGIN_MS = Date.UTC(2000, 0, 1)
 
-// An agent's uptime: the share of completed 5-minute intervals with a
-// successful report, since its first report in the range (a dead machine
-// records nothing, so counting its reports alone would always say 100%).
-async function getAgentUptime(key: string, now: Date): Promise<Uptime> {
+// An agent's uptime: the share of completed 5-minute intervals (or two check
+// intervals, if longer) with a successful report, since its first report in
+// the range (a dead machine records nothing, so counting its reports alone
+// would always say 100%).
+async function getAgentUptime(
+  key: string,
+  now: Date,
+  intervalSeconds: number,
+): Promise<Uptime> {
   const t = systemPings
+  const bucketMs = Math.max(5 * 60, 2 * intervalSeconds) * 1000
+  const bucket = `${bucketMs / 1000} seconds`
+  // Buckets start from the same origin as date_bin's below.
+  const bucketStart = (ms: number) => ms - ((ms - BUCKET_ORIGIN_MS) % bucketMs)
   // The interval in progress has not had its chance to report yet.
-  const current = now.getTime() - (now.getTime() % COVERAGE_BUCKET_MS)
+  const current = bucketStart(now.getTime())
   const cutoff = sql`${new Date(current).toISOString()}::timestamptz`
   const ranges = Object.keys(HISTORY_RANGES) as HistoryRange[]
   const result: Partial<Uptime> = {}
@@ -180,7 +189,7 @@ async function getAgentUptime(key: string, now: Date): Promise<Uptime> {
       first: Date | null
     }>(sql`
       select
-        count(distinct date_bin('5 minutes'::interval, ${t.timestamp}, timestamp with time zone '2000-01-01'))
+        count(distinct date_bin(${bucket}::interval, ${t.timestamp}, timestamp with time zone '2000-01-01'))
           filter (where ${t.error} is null and ${t.timestamp} < ${cutoff})::int as seen,
         bool_or(${t.error} is null and ${t.timestamp} >= ${cutoff}) as seen_now,
         min(${t.timestamp}) as first
@@ -191,8 +200,8 @@ async function getAgentUptime(key: string, now: Date): Promise<Uptime> {
       continue
     }
     const first = new Date(row.first).getTime()
-    const start = first - (first % COVERAGE_BUCKET_MS)
-    const expected = Math.floor((current - start) / COVERAGE_BUCKET_MS)
+    const start = bucketStart(first)
+    const expected = Math.floor((current - start) / bucketMs)
     // An agent that only started reporting in this interval.
     if (expected === 0) {
       result[range] = row.seen_now ? 1 : 0
@@ -210,8 +219,9 @@ export async function getUptime(
   type: MonitorTile["type"],
   key: string,
   now = new Date(),
+  intervalSeconds = 60,
 ): Promise<Uptime> {
-  if (type === "agent") return getAgentUptime(key, now)
+  if (type === "agent") return getAgentUptime(key, now, intervalSeconds)
   const t = TABLES[type]
   const result = await db.execute<{
     total_24h: number

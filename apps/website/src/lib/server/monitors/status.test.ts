@@ -2,10 +2,12 @@ import { describe, expect, it } from "bun:test"
 
 import {
   agentStatusFromLatestReport,
+  groupFailures,
   groupStatus,
   NO_REPORT,
   reportGaps,
   STALE_AFTER_MS,
+  staleAfterMs,
   statusFromLatestPing,
 } from "./status"
 
@@ -107,5 +109,59 @@ describe("reportGaps", () => {
       reportGaps([minutesAgo(3), minutesAgo(2), minutesAgo(1)], now),
     ).toEqual([])
     expect(reportGaps([], now)).toEqual([])
+  })
+})
+
+describe("staleAfterMs", () => {
+  it("is 3 minutes, or 3 check intervals when they are longer", () => {
+    expect(staleAfterMs()).toBe(STALE_AFTER_MS)
+    expect(staleAfterMs(10)).toBe(STALE_AFTER_MS)
+    expect(staleAfterMs(60)).toBe(STALE_AFTER_MS)
+    expect(staleAfterMs(300)).toBe(15 * 60_000)
+  })
+
+  it("keeps a monitor checked every 5 minutes known between checks", () => {
+    const ping = { timestamp: minutesAgo(4), error: null }
+    expect(statusFromLatestPing(ping, now)).toBe("unknown")
+    expect(statusFromLatestPing(ping, now, staleAfterMs(300))).toBe("online")
+    expect(agentStatusFromLatestReport(ping, now, staleAfterMs(300))).toBe(
+      "online",
+    )
+    expect(
+      reportGaps([minutesAgo(10), minutesAgo(5)], now, staleAfterMs(300)),
+    ).toEqual([])
+  })
+})
+
+describe("groupFailures", () => {
+  const timeout = (m: number) => ({
+    timestamp: minutesAgo(m),
+    error: "timeout",
+  })
+
+  it("merges failures a minute apart and splits at a gap", () => {
+    expect(
+      groupFailures([timeout(10), timeout(9), timeout(8), timeout(3)]),
+    ).toEqual([
+      { start: minutesAgo(10), end: minutesAgo(7), error: "timeout" },
+      { start: minutesAgo(3), end: minutesAgo(2), error: "timeout" },
+    ])
+  })
+
+  it("splits on a different error", () => {
+    expect(
+      groupFailures([
+        timeout(10),
+        { timestamp: minutesAgo(9), error: "refused" },
+      ]),
+    ).toHaveLength(2)
+  })
+
+  it("merges failures a check interval apart", () => {
+    const pings = [timeout(20), timeout(15), timeout(10)]
+    expect(groupFailures(pings)).toHaveLength(3)
+    expect(groupFailures(pings, 300)).toEqual([
+      { start: minutesAgo(20), end: minutesAgo(5), error: "timeout" },
+    ])
   })
 })

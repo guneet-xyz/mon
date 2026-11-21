@@ -62,17 +62,28 @@ agent  = "office"
 
 If omitted, `agent` defaults to `"default"`. Tiles whose `agent` does not match any `[agents.<id>]` block will never be polled.
 
-### Per-tile poll interval
+### Check intervals
 
-Monitor tiles also accept an optional `interval_seconds` integer (positive). When set, that tile is polled at the given cadence instead of the global `options.ping_interval_ms`:
+Agents check every monitor once a minute by default. Change that for the whole board with `ping_interval_ms` in `[options]`, or for one monitor with `interval_seconds` (a positive integer), which takes precedence:
 
 ```toml
+[options]
+ping_interval_ms = 30000 # check every monitor every 30 seconds
+
 [[tiles]]
 type             = "website"
 key              = "slow-endpoint"
 url              = "https://slow.example.com"
-interval_seconds = 60
+interval_seconds = 300 # but this one every 5 minutes
 ```
+
+Each monitor is checked on its own schedule, so an interval can be shorter or longer than how often the agent fetches its job list. A new monitor is checked straight away, and a check never starts while the previous check of the same monitor is still running.
+
+The agent fetches its job list every `AGENT_POLL_INTERVAL_SECONDS` (default `60`), so added, removed and changed monitors take effect within that time.
+
+A monitor with no check for 3 minutes, or for three of its intervals if that is longer, shows as unknown (an agent tile as offline). Keep in mind that every check is stored, so short intervals on many monitors grow the database quickly: 40 monitors checked every 6 seconds record about 576,000 checks a day, against 57,600 at the default of a minute.
+
+> Agents older than v0.11.0 ignore both settings and check every monitor once per job-list fetch, every `AGENT_POLL_INTERVAL_SECONDS`. Newer agents do the same with websites older than v0.11.0.
 
 ### GitHub tokens
 

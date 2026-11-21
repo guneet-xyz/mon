@@ -2,7 +2,8 @@ import { createHash, timingSafeEqual } from "crypto"
 import { z } from "zod/v4"
 
 const _OptionsSchema = z.object({
-  ping_interval_ms: z.number().default(6000), // Default to 5 seconds
+  // How often agents check each monitor, unless it sets interval_seconds.
+  ping_interval_ms: z.number().default(60_000), // 1 minute
   max_retries: z.number().default(3), // Default to 3 retries
   retry_delay_ms: z.number().default(1000), // Default to 1 second delay between retries
   default_tile: z.literal("empty").or(z.literal("hidden")).default("empty"),
@@ -83,7 +84,7 @@ const GroupExpandedSchema = z.object({
 const MonitorSchema = KeyedTileSchema.extend({
   hidden: z.boolean().optional(), // leave off the grid; still polled and listed in groups
   agent: z.string().default("default"), // which agent handles this tile
-  interval_seconds: z.number().int().positive().optional(), // per-tile override; falls back to options.ping_interval_ms
+  interval_seconds: z.number().int().positive().optional(), // per-tile override of options.ping_interval_ms; see monitorIntervalSeconds
 })
 
 const _ConfigSchema = z.object({
@@ -423,6 +424,29 @@ export function isTileOnGrid(config: Config, tile: Tile): boolean {
     (other) =>
       other.type === "group" &&
       other.members.some((member) => member.key === tile.key),
+  )
+}
+
+// TS can't narrow `.find` against the discriminated union, hence the cast.
+export function findMonitor<T extends MonitorTile["type"]>(
+  config: Config,
+  type: T,
+  key: string,
+): Extract<MonitorTile, { type: T }> | undefined {
+  return getMonitorTiles(config).find(
+    (tile) => tile.type === type && tile.key === key,
+  ) as Extract<MonitorTile, { type: T }> | undefined
+}
+
+// Seconds between checks of a monitor: its own interval_seconds, or else
+// options.ping_interval_ms rounded to whole seconds (at least 1).
+export function monitorIntervalSeconds(
+  config: Pick<Config, "options">,
+  tile: Pick<MonitorTile, "interval_seconds">,
+): number {
+  return (
+    tile.interval_seconds ??
+    Math.max(1, Math.round(config.options.ping_interval_ms / 1000))
   )
 }
 

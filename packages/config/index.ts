@@ -4,6 +4,7 @@ import { parse } from "smol-toml"
 
 import {
   ConfigSchema,
+  findMonitor,
   getGroupMembers,
   getMonitorTiles,
   type Config,
@@ -30,11 +31,13 @@ export type {
   PublicGroupTile,
 } from "./schema"
 export {
+  findMonitor,
   getAgentAssignments,
   getGroupMembers,
   getMonitorTiles,
   isMonitorTile,
   isTileOnGrid,
+  monitorIntervalSeconds,
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
@@ -55,9 +58,7 @@ export async function getMonitorConfig<T extends MonitorTile["type"]>(
   type: T,
   key: string,
 ): Promise<Extract<MonitorTile, { type: T }> | undefined> {
-  const monitors = await getMonitors(path)
-  return monitors.find((tile) => tile.type === type && tile.key === key) as
-    Extract<MonitorTile, { type: T }> | undefined
+  return findMonitor(await getConfig(path), type, key)
 }
 
 export async function getMonitors(path: string): Promise<MonitorTile[]> {

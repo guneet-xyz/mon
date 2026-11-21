@@ -215,6 +215,12 @@ describe("agent tiles", () => {
     })
   })
 
+  it("counts uptime in buckets of two check intervals when they are longer", async () => {
+    // 20-minute buckets from 11:20: both have a report, so the 10-minute
+    // silence is within what a 10-minute interval allows.
+    expect((await history.getUptime("agent", "a", now, 600))["24h"]).toBe(1)
+  })
+
   it("finds the silence between reports", async () => {
     const { reportGaps, NO_REPORT } = await import("./status")
     const gaps = reportGaps(

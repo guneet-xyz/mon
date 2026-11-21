@@ -6,6 +6,7 @@ import {
   getAgentAssignments,
   getGroupMembers,
   isTileOnGrid,
+  monitorIntervalSeconds,
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
@@ -631,5 +632,31 @@ describe("ConfigSchema — nested groups", () => {
       { key: "app", type: "group" },
       { key: "shown", type: "group" },
     ])
+  })
+})
+
+describe("monitorIntervalSeconds", () => {
+  const host = { type: "host", key: "h", address: "10.0.0.1" }
+
+  test("defaults to one minute", () => {
+    const config = ConfigSchema.parse({ tiles: [host] })
+    expect(config.options.ping_interval_ms).toBe(60_000)
+    expect(monitorIntervalSeconds(config, {})).toBe(60)
+  })
+
+  test("uses the tile's interval_seconds over options.ping_interval_ms", () => {
+    const config = ConfigSchema.parse({
+      options: { ping_interval_ms: 30_000 },
+      tiles: [host, { ...host, key: "slow", interval_seconds: 300 }],
+    })
+    expect(monitorIntervalSeconds(config, {})).toBe(30)
+    expect(monitorIntervalSeconds(config, { interval_seconds: 300 })).toBe(300)
+  })
+
+  test("rounds options.ping_interval_ms to whole seconds, at least 1", () => {
+    const options = (ms: number) =>
+      ConfigSchema.parse({ options: { ping_interval_ms: ms } })
+    expect(monitorIntervalSeconds(options(6_400), {})).toBe(6)
+    expect(monitorIntervalSeconds(options(100), {})).toBe(1)
   })
 })

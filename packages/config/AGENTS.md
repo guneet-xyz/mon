@@ -10,7 +10,7 @@ The **single source of truth** for tile shape. Loads `/etc/mon/config.toml` (pat
 - **Member keys must resolve to exactly one monitor or group**, and groups must not contain themselves (enforced in `ConfigSchema`'s `superRefine`); tiles may otherwise share a key.
 - **Defaults belong in the schema** (`.default(...)`), not in callers. `OptionsSchema` wraps an inner `_OptionsSchema.default(_OptionsSchema.parse({}))` so the whole `options` block is optional in TOML.
 - **`getConfig()` auto-creates** the config dir + empty file if missing. This is intentional — first-run UX. Don't add a "file not found" error path.
-- **`getMonitorConfig<T>(type, key)`** uses an `as Extract<...>` cast on the `.find()` return — this is the **only** sanctioned cast in the package because TS can't narrow `.find` against discriminated unions. Don't replicate the pattern elsewhere.
+- **`findMonitor<T>(config, type, key)`** (used by `getMonitorConfig`) uses an `as Extract<...>` cast on the `.find()` return — this is the **only** sanctioned cast in the package because TS can't narrow `.find` against discriminated unions. Don't replicate the pattern elsewhere.
 - **`package.json` `"main": "src/index.ts"`** — but source is at the package root (`./index.ts`), not `./src/`. The `"main"` value is stale-but-harmless because Bun/Next resolve workspace TS directly. Don't add a `src/` folder to "match" it; fix the `"main"` instead if you touch the manifest.
 - **Uses `zod/v4` import path** — schema.ts pins the v4 subpath explicitly. Other workspaces import from `"zod"` (v3-compatible API surface). Both work; don't mix in one file.
 
