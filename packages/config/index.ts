@@ -4,9 +4,11 @@ import { parse } from "smol-toml"
 
 import {
   ConfigSchema,
-  findMonitorTile,
+  findMonitor,
+  getGroupMembers,
   getMonitorTiles,
   type Config,
+  type GroupTile,
   type MonitorTile,
 } from "./schema"
 
@@ -16,6 +18,7 @@ export type {
   NonMonitorTile,
   Tile,
   Agent,
+  NotificationSettings,
   Host,
   Container,
   Website,
@@ -30,12 +33,13 @@ export type {
 } from "./schema"
 export { describeConfigError, type ConfigErrorDescription } from "./errors"
 export {
-  findMonitorTile,
+  findMonitor,
   getAgentAssignments,
   getGroupMembers,
   getMonitorTiles,
   isMonitorTile,
   isTileOnGrid,
+  monitorIntervalSeconds,
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
@@ -56,7 +60,7 @@ export async function getMonitorConfig<T extends MonitorTile["type"]>(
   type: T,
   key: string,
 ): Promise<Extract<MonitorTile, { type: T }> | undefined> {
-  return findMonitorTile(await getConfig(path), type, key)
+  return findMonitor(await getConfig(path), type, key)
 }
 
 export async function getMonitors(path: string): Promise<MonitorTile[]> {

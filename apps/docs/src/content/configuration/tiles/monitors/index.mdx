@@ -6,13 +6,14 @@ Monitors are probably the tiles you will use the most.
 
 All monitors have the following common properties that you can set:
 
-| Property     | Type   | Description                                                                                                      | Required |
-| ------------ | ------ | ---------------------------------------------------------------------------------------------------------------- | -------- |
-| `key`        | string | Key to indentify this monitor in the database.                                                                   | Yes      |
-| `name`       | string | Name of the monitor.                                                                                             | No       |
-| `short_name` | string | Short name of the monitor. Shown instead of the name when the name does not fit the tile.                        | No       |
-| `icon`       | string | Icon shown when the name does not fit the tile and `short_name` is not set.                                      | No       |
-| `hidden`     | bool   | Leave the monitor off the board. It is still polled and listed in its [groups](/docs/configuration/tiles/group). | No       |
+| Property           | Type    | Description                                                                                                                                                           | Required |
+| ------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `key`              | string  | Key to indentify this monitor in the database.                                                                                                                        | Yes      |
+| `name`             | string  | Name of the monitor.                                                                                                                                                  | No       |
+| `short_name`       | string  | Short name of the monitor. Shown instead of the name when the name does not fit the tile.                                                                             | No       |
+| `icon`             | string  | Icon shown when the name does not fit the tile and `short_name` is not set.                                                                                           | No       |
+| `hidden`           | bool    | Leave the monitor off the board. It is still polled and listed in its [groups](/docs/configuration/tiles/group).                                                      | No       |
+| `interval_seconds` | integer | Seconds between checks of this monitor. Defaults to `ping_interval_ms` in `[options]`, which is a minute. See [Check intervals](/docs/configuration#check-intervals). | No       |
 
 **Notes**:
 

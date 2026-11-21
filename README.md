@@ -46,6 +46,7 @@ The config reference lives in the docs site, under [`apps/docs/src/content/`](./
 
 - [Configuration](./apps/docs/src/content/configuration/index.mdx): agents, tokens, assigning tiles to agents, intervals.
 - [Tiles](./apps/docs/src/content/configuration/tiles/index.mdx): layout, the monitor tile types, groups, and the logo and theme tiles.
+- [Notifications](./apps/docs/src/content/configuration/notifications.mdx): alerts through ntfy or a webhook when a monitor goes down, recovers or shows a new warning.
 
 Run the docs site locally (see [Running](#running)) to browse it.
 
@@ -223,6 +224,9 @@ The website and docs Dockerfiles build with `SKIP_ENV_VALIDATION=1`: environment
 | `NODE_ENV`     | no       | `development`          | Set to `production` in real deployments.                                  |
 | `PORT`         | no       | `3000`                 | Listen port (Next.js standalone).                                         |
 | `HOSTNAME`     | no       | `0.0.0.0`              | Listen address. Set it in containers: Docker sets it to the container ID. |
+| `NTFY_URL`     | no       | —                      | ntfy topic URL for notifications. Or `NTFY_URL_FILE`.                     |
+| `NTFY_TOKEN`   | no       | —                      | ntfy access token for a private topic. Or `NTFY_TOKEN_FILE`.              |
+| `WEBHOOK_URL`  | no       | —                      | URL to POST JSON notifications to. Or `WEBHOOK_URL_FILE`.                 |
 
 **agent** (`cr.guneet.dev/mon/agent`):
 

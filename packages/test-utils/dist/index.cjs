@@ -32,6 +32,7 @@ var index_exports = {};
 __export(index_exports, {
   createMockGithubServer: () => createMockGithubServer,
   createMockHttpHost: () => createMockHttpHost,
+  createMockNotifyServer: () => createMockNotifyServer,
   createTestDb: () => createTestDb,
   fixturePath: () => fixturePath,
   withTestDb: () => withTestDb
@@ -55,6 +56,7 @@ __export(schema_exports, {
   githubCheckRun: () => githubCheckRun,
   githubPings: () => githubPings,
   hostPings: () => hostPings,
+  notificationState: () => notificationState,
   systemPings: () => systemPings,
   websitePings: () => websitePings
 });
@@ -206,6 +208,27 @@ var githubPings = createTable(
       import_drizzle_orm.sql`(${t.commitHash} IS NOT NULL AND ${t.checkRunId} IS NOT NULL) OR (${t.error} IS NOT NULL)`
     )
   ]
+);
+var notificationState = createTable(
+  "notification_state",
+  {
+    type: (0, import_pg_core.varchar)("type", { length: 16 }).notNull(),
+    key: (0, import_pg_core.varchar)("key", { length: 64 }).notNull(),
+    // "online" or "offline"; null until the monitor has had a known status.
+    notifiedStatus: (0, import_pg_core.varchar)("notified_status", { length: 16 }),
+    observedStatus: (0, import_pg_core.varchar)("observed_status", { length: 16 }).notNull(),
+    observedSince: (0, import_pg_core.timestamp)("observed_since", {
+      mode: "date",
+      withTimezone: true
+    }).notNull(),
+    warnings: (0, import_pg_core.jsonb)("warnings").$type().notNull().default([]),
+    revision: (0, import_pg_core.integer)("revision").notNull().default(0),
+    updatedAt: (0, import_pg_core.timestamp)("updated_at", {
+      mode: "date",
+      withTimezone: true
+    }).notNull()
+  },
+  (t) => [(0, import_pg_core.primaryKey)({ columns: [t.type, t.key] })]
 );
 
 // fixtures/index.ts
@@ -563,10 +586,80 @@ async function createMockGithubServer(opts) {
     stop: entry.stop
   };
 }
+async function createMockNotifyServer(opts) {
+  registerExitHandlers();
+  const port = opts?.port ?? await getFreePort();
+  const requests = [];
+  const delivered = [];
+  let scenario = { kind: "ok" };
+  let failures = 0;
+  const server = import_http.default.createServer((req, res) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => {
+      const body = Buffer.concat(chunks).toString("utf8");
+      const headers = {};
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (typeof v === "string") headers[k] = v;
+        else if (Array.isArray(v)) headers[k] = v.join(",");
+      }
+      let json = null;
+      try {
+        json = JSON.parse(body);
+      } catch {
+      }
+      const request = {
+        method: req.method ?? "GET",
+        path: req.url ?? "/",
+        headers,
+        body,
+        json
+      };
+      requests.push(request);
+      let status = 200;
+      if (scenario.kind === "http_error") status = scenario.status;
+      if (scenario.kind === "flaky" && failures < scenario.times) {
+        failures++;
+        status = scenario.status;
+      }
+      if (status < 300) delivered.push(request);
+      res.writeHead(status, { "content-type": "application/json" });
+      res.end(status < 300 ? '{"id":"mock"}' : `{"error":${status}}`);
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, "127.0.0.1", () => resolve());
+  });
+  let stopped = false;
+  const entry = {
+    stop: async () => {
+      if (stopped) return;
+      stopped = true;
+      await new Promise((resolve) => {
+        server.closeAllConnections?.();
+        server.close(() => resolve());
+      });
+      activeServers.delete(entry);
+    }
+  };
+  activeServers.add(entry);
+  return {
+    url: `http://127.0.0.1:${port}`,
+    setScenario(s) {
+      scenario = s;
+      failures = 0;
+    },
+    requests,
+    delivered,
+    stop: entry.stop
+  };
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   createMockGithubServer,
   createMockHttpHost,
+  createMockNotifyServer,
   createTestDb,
   fixturePath,
   withTestDb

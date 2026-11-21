@@ -1,6 +1,6 @@
 "use server"
 
-import { findMonitorTile, toPublicTile } from "@mon/config"
+import { findMonitor, monitorIntervalSeconds, toPublicTile } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
 import { getCachedConfig } from "@/lib/server/config-cache"
@@ -14,13 +14,14 @@ export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
   type: T,
   dbKey: string,
 ) {
-  const config = findMonitorTile(await getCachedConfig(), type, dbKey)
+  const board = await getCachedConfig()
+  const config = findMonitor(board, type, dbKey)
   if (!config) {
     return null
   }
 
   const [status, details] = await Promise.all([
-    getStatus(type, dbKey),
+    getStatus(type, dbKey, monitorIntervalSeconds(board, config)),
     getMonitorDetails(type, dbKey, new Date(), {
       disks:
         "disks" in config

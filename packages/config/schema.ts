@@ -2,7 +2,8 @@ import { createHash, timingSafeEqual } from "crypto"
 import { z } from "zod/v4"
 
 const _OptionsSchema = z.object({
-  ping_interval_ms: z.number().default(6000), // Default to 5 seconds
+  // How often agents check each monitor, unless it sets interval_seconds.
+  ping_interval_ms: z.number().default(60_000), // 1 minute
   max_retries: z.number().default(3), // Default to 3 retries
   retry_delay_ms: z.number().default(1000), // Default to 1 second delay between retries
   default_tile: z.literal("empty").or(z.literal("hidden")).default("empty"),
@@ -18,6 +19,28 @@ const _OptionsSchema = z.object({
 })
 
 const OptionsSchema = _OptionsSchema.default(_OptionsSchema.parse({}))
+
+// How the website alerts on monitor state changes. The channels (ntfy topic,
+// webhook URL, tokens) are secrets and come from the website's environment,
+// never from this file. Without a channel nothing is sent.
+const _NotificationsSchema = z.object({
+  enabled: z.boolean().default(true),
+  // How long a monitor must stay down before the alert is sent.
+  grace_period_seconds: z.number().int().nonnegative().default(0),
+  // Alert on new warnings (disk or memory full, certificate expiring, ...).
+  warnings: z.boolean().default(true),
+  // Monitor or group keys to alert on (a group covers all of its members).
+  // Every monitor when unset.
+  include: z.array(z.string()).optional(),
+  // Monitor or group keys never to alert on, even when included.
+  mute: z.array(z.string()).default([]),
+  // The board's address, linked from each notification.
+  board_url: z.url().optional(),
+})
+
+const NotificationsSchema = _NotificationsSchema.default(
+  _NotificationsSchema.parse({}),
+)
 
 const AgentSchema = z.object({
   token_hash: z.string().regex(/^[0-9a-f]{64}$/), // sha256 hex of the agent's bearer token
@@ -83,11 +106,12 @@ const GroupExpandedSchema = z.object({
 const MonitorSchema = KeyedTileSchema.extend({
   hidden: z.boolean().optional(), // leave off the grid; still polled and listed in groups
   agent: z.string().default("default"), // which agent handles this tile
-  interval_seconds: z.number().int().positive().optional(), // per-tile override; falls back to options.ping_interval_ms
+  interval_seconds: z.number().int().positive().optional(), // per-tile override of options.ping_interval_ms; see monitorIntervalSeconds
 })
 
 const _ConfigSchema = z.object({
   options: OptionsSchema,
+  notifications: NotificationsSchema,
   agents: z.record(z.string(), AgentSchema).optional().default({}),
   tiles: z
     .array(
@@ -282,10 +306,23 @@ export const ConfigSchema = _ConfigSchema.superRefine((config, ctx) => {
     done.add(key)
   }
   for (const key of children.keys()) visit(key, [])
+
+  for (const field of ["include", "mute"] as const) {
+    config.notifications[field]?.forEach((key, index) => {
+      if (!keyCounts.has(key)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `notifications.${field} "${key}" is not a monitor or group key`,
+          path: ["notifications", field, index],
+        })
+      }
+    })
+  }
 })
 
 export type Config = z.infer<typeof ConfigSchema>
 export type Agent = z.infer<typeof AgentSchema>
+export type NotificationSettings = Config["notifications"]
 export type Tile = Config["tiles"][number]
 
 export type NonMonitorTile = Extract<
@@ -401,16 +438,6 @@ export function getMonitorTiles(config: Config): MonitorTile[] {
   return config.tiles.filter(isMonitorTile)
 }
 
-export function findMonitorTile<T extends MonitorTile["type"]>(
-  config: Config,
-  type: T,
-  key: string,
-): Extract<MonitorTile, { type: T }> | undefined {
-  return getMonitorTiles(config).find(
-    (tile) => tile.type === type && tile.key === key,
-  ) as Extract<MonitorTile, { type: T }> | undefined
-}
-
 // The monitors and nested groups a group lists, in member order.
 export function getGroupMembers(
   config: Config,
@@ -433,6 +460,29 @@ export function isTileOnGrid(config: Config, tile: Tile): boolean {
     (other) =>
       other.type === "group" &&
       other.members.some((member) => member.key === tile.key),
+  )
+}
+
+// TS can't narrow `.find` against the discriminated union, hence the cast.
+export function findMonitor<T extends MonitorTile["type"]>(
+  config: Config,
+  type: T,
+  key: string,
+): Extract<MonitorTile, { type: T }> | undefined {
+  return getMonitorTiles(config).find(
+    (tile) => tile.type === type && tile.key === key,
+  ) as Extract<MonitorTile, { type: T }> | undefined
+}
+
+// Seconds between checks of a monitor: its own interval_seconds, or else
+// options.ping_interval_ms rounded to whole seconds (at least 1).
+export function monitorIntervalSeconds(
+  config: Pick<Config, "options">,
+  tile: Pick<MonitorTile, "interval_seconds">,
+): number {
+  return (
+    tile.interval_seconds ??
+    Math.max(1, Math.round(config.options.ping_interval_ms / 1000))
   )
 }
 

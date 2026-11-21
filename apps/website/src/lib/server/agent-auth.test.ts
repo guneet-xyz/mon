@@ -16,6 +16,12 @@ function makeConfig(): Config {
       hide_grouped_tiles: false,
       desktop: { rows: 8, columns: 5 },
     },
+    notifications: {
+      enabled: true,
+      grace_period_seconds: 0,
+      warnings: true,
+      mute: [],
+    },
     agents: {
       default: { token_hash: hashToken(TOKEN) },
     },

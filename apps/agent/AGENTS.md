@@ -9,7 +9,7 @@ Bun-runtime agent. Polls the website's `GET /api/agent/jobs` for the tiles assig
 | Env vars                | [src/env.ts](src/env.ts) (`WEBSITE_URL`, `AGENT_ID`, `AGENT_TOKEN`, `AGENT_POLL_INTERVAL_SECONDS`, `GITHUB_API_BASE_URL`) and [src/token.ts](src/token.ts) (`AGENT_TOKEN_FILE` fallback)                                                                                    |
 | Add a new monitor type  | [src/jobs/](src/jobs) — one file per job kind (`system.ts` serves `agent` tiles: the agent's own machine from `/proc` and `statfs`); dispatch it in [src/index.ts](src/index.ts) `executeJob` and add a push method in [src/client/api-client.ts](src/client/api-client.ts) |
 | Website API client      | [src/client/api-client.ts](src/client/api-client.ts) — bearer token + `X-Agent-Id` headers; `parseJobs` skips job kinds this agent does not know, so new kinds are safe to roll out                                                                                         |
-| Polling and job running | [src/client/pull-loop.ts](src/client/pull-loop.ts) (fetches the job list every `AGENT_POLL_INTERVAL_SECONDS`, backs off 5 s → 5 min while the website is unreachable, exits `78` on `401`) and [src/main.ts](src/main.ts) (entry point; runs the jobs it is handed)         |
+| Polling and job running | [src/client/pull-loop.ts](src/client/pull-loop.ts) (fetches the job list every `AGENT_POLL_INTERVAL_SECONDS`, backs off 5 s → 5 min while the website is unreachable, exits `78` on `401`) and [src/scheduler.ts](src/scheduler.ts) (runs each job on its interval)         |
 | Graceful shutdown       | [src/main.ts](src/main.ts) — `SIGINT`/`SIGTERM` abort the pull loop                                                                                                                                                                                                         |
 
 ## CONVENTIONS
@@ -19,7 +19,7 @@ Bun-runtime agent. Polls the website's `GET /api/agent/jobs` for the tiles assig
 - **Every run pushes a result**, success or failure. No "only push on change" optimization; the website deduplicates on `ping_id`.
 - **The job's `id` is the tile key.** DTOs carry it as `key`, plus `ping_id`, `agent_id` and `recorded_at`.
 - **Inject dependencies for tests** (`deps` arguments such as `execa`, `fetch`, readers) rather than mocking modules.
-- **The website decides what to run and how often** (the job list and each job's `cron`). Don't add agent-side config.
+- **The website decides what to run and how often** (the job list and each job's `interval_seconds`; `cron` is still sent for older agents but not read). Don't add agent-side config.
 
 ## ANTI-PATTERNS
 

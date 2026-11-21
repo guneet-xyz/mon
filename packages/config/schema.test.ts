@@ -3,10 +3,11 @@ import { describe, expect, test } from "bun:test"
 
 import {
   ConfigSchema,
-  findMonitorTile,
+  findMonitor,
   getAgentAssignments,
   getGroupMembers,
   isTileOnGrid,
+  monitorIntervalSeconds,
   toPublicConfig,
   toPublicTile,
   verifyAgentToken,
@@ -193,7 +194,7 @@ describe("getAgentAssignments", () => {
   })
 })
 
-describe("findMonitorTile", () => {
+describe("findMonitor", () => {
   const config = baseConfig({
     tiles: [
       { type: "host", key: "shared", address: "192.0.2.1", agent: "default" },
@@ -208,12 +209,12 @@ describe("findMonitorTile", () => {
   })
 
   test("matches on both type and key", () => {
-    expect(findMonitorTile(config, "website", "shared")?.type).toBe("website")
-    expect(findMonitorTile(config, "host", "shared")?.address).toBe("192.0.2.1")
+    expect(findMonitor(config, "website", "shared")?.type).toBe("website")
+    expect(findMonitor(config, "host", "shared")?.address).toBe("192.0.2.1")
   })
 
   test("returns undefined for an unknown monitor", () => {
-    expect(findMonitorTile(config, "github", "shared")).toBeUndefined()
+    expect(findMonitor(config, "github", "shared")).toBeUndefined()
   })
 })
 
@@ -656,5 +657,84 @@ describe("ConfigSchema — nested groups", () => {
       { key: "app", type: "group" },
       { key: "shown", type: "group" },
     ])
+  })
+})
+
+describe("ConfigSchema — notifications", () => {
+  const tiles = [
+    { type: "host", key: "router", address: "192.168.1.1" },
+    { type: "group", key: "net", members: ["router"] },
+  ]
+
+  test("defaults when the section is missing", () => {
+    const config = ConfigSchema.parse({ tiles })
+    expect(config.notifications).toEqual({
+      enabled: true,
+      grace_period_seconds: 0,
+      warnings: true,
+      mute: [],
+    })
+  })
+
+  test("accepts monitor and group keys in include and mute", () => {
+    const config = ConfigSchema.parse({
+      tiles,
+      notifications: {
+        grace_period_seconds: 120,
+        include: ["net"],
+        mute: ["router"],
+        board_url: "https://mon.example.com",
+      },
+    })
+    expect(config.notifications.include).toEqual(["net"])
+    expect(config.notifications.mute).toEqual(["router"])
+    expect(config.notifications.grace_period_seconds).toBe(120)
+  })
+
+  test("rejects unknown keys in include and mute", () => {
+    for (const field of ["include", "mute"]) {
+      const result = ConfigSchema.safeParse({
+        tiles,
+        notifications: { [field]: ["nope"] },
+      })
+      expect(result.success).toBe(false)
+      expect(result.error?.issues[0]?.message).toBe(
+        `notifications.${field} "nope" is not a monitor or group key`,
+      )
+    }
+  })
+
+  test("is not sent to the browser", () => {
+    const config = ConfigSchema.parse({
+      tiles,
+      notifications: { board_url: "https://mon.example.com" },
+    })
+    expect(toPublicConfig(config)).not.toHaveProperty("notifications")
+  })
+})
+
+describe("monitorIntervalSeconds", () => {
+  const host = { type: "host", key: "h", address: "10.0.0.1" }
+
+  test("defaults to one minute", () => {
+    const config = ConfigSchema.parse({ tiles: [host] })
+    expect(config.options.ping_interval_ms).toBe(60_000)
+    expect(monitorIntervalSeconds(config, {})).toBe(60)
+  })
+
+  test("uses the tile's interval_seconds over options.ping_interval_ms", () => {
+    const config = ConfigSchema.parse({
+      options: { ping_interval_ms: 30_000 },
+      tiles: [host, { ...host, key: "slow", interval_seconds: 300 }],
+    })
+    expect(monitorIntervalSeconds(config, {})).toBe(30)
+    expect(monitorIntervalSeconds(config, { interval_seconds: 300 })).toBe(300)
+  })
+
+  test("rounds options.ping_interval_ms to whole seconds, at least 1", () => {
+    const options = (ms: number) =>
+      ConfigSchema.parse({ options: { ping_interval_ms: ms } })
+    expect(monitorIntervalSeconds(options(6_400), {})).toBe(6)
+    expect(monitorIntervalSeconds(options(100), {})).toBe(1)
   })
 })

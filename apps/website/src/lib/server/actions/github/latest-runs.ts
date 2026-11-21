@@ -1,11 +1,18 @@
 "use server"
 
+import { getMonitorConfig } from "@mon/config"
 import { and, asc, desc, eq } from "@mon/db/drizzle"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
 
+import { env } from "@/env"
 import { db } from "@/lib/server/db"
 
+// Check runs from a GitHub tile's latest commit. Only answers for GitHub tiles
+// in this board's config.
 export async function getLatestRuns(key: string) {
+  const config = await getMonitorConfig(env.CONFIG_PATH, "github", key)
+  if (!config) return null
+
   const latestPing = db.$with("latest_ping").as(
     db
       .select({

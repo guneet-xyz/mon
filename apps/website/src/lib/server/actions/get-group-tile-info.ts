@@ -2,6 +2,7 @@
 
 import {
   getGroupMembers,
+  monitorIntervalSeconds,
   toPublicTile,
   type GroupTile,
   type MonitorTile,
@@ -32,7 +33,7 @@ export async function getGroupTileInfo(dbKey: string) {
           ? Promise.all(getGroupMembers(config, tile).map(statusOf)).then(
               groupStatus,
             )
-          : getStatus(tile.type, tile.key)
+          : getStatus(tile.type, tile.key, monitorIntervalSeconds(config, tile))
       statuses.set(id, status)
     }
     return status

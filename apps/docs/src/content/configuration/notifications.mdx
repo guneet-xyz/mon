@@ -1,0 +1,115 @@
+# Notifications
+
+The website can tell you when a monitor changes state, so an outage doesn't go unnoticed when nobody is looking at the board. It sends:
+
+- an **alert** when a monitor goes down, including an agent that stops reporting (after 3 minutes without a report),
+- a **recovery** message when it is back online,
+- a **warning** message when a new warning appears: a disk or memory almost full, a certificate about to expire, a failing container health check.
+
+Each down episode produces exactly one alert and one recovery message, however long the monitor stays down. A monitor with no recent data ("unknown", usually because its agent stopped polling) neither alerts nor recovers. Give each agent an [`agent` tile](/docs/configuration/tiles/monitors/agent) to be alerted when it goes silent.
+
+Notifications are off until you configure a channel. With no channel variables set, the website behaves exactly as before.
+
+## Channels
+
+Two channels are supported, and you can use both at once:
+
+- [ntfy](https://ntfy.sh), on ntfy.sh or your own server, with an optional access token.
+- A **webhook**: any URL that accepts a JSON `POST`.
+
+Channel settings identify or authenticate the channel, so they are secrets. They are set in the **website's** environment, never in the TOML file, and never sent to the browser. Each variable can instead name a file to read it from (`<NAME>_FILE`), such as a Docker Compose secret mounted under `/run/secrets/`. When both are set, the variable wins.
+
+| Variable           | Description                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| `NTFY_URL`         | The ntfy topic URL, for example `https://ntfy.sh/my-secret-topic`. Turns on the ntfy channel.    |
+| `NTFY_URL_FILE`    | File containing the topic URL.                                                                   |
+| `NTFY_TOKEN`       | Optional ntfy access token (`tk_…`), sent as `Authorization: Bearer`. Needed for private topics. |
+| `NTFY_TOKEN_FILE`  | File containing the access token.                                                                |
+| `WEBHOOK_URL`      | The URL to `POST` JSON events to. Turns on the webhook channel.                                  |
+| `WEBHOOK_URL_FILE` | File containing the webhook URL.                                                                 |
+
+A channel whose settings are invalid (for example a URL that doesn't parse, or a file that can't be read) is skipped and the problem is logged when the website starts.
+
+```yaml
+# docker-compose snippet
+services:
+  website:
+    image: cr.guneet.dev/mon/website
+    environment:
+      NTFY_URL_FILE: /run/secrets/ntfy_url
+      NTFY_TOKEN_FILE: /run/secrets/ntfy_token
+    secrets: [ntfy_url, ntfy_token]
+
+secrets:
+  ntfy_url:
+    file: ./secrets/ntfy_url
+  ntfy_token:
+    file: ./secrets/ntfy_token
+```
+
+### ntfy messages
+
+Messages are published as JSON to the topic's server, with a title such as `Router is down`, a short description, a tag (🚨 down, ✅ recovered, ⚠️ warning), high priority for alerts and default priority otherwise, and a click link to the board when `board_url` is set.
+
+### Webhook payload
+
+```json
+{
+  "event": "down",
+  "monitor": { "type": "host", "key": "router", "name": "Router" },
+  "status": "offline",
+  "warnings": [],
+  "since": "2026-11-21T12:00:00.000Z",
+  "timestamp": "2026-11-21T12:00:30.000Z",
+  "title": "Router is down",
+  "message": "Host Router is down (since 2026-11-21T12:00:00Z).",
+  "url": "https://mon.example.com"
+}
+```
+
+| Field       | Description                                                              |
+| ----------- | ------------------------------------------------------------------------ |
+| `event`     | `down`, `recovered` or `warning`.                                        |
+| `monitor`   | The tile's `type`, `key` and `name` (the key when the tile has no name). |
+| `status`    | The monitor's status: `online`, `offline` or `unknown`.                  |
+| `warnings`  | For `warning` events, the new warnings. Empty otherwise.                 |
+| `since`     | When the monitor entered its current status.                             |
+| `timestamp` | When the event was detected.                                             |
+| `title`     | A one-line summary.                                                      |
+| `message`   | A sentence describing the event.                                         |
+| `url`       | `board_url` from the config, or `null`.                                  |
+
+A delivery that fails with a network error, a timeout, `429` or a `5xx` response is retried three times with backoff (1, 2 and 4 seconds), then given up and logged. Other `4xx` responses are not retried. A failed delivery is not sent again later: the alert belongs to the episode.
+
+## Behaviour (`[notifications]`)
+
+Everything that isn't a secret lives in an optional `[notifications]` section of the config file. Every property is optional.
+
+```toml
+[notifications]
+enabled              = true
+grace_period_seconds = 120
+warnings             = true
+include              = ["production"]   # a group: all of its members
+mute                 = ["staging-db"]
+board_url            = "https://mon.example.com"
+```
+
+| Property               | Type             | Description                                                                                               | Default       |
+| ---------------------- | ---------------- | --------------------------------------------------------------------------------------------------------- | ------------- |
+| `enabled`              | boolean          | Set to `false` to stop sending without removing the channel variables.                                    | `true`        |
+| `grace_period_seconds` | integer          | How long a monitor must stay down before the alert is sent. A monitor that recovers sooner sends nothing. | `0`           |
+| `warnings`             | boolean          | Send warning messages.                                                                                    | `true`        |
+| `include`              | array of strings | Monitor or group keys to notify about. A group covers all of its members, including nested groups.        | every monitor |
+| `mute`                 | array of strings | Monitor or group keys never to notify about, even when included.                                          | `[]`          |
+| `board_url`            | string           | The board's address, linked from each notification.                                                       | —             |
+
+Keys in `include` and `mute` must be monitor or group keys in the config, so a typo is reported instead of silently muting nothing.
+
+## How it works
+
+The website checks every monitor every 30 seconds, using the same status logic as the board, so an agent that goes silent is detected even though it sends nothing. The last notified state of each monitor is stored in the database (the `mon_notification_state` table), so a restart doesn't repeat alerts.
+
+- **First start:** the current states are recorded without sending anything, so turning notifications on (or adding a monitor) doesn't send a storm of alerts for problems that already existed. A monitor that was already down sends a recovery message when it comes back.
+- **Several website instances:** each change is recorded with a conditional update, and only the instance whose update succeeds sends the notification.
+- **Warnings** are compared without their numbers, so `Disk / 91% full` turning into `Disk / 92% full` is not a new warning, but a warning that clears and comes back is.

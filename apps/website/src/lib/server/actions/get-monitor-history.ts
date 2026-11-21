@@ -1,6 +1,6 @@
 "use server"
 
-import { findMonitorTile } from "@mon/config"
+import { findMonitor, monitorIntervalSeconds } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
 import { getCachedConfig } from "@/lib/server/config-cache"
@@ -20,13 +20,15 @@ export async function getMonitorHistory(
   range: HistoryRange,
 ) {
   if (!isHistoryRange(range)) return null
-  const config = findMonitorTile(await getCachedConfig(), type, dbKey)
+  const board = await getCachedConfig()
+  const config = findMonitor(board, type, dbKey)
   if (!config) return null
+  const intervalSeconds = monitorIntervalSeconds(board, config)
 
   const [series, uptime, incidents] = await Promise.all([
     getSeries(type, dbKey, range),
-    getUptime(type, dbKey),
-    getIncidents(type, dbKey, range),
+    getUptime(type, dbKey, new Date(), intervalSeconds),
+    getIncidents(type, dbKey, range, intervalSeconds),
   ])
   return { series, uptime, incidents }
 }

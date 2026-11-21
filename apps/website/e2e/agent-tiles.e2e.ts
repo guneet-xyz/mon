@@ -29,6 +29,9 @@ test("agent tiles show their machine and go offline when silent", async ({
   await writeRuntimeConfig(
     runtime.configPath,
     `
+[options]
+ping_interval_ms = 5000
+
 [agents.${AGENT_ID}]
 token_hash = "${hashToken(E2E_TOKEN)}"
 
