@@ -401,6 +401,16 @@ export function getMonitorTiles(config: Config): MonitorTile[] {
   return config.tiles.filter(isMonitorTile)
 }
 
+export function findMonitorTile<T extends MonitorTile["type"]>(
+  config: Config,
+  type: T,
+  key: string,
+): Extract<MonitorTile, { type: T }> | undefined {
+  return getMonitorTiles(config).find(
+    (tile) => tile.type === type && tile.key === key,
+  ) as Extract<MonitorTile, { type: T }> | undefined
+}
+
 // The monitors and nested groups a group lists, in member order.
 export function getGroupMembers(
   config: Config,

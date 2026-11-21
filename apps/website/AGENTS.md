@@ -7,7 +7,7 @@ Next.js 14 App Router status board. Reads the same TOML config the agent polls f
 ```
 src/
 ├── app/
-│   ├── page.tsx                # entry: getConfig() → <ClientOnly><TileGrid/></ClientOnly>
+│   ├── page.tsx                # entry: getConfigState() → <ClientOnly><TileGrid/></ClientOnly>, empty state, config error banner
 │   ├── tile-grid.tsx           # client component; runs generateTiles() against window dims
 │   └── _components/providers/  # ThemeProvider + react-query QueryClientProvider
 ├── components/
@@ -35,6 +35,7 @@ src/
 ## CONVENTIONS
 
 - **Path alias `@/*` → `src/*`** (defined in repo-root [tsconfig.json](file:///Users/guneet/projects/mon/tsconfig.json#L29-L31)). Never use `../../`.
+- **Read the config through [lib/server/config-cache.ts](file:///Users/guneet/projects/mon/apps/website/src/lib/server/config-cache.ts)** everywhere (page, server actions, agent API routes): `getCachedConfig()` returns the last config that loaded successfully (it throws only if none has), and `getConfigState()` returns `{ config, error }` for callers that report a broken file. It re-reads at most every 5 s and only when the mtime changes; `instrumentation.ts` loads it at startup so an invalid file is logged straight away.
 - **`force-dynamic` on `app/page.tsx`** — config + DB are read every request; do not add ISR/static caching at the page level.
 - **Server actions** are co-located in `lib/server/actions/`, named `get-*.ts` / `<verb>-*.ts`, one exported function per file. They're imported directly by client components, which triggers Next's RSC action plumbing.
 - **Type-dispatch facades** in `lib/server/monitors/index.ts` and `components/tiles/index.tsx` use `if (type === "x")` chains over the Zod discriminated union — exhaustiveness is enforced by the trailing `throw new Error(...)`. **Always add a new branch** when extending the tile union.

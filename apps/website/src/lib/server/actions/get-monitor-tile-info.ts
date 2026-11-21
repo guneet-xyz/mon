@@ -1,9 +1,9 @@
 "use server"
 
-import { getMonitorConfig, toPublicTile } from "@mon/config"
+import { findMonitorTile, toPublicTile } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
-import { env } from "@/env"
+import { getCachedConfig } from "@/lib/server/config-cache"
 import { getStatus } from "@/lib/server/monitors"
 import {
   getMonitorDetails,
@@ -14,7 +14,7 @@ export async function getMonitorTileInfo<T extends MonitorTile["type"]>(
   type: T,
   dbKey: string,
 ) {
-  const config = await getMonitorConfig(env.CONFIG_PATH, type, dbKey)
+  const config = findMonitorTile(await getCachedConfig(), type, dbKey)
   if (!config) {
     return null
   }

@@ -276,5 +276,34 @@ test("board tour", async ({ browser }) => {
   await dark.waitForTimeout(600)
   await shot(dark, `${next()}-dialog-beta-dark`)
 
+  // A broken config file: the last good board stays up under a banner.
+  await writeRuntimeConfig(runtime.configPath, `${CONFIG}\n[[tiles]\n`)
+  for (const [size, theme] of [
+    ["desktop", "light"],
+    ["desktop", "dark"],
+    ["phone", "light"],
+  ] as const) {
+    const page = await browser.newPage({ viewport: VIEWPORTS[size] })
+    await open(page, theme)
+    await page.getByTestId("config-error-banner").waitFor()
+    await shot(page, `${next()}-config-error-${size}-${theme}`)
+    await page.close()
+  }
+
+  // A config without tiles explains what to do.
+  await writeRuntimeConfig(runtime.configPath, "")
+  for (const [size, theme] of [
+    ["desktop", "light"],
+    ["phone", "dark"],
+  ] as const) {
+    const page = await browser.newPage({ viewport: VIEWPORTS[size] })
+    await page.addInitScript((t) => localStorage.setItem("theme", t), theme)
+    await page.emulateMedia({ reducedMotion: "reduce", colorScheme: theme })
+    await page.goto("/")
+    await page.getByTestId("empty-board").waitFor()
+    await shot(page, `${next()}-empty-board-${size}-${theme}`)
+    await page.close()
+  }
+
   console.log(`[tour] ${n} screenshots in ${OUT}`)
 })
