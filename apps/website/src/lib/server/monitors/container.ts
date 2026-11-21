@@ -3,9 +3,12 @@ import { containerPings } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
-import { statusFromLatestPing } from "./status"
+import { staleAfterMs, statusFromLatestPing } from "./status"
 
-export async function getContainerStatus(dbKey: string) {
+export async function getContainerStatus(
+  dbKey: string,
+  intervalSeconds?: number,
+) {
   const pings = await db
     .select({
       timestamp: containerPings.timestamp,
@@ -16,5 +19,9 @@ export async function getContainerStatus(dbKey: string) {
     .orderBy(desc(containerPings.timestamp))
     .limit(1)
 
-  return statusFromLatestPing(pings[0])
+  return statusFromLatestPing(
+    pings[0],
+    new Date(),
+    staleAfterMs(intervalSeconds),
+  )
 }

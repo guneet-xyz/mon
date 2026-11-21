@@ -1,18 +1,12 @@
-import { getAgentAssignments } from "@mon/config/schema"
+import { getAgentAssignments, monitorIntervalSeconds } from "@mon/config/schema"
 import { JobsResponseSchema, type JobTile } from "@mon/contracts"
 
 import { verifyBearerToken } from "@/lib/server/agent-auth"
 import { getCachedConfig } from "@/lib/server/config-cache"
 
-function deriveCron(
-  intervalSeconds: number | undefined,
-  defaultIntervalMs: number,
-): string {
-  const seconds =
-    intervalSeconds && intervalSeconds > 0
-      ? intervalSeconds
-      : Math.max(1, Math.round(defaultIntervalMs / 1000))
-
+// Agents schedule jobs from interval_seconds. The cron string is only there
+// because older agents require the field; they never read it.
+function deriveCron(seconds: number): string {
   if (seconds < 60) return `*/${seconds} * * * * *`
   const minutes = Math.max(1, Math.round(seconds / 60))
   return `0 */${minutes} * * * *`
@@ -27,16 +21,17 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const tiles = getAgentAssignments(config, auth.agentId)
-  const defaultIntervalMs = config.options.ping_interval_ms
 
   const jobTiles: JobTile[] = tiles.map((tile) => {
-    const cron = deriveCron(tile.interval_seconds, defaultIntervalMs)
+    const interval_seconds = monitorIntervalSeconds(config, tile)
+    const cron = deriveCron(interval_seconds)
     switch (tile.type) {
       case "host":
         return {
           kind: "host",
           id: tile.key,
           cron,
+          interval_seconds,
           address: tile.address,
         }
       case "website":
@@ -44,6 +39,7 @@ export async function GET(request: Request): Promise<Response> {
           kind: "website",
           id: tile.key,
           cron,
+          interval_seconds,
           url: tile.url,
           method: tile.method,
         }
@@ -52,6 +48,7 @@ export async function GET(request: Request): Promise<Response> {
           kind: "container",
           id: tile.key,
           cron,
+          interval_seconds,
           container_name: tile.container_name,
           ...(tile.docker_socket ? { docker_socket: tile.docker_socket } : {}),
         }
@@ -60,6 +57,7 @@ export async function GET(request: Request): Promise<Response> {
           kind: "github",
           id: tile.key,
           cron,
+          interval_seconds,
           repo: tile.repo,
           ...(tile.github_token ? { github_token: tile.github_token } : {}),
         }
@@ -68,6 +66,7 @@ export async function GET(request: Request): Promise<Response> {
           kind: "system",
           id: tile.key,
           cron,
+          interval_seconds,
           disks: tile.disks,
         }
     }

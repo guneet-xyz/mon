@@ -3,9 +3,9 @@ import { hostPings } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
-import { statusFromLatestPing } from "./status"
+import { staleAfterMs, statusFromLatestPing } from "./status"
 
-export async function getHostStatus(dbKey: string) {
+export async function getHostStatus(dbKey: string, intervalSeconds?: number) {
   const pings = await db
     .select({ timestamp: hostPings.timestamp, error: hostPings.error })
     .from(hostPings)
@@ -13,5 +13,9 @@ export async function getHostStatus(dbKey: string) {
     .orderBy(desc(hostPings.timestamp))
     .limit(1)
 
-  return statusFromLatestPing(pings[0])
+  return statusFromLatestPing(
+    pings[0],
+    new Date(),
+    staleAfterMs(intervalSeconds),
+  )
 }

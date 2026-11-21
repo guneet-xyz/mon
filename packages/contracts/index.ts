@@ -2,17 +2,26 @@ import { z } from "zod"
 
 // ─── Job Tile shapes (agent-visible subset; website maps config tiles → these) ───
 
+// Every job carries its schedule. Agents run a job every `interval_seconds`;
+// older websites don't send it, and agents then run the job once per poll.
+// `cron` is no longer read, but older agents require it, so websites keep
+// sending it.
+const JobScheduleSchema = {
+  cron: z.string(),
+  interval_seconds: z.number().int().positive().optional(),
+}
+
 export const HostJobTileSchema = z.object({
   kind: z.literal("host"),
   id: z.string(),
-  cron: z.string(),
+  ...JobScheduleSchema,
   address: z.string(),
 })
 
 export const WebsiteJobTileSchema = z.object({
   kind: z.literal("website"),
   id: z.string(),
-  cron: z.string(),
+  ...JobScheduleSchema,
   url: z.string(),
   // Optional for websites older than v0.8.0, which never send it.
   method: z.enum(["GET", "HEAD"]).optional(),
@@ -21,7 +30,7 @@ export const WebsiteJobTileSchema = z.object({
 export const ContainerJobTileSchema = z.object({
   kind: z.literal("container"),
   id: z.string(),
-  cron: z.string(),
+  ...JobScheduleSchema,
   container_name: z.string(),
   docker_socket: z.string().optional(),
 })
@@ -29,7 +38,7 @@ export const ContainerJobTileSchema = z.object({
 export const GithubJobTileSchema = z.object({
   kind: z.literal("github"),
   id: z.string(),
-  cron: z.string(),
+  ...JobScheduleSchema,
   repo: z.string(),
   github_token: z.string().optional(),
 })
@@ -38,7 +47,7 @@ export const GithubJobTileSchema = z.object({
 export const SystemJobTileSchema = z.object({
   kind: z.literal("system"),
   id: z.string(),
-  cron: z.string(),
+  ...JobScheduleSchema,
   disks: z.array(z.object({ path: z.string(), name: z.string() })),
 })
 
