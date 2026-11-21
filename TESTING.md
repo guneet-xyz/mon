@@ -60,7 +60,7 @@ apps/
 packages/
 ├── config/*.test.ts                        # getConfig, schema, public config
 └── test-utils/
-    ├── index.ts                            # createTestDb, withTestDb, createMockGithubServer, createMockHttpHost, fixturePath
+    ├── index.ts                            # createTestDb, withTestDb, createMockGithubServer, createMockHttpHost, createMockNotifyServer, fixturePath
     ├── fixtures/                           # *.toml fixtures
     └── __tests__/                          # integration tests for the helpers themselves
 ```
@@ -127,7 +127,7 @@ Import conventions inside `e2e/`:
 
 ## 6. Using mock servers
 
-`packages/test-utils/index.ts` exposes two in-process servers. They listen on free ports (or `{ port }`), record `requests`, and are switched between scenarios with `setScenario(...)`.
+`packages/test-utils/index.ts` exposes in-process mock servers. They listen on free ports (or `{ port }`), record `requests`, and are switched between scenarios with `setScenario(...)`.
 
 ### Mock GitHub API
 
@@ -155,7 +155,17 @@ host.setScenario({ kind: "server_error", status: 503 })
 await host.stop()
 ```
 
-Both helpers (and `createTestDb()`) register exit handlers, so `Ctrl-C` during a test doesn't leak listeners or containers.
+### Mock notification receiver (ntfy or webhook)
+
+```ts
+const ntfy = await createMockNotifyServer()
+ntfy.setScenario({ kind: "flaky", times: 2, status: 503 })
+// scenarios: "ok" (default), "http_error", "flaky" (fail `times` requests, then succeed)
+// point a channel at `${ntfy.url}/topic`; `ntfy.delivered` holds the 2xx requests with parsed `json` bodies
+await ntfy.stop()
+```
+
+These helpers (and `createTestDb()`) register exit handlers, so `Ctrl-C` during a test doesn't leak listeners or containers.
 
 ## 7. Anti-patterns
 

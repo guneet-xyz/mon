@@ -635,6 +635,59 @@ describe("ConfigSchema — nested groups", () => {
   })
 })
 
+describe("ConfigSchema — notifications", () => {
+  const tiles = [
+    { type: "host", key: "router", address: "192.168.1.1" },
+    { type: "group", key: "net", members: ["router"] },
+  ]
+
+  test("defaults when the section is missing", () => {
+    const config = ConfigSchema.parse({ tiles })
+    expect(config.notifications).toEqual({
+      enabled: true,
+      grace_period_seconds: 0,
+      warnings: true,
+      mute: [],
+    })
+  })
+
+  test("accepts monitor and group keys in include and mute", () => {
+    const config = ConfigSchema.parse({
+      tiles,
+      notifications: {
+        grace_period_seconds: 120,
+        include: ["net"],
+        mute: ["router"],
+        board_url: "https://mon.example.com",
+      },
+    })
+    expect(config.notifications.include).toEqual(["net"])
+    expect(config.notifications.mute).toEqual(["router"])
+    expect(config.notifications.grace_period_seconds).toBe(120)
+  })
+
+  test("rejects unknown keys in include and mute", () => {
+    for (const field of ["include", "mute"]) {
+      const result = ConfigSchema.safeParse({
+        tiles,
+        notifications: { [field]: ["nope"] },
+      })
+      expect(result.success).toBe(false)
+      expect(result.error?.issues[0]?.message).toBe(
+        `notifications.${field} "nope" is not a monitor or group key`,
+      )
+    }
+  })
+
+  test("is not sent to the browser", () => {
+    const config = ConfigSchema.parse({
+      tiles,
+      notifications: { board_url: "https://mon.example.com" },
+    })
+    expect(toPublicConfig(config)).not.toHaveProperty("notifications")
+  })
+})
+
 describe("monitorIntervalSeconds", () => {
   const host = { type: "host", key: "h", address: "10.0.0.1" }
 
