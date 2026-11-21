@@ -13,6 +13,9 @@ import { insertGithubCheckRun, insertGithubPing } from "./github"
 // Exercises the real schema (FK from github_ping.check_run_id to
 // github_check_run.id, unique ids) with the order the agent pushes in.
 
+// With SKIP_ENV_VALIDATION (test-setup.ts) env is a plain, writable object.
+const mutableEnv: { CONFIG_PATH: string } = env
+
 let testDb: TestDb
 let configDir: string
 let originalConfigPath: string
@@ -38,13 +41,12 @@ beforeAll(async () => {
       'address = "127.0.0.1"',
     ].join("\n"),
   )
-  // With SKIP_ENV_VALIDATION (test-setup.ts) env is a plain object.
   originalConfigPath = env.CONFIG_PATH
-  env.CONFIG_PATH = configPath
+  mutableEnv.CONFIG_PATH = configPath
 }, 120_000)
 
 afterAll(() => {
-  env.CONFIG_PATH = originalConfigPath
+  mutableEnv.CONFIG_PATH = originalConfigPath
   if (configDir) rmSync(configDir, { recursive: true, force: true })
   testDb?.stop()
 })
