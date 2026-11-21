@@ -9,7 +9,7 @@ Self-hosted status board. A TOML file on the website host declares what to watch
                                  │ read (only by the website)
 ┌──────────────────┐    ┌────────▼─────────┐    ┌──────────────────┐
 │  agent (Bun)     │───▶│  website (Next)  │───▶│  Postgres        │
-│  one per network │    │  tile grid +     │◀───│  (mon_* tables)  │
+│  one or more     │    │  tile grid +     │◀───│  (mon_* tables)  │
 │                  │◀───│  agent HTTP API  │    └────────▲─────────┘
 └──────────────────┘    └──────────────────┘             │ apply committed
    GET  /api/agent/jobs     (jobs for this agent)        │ migrations
@@ -253,13 +253,19 @@ services:
       POSTGRES_DB: mon
     volumes:
       - mon-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mon -d mon"]
+      interval: 2s
+      retries: 20
     restart: unless-stopped
 
   migrator:
     image: cr.guneet.dev/mon/migrator:vX.Y.Z
     environment:
       DATABASE_URL: postgres://mon:mon@db:5432/mon
-    depends_on: [db]
+    depends_on:
+      db:
+        condition: service_healthy
     restart: "no"
 
   website:
