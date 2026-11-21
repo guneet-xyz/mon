@@ -10,6 +10,16 @@ import {
   formatSeconds,
 } from "./format"
 
+const CONCLUSIONS: Record<string, string> = {
+  success: "Passed",
+  failure: "Failed",
+  neutral: "Neutral",
+  cancelled: "Cancelled",
+  skipped: "Skipped",
+  timed_out: "Timed out",
+  action_required: "Action required",
+}
+
 export type Stat = { label: string; value: string; detail?: string }
 
 // The current-state summary at the top of a monitor's dialog. Values the
@@ -110,6 +120,19 @@ export function monitorSummary(
           `Disk ${disk.name}`,
           formatPercent(disk.total > 0 ? (disk.used / disk.total) * 100 : 0),
           ofTotal(disk.used, disk.total),
+        ),
+      ),
+    )
+  }
+
+  if (details.type === "github") {
+    stats.push(
+      ...details.checks.map((check) =>
+        stat(
+          check.name,
+          check.status === "completed"
+            ? (CONCLUSIONS[check.conclusion ?? ""] ?? "Done")
+            : "Running",
         ),
       ),
     )

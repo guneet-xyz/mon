@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
-import { tileValue } from "@/lib/client/tile-value"
+import { monitorState } from "@/lib/client/monitor-state"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
@@ -43,6 +43,8 @@ export function WebsiteTile({
 
   const urlWithoutProtocol = config.url.replace(/(^\w+:|^)\/\//, "")
 
+  const { tone, message } = monitorState(data, "website")
+
   return (
     <MonitorDialog dbKey={dbKey} type="website">
       <BaseTile
@@ -50,8 +52,10 @@ export function WebsiteTile({
         c_span={c_span}
         title={name}
         short_title={config.short_name}
-        bottom_text={tileValue(data.details)}
-        warnings={data.warnings}
+        tone={tone}
+        bottom_text={message}
+        bottom_detail={data.warnings.join("\n") || undefined}
+        label={message ? `${name}: ${message}` : name}
         top_text={urlWithoutProtocol}
         status={status}
         orientation={orientation}

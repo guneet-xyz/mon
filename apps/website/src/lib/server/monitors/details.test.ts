@@ -60,6 +60,37 @@ describe("monitorWarnings", () => {
     ])
   })
 
+  it("warns about failed GitHub checks", () => {
+    const check = (name: string, conclusion: string | null) => ({
+      name,
+      status: "completed",
+      conclusion,
+    })
+    const github = (checks: ReturnType<typeof check>[]): MonitorDetails => ({
+      type: "github",
+      checks,
+    })
+    expect(monitorWarnings(github([check("build", "success")]), now)).toEqual(
+      [],
+    )
+    expect(
+      monitorWarnings(
+        github([check("build", "success"), check("e2e", "failure")]),
+        now,
+      ),
+    ).toEqual(["Check e2e failed"])
+    expect(
+      monitorWarnings(
+        github([
+          check("build", "timed_out"),
+          check("e2e", "failure"),
+          check("lint", "success"),
+        ]),
+        now,
+      ),
+    ).toEqual(["2 of 3 checks failed"])
+  })
+
   it("never warns about hosts", () => {
     expect(monitorWarnings({ type: "host", latency: 5 }, now)).toEqual([])
   })

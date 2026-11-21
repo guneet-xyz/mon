@@ -2,7 +2,7 @@
 
 A group tile sums up several monitors, and other groups, in one tile. Use `type = "group"` to use this tile.
 
-Collapsed, the tile shows the group's name, how many of its members are up (for example `7/8 up`), the combined status and a status line with one segment per member.
+Collapsed, the tile shows the group's name and how many of its monitors are up (for example `7/8 up`), counting the monitors in nested groups and each monitor once. When any of them has a problem, the group takes on the worst one, the way a [monitor tile](/docs/configuration/tiles/monitors#on-the-board) does, and says how many: `1 down · 2 warnings`, with the up count above. A status line has one segment per member, coloured by that member's state. An expanded group's header shows the same counts.
 
 Clicking it expands the group in place: it grows from the cell it occupies to its expanded size (shifting back only where it would run off the board), and the group becomes a subgrid of its member tiles. Other tiles stay where they are; only the ones the group now covers move, each to the nearest free cell, and the board grows if it has to. The change is animated so you can follow which tiles moved; the animation is off when your system asks for reduced motion. Each member opens its own monitor dialog. The header of an expanded group collapses it again. Any number of groups can be expanded at once. A group starts as its `initial_state` says; once you expand or collapse it, your browser remembers that choice (as it does the theme) and uses it instead.
 
@@ -50,7 +50,7 @@ When neither `row_span`/`col_span` nor `rows`/`cols` fixes the size, the group s
 
 A group can list other groups as members. A nested group is shown as a group tile inside its parent's subgrid; clicking it expands it there, in place, the same way groups expand on the board: it grows from its cell, the parent grows to make room (see [Expanded size](#expanded-size)), and only the tiles it covers move. A nested group's `expanded` settings are counted in cells of its parent's subgrid, and its collapsed size is its placement in the parent's `members`.
 
-A group's status and its `n/m up` count cover its direct members; a nested group counts as up when every tile inside it is.
+A group's status and its counts cover every monitor inside it, nested groups included.
 
 ```toml
 [[tiles]]
@@ -86,11 +86,13 @@ A monitor or group can have a different placement in each group it belongs to.
 
 ## Status
 
-| Group status | When                                                  |
-| ------------ | ----------------------------------------------------- |
-| offline      | Any member is offline.                                |
-| unknown      | No member is offline, but at least one has no status. |
-| online       | Every member is online.                               |
+| Group status | When                                                   |
+| ------------ | ------------------------------------------------------ |
+| offline      | Any monitor is offline.                                |
+| unknown      | No monitor is offline, but at least one has no status. |
+| online       | Every monitor is online.                               |
+
+The tile also turns amber when every monitor is up but one has a warning.
 
 ## Showing members on the board
 

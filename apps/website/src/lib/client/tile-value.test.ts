@@ -33,8 +33,8 @@ describe("tileValue", () => {
   })
 
   it("shows CPU and memory for running containers", () => {
-    expect(tileValue(container)).toBe("3% · 250 MB")
-    expect(tileValue({ ...container, cpu: null })).toBe("250 MB")
+    expect(tileValue(container)).toBe("CPU 3% · MEM 250 MB")
+    expect(tileValue({ ...container, cpu: null })).toBe("MEM 250 MB")
   })
 
   it("shows the state of stopped containers", () => {
@@ -73,5 +73,26 @@ describe("tileValue for agents", () => {
     expect(
       tileValue({ ...agent, cpu: null, memory: null, disks: [] }),
     ).toBeNull()
+  })
+
+  it("counts GitHub checks", () => {
+    const check = (status: string, conclusion: string | null) => ({
+      name: "ci",
+      status,
+      conclusion,
+    })
+    expect(
+      tileValue({
+        type: "github",
+        checks: [check("completed", "success"), check("completed", "failure")],
+      }),
+    ).toBe("1/2 checks passed")
+    expect(
+      tileValue({
+        type: "github",
+        checks: [check("completed", "success"), check("in_progress", null)],
+      }),
+    ).toBe("1 of 2 checks running")
+    expect(tileValue({ type: "github", checks: [] })).toBeNull()
   })
 })

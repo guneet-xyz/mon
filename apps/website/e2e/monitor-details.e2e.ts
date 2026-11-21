@@ -153,12 +153,12 @@ col_span = 2
     })
     await expect(tile("Details Site")).toContainText(/\d+ ms/)
     await expect(tile("Healthy Box")).toContainText(
-      /\d+(\.\d)?% · [\d.]+ [KMG]?B/,
+      /CPU \d+(\.\d)?% · MEM [\d.]+ [KMG]?B/,
     )
     await expect(tile("Healthy Box").getByTestId("tile-warning")).toHaveCount(0)
     await expect(
       tile("Unhealthy Box").getByTestId("tile-warning"),
-    ).toHaveAttribute("aria-label", /Health check failing/)
+    ).toContainText("Health check failing")
 
     await testInfo.attach("board", {
       body: await page.screenshot(),

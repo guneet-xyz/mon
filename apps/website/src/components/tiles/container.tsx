@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { MonitorDialog } from "@/components/dialogs/monitor-dialog"
-import { tileValue } from "@/lib/client/tile-value"
+import { monitorState } from "@/lib/client/monitor-state"
 import { getMonitorTileInfo } from "@/lib/server/actions/get-monitor-tile-info"
 
 import { BaseTile } from "./_base"
@@ -40,6 +40,8 @@ export function ContainerTile({
     orientation = "vertical"
   }
 
+  const { tone, message } = monitorState(data, "container")
+
   return (
     <MonitorDialog type="container" dbKey={dbKey}>
       <BaseTile
@@ -49,8 +51,10 @@ export function ContainerTile({
         top_text={config.container_name}
         title={name}
         short_title={config.short_name}
-        bottom_text={tileValue(data.details)}
-        warnings={data.warnings}
+        tone={tone}
+        bottom_text={message}
+        bottom_detail={data.warnings.join("\n") || undefined}
+        label={message ? `${name}: ${message}` : name}
         orientation={orientation}
         icon={config.icon}
         top_right_icon="mdi:docker"

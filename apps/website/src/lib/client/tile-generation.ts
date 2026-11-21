@@ -24,7 +24,8 @@ export type GeneratedTile = (
   | { type: MonitorTile["type"]; key: string }
   // `subgrid` is set only while the group is expanded.
   | { type: "group"; key: string; subgrid?: Subgrid }
-  | { type: NonMonitorTile["type"] }
+  // `filler` marks the default tile put in a free cell.
+  | { type: NonMonitorTile["type"]; filler?: true }
 ) & {
   location: Location
 }
@@ -359,6 +360,7 @@ function attemptLayout({
       if (tiles_available[r - 1]![c - 1]) {
         placed_tiles.push({
           type: default_tile,
+          filler: true,
           location: {
             row_start: r,
             row_span: 1,
@@ -733,4 +735,24 @@ export function generateTiles(
     ),
     layout: { rows: rows, cols: cols },
   }
+}
+
+// Drops the fillers after the last real tile (in reading order), and the
+// rows they leave empty, so a short board doesn't end in a field of empty
+// cells.
+export function trimFillers(
+  tiles: Array<GeneratedTile>,
+  rows: number,
+): { tiles: Array<GeneratedTile>; rows: number } {
+  const order = (tile: GeneratedTile) =>
+    tile.location.row_start * 1000 + tile.location.col_start
+  const isFiller = (tile: GeneratedTile) => "filler" in tile && !!tile.filler
+  const real = tiles.filter((tile) => !isFiller(tile))
+  if (real.length === 0) return { tiles: [], rows: 0 }
+  const last = Math.max(...real.map(order))
+  const kept = tiles.filter((tile) => !isFiller(tile) || order(tile) < last)
+  const usedRows = Math.max(
+    ...kept.map((tile) => tile.location.row_start + tile.location.row_span - 1),
+  )
+  return { tiles: kept, rows: Math.min(rows, usedRows) }
 }

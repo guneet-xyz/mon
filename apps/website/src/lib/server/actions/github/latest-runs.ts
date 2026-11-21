@@ -1,16 +1,17 @@
 "use server"
 
-import { getMonitorConfig } from "@mon/config"
+import { findMonitor } from "@mon/config"
 import { and, asc, desc, eq } from "@mon/db/drizzle"
 import { githubCheckRun, githubPings } from "@mon/db/schema"
 
-import { env } from "@/env"
+import { getCachedConfig } from "@/lib/server/config-cache"
 import { db } from "@/lib/server/db"
 
 // Check runs from a GitHub tile's latest commit. Only answers for GitHub tiles
 // in this board's config.
 export async function getLatestRuns(key: string) {
-  const config = await getMonitorConfig(env.CONFIG_PATH, "github", key)
+  // The cached config, so an invalid config file keeps the last good board.
+  const config = findMonitor(await getCachedConfig(), "github", key)
   if (!config) return null
 
   const latestPing = db.$with("latest_ping").as(

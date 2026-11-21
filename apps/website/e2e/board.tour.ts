@@ -63,6 +63,12 @@ name = "Cache"
 members = ["ctr-cache"]
 
 [[tiles]]
+type = "github"
+key = "gh-mon"
+name = "mon CI"
+repo = "guneet-xyz/mon"
+
+[[tiles]]
 type = "host"
 key = "host-router"
 name = "Router"
@@ -136,6 +142,14 @@ const DAY = 24 * HOUR
 
 async function seed(sql: postgres.Sql) {
   const now = Date.now()
+  for (const [id, name, conclusion] of [
+    [1, "build", "success"],
+    [2, "lint", "success"],
+    [3, "e2e", "failure"],
+  ] as const) {
+    await sql`insert into mon_github_check_run (id, name, status, conclusion, started_at, completed_at)
+      values (${id}, ${name}, 'completed', ${conclusion}, ${new Date(now - HOUR)}, ${new Date(now - HOUR / 2)})`
+  }
   // Every 10 minutes for the last day; the newest is 20 s old, so fresh.
   const times = Array.from(
     { length: 144 },
@@ -145,6 +159,10 @@ async function seed(sql: postgres.Sql) {
     base + amp * Math.sin(i / 9)
 
   for (const [i, t] of times.entries()) {
+    for (const run of [1, 2, 3]) {
+      await sql`insert into mon_github_ping (key, agent_id, timestamp, commit_hash, check_run_id, error)
+        values ('gh-mon', 'alpha', ${t}, ${"a".repeat(40)}, ${run}, null)`
+    }
     await sql`insert into mon_host_ping (key, agent_id, timestamp, latency, error)
       values ('host-router', 'alpha', ${t}, ${i > 0 && i % 37 === 0 ? null : wave(i, 3, 1)}, ${i > 0 && i % 37 === 0 ? "timeout" : null})`
     for (const [key, base, extra] of [
@@ -219,6 +237,7 @@ async function open(
   await page.goto("/")
   await page.getByText("Machines").first().waitFor()
   await page.waitForLoadState("networkidle")
+  await page.locator("[data-loading]").first().waitFor({ state: "detached" })
   await page.waitForTimeout(800)
 }
 
@@ -256,7 +275,37 @@ test("board tour", async ({ browser }) => {
   })
   await shot(page, `${next()}-services-nested-expanded`)
 
-  for (const name of ["Beta", "Expiring cert", "App server", "Gamma"]) {
+  // The Cache group is the one hiding a warning (its container's health
+  // check fails).
+  const cache = await browser.newPage({ viewport: VIEWPORTS.desktop })
+  await open(cache, "dark", {
+    "grp-services": "expanded",
+    "grp-cache": "expanded",
+  })
+  await shot(cache, `${next()}-cache-expanded-dark`)
+  await cache.close()
+
+  // Keyboard users: focus moves through the tiles with Tab.
+  const keyboard = await browser.newPage({ viewport: VIEWPORTS.desktop })
+  await open(keyboard, "light")
+  for (let i = 0; i < 20; i++) {
+    await keyboard.keyboard.press("Tab")
+    const focused = await keyboard.evaluate(
+      () => document.activeElement?.textContent ?? "",
+    )
+    if (focused.includes("Beta")) break
+  }
+  await shot(keyboard, `${next()}-keyboard-focus`)
+  await keyboard.close()
+
+  for (const name of [
+    "Beta",
+    "Expiring cert",
+    "App server",
+    "Gamma",
+    "Router",
+    "mon CI",
+  ]) {
     await page.getByText(name, { exact: true }).first().click()
     await page.getByRole("dialog").waitFor()
     await page.waitForLoadState("networkidle")
@@ -275,6 +324,20 @@ test("board tour", async ({ browser }) => {
   await dark.waitForLoadState("networkidle")
   await dark.waitForTimeout(600)
   await shot(dark, `${next()}-dialog-beta-dark`)
+
+  await dark.close()
+
+  // Loading: tiles whose data has not arrived yet (server actions held).
+  const loading = await browser.newPage({ viewport: VIEWPORTS.phone })
+  await loading.route("**/*", (route) =>
+    route.request().headers()["next-action"] ? undefined : route.continue(),
+  )
+  await loading.addInitScript(() => localStorage.setItem("theme", "light"))
+  await loading.emulateMedia({ reducedMotion: "reduce" })
+  await loading.goto("/")
+  await loading.locator("[data-loading]").first().waitFor()
+  await shot(loading, `${next()}-loading-phone`)
+  await loading.close()
 
   // A broken config file: the last good board stays up under a banner.
   await writeRuntimeConfig(runtime.configPath, `${CONFIG}\n[[tiles]\n`)
