@@ -183,9 +183,9 @@ export function monitorWarnings(
     const days = Math.floor(
       (details.certExpiresAt.getTime() - now.getTime()) / DAY_MS,
     )
-    if (days < 0) warnings.push("Cert expired")
+    if (days < 0) warnings.push("Certificate expired")
     else if (days < CERT_WARNING_DAYS)
-      warnings.push(`Cert expires in ${days} ${days === 1 ? "day" : "days"}`)
+      warnings.push(`Certificate expires in ${days} ${days === 1 ? "day" : "days"}`)
   }
   if (details.type === "container") {
     if (details.health === "unhealthy") warnings.push("Health check failing")

@@ -36,12 +36,12 @@ describe("monitorWarnings", () => {
   it("warns about certificates expiring within 14 days", () => {
     expect(monitorWarnings(website(days(30)), now)).toEqual([])
     expect(monitorWarnings(website(days(13.5)), now)).toEqual([
-      "Cert expires in 13 days",
+      "Certificate expires in 13 days",
     ])
     expect(monitorWarnings(website(days(1.2)), now)).toEqual([
-      "Cert expires in 1 day",
+      "Certificate expires in 1 day",
     ])
-    expect(monitorWarnings(website(days(-1)), now)).toEqual(["Cert expired"])
+    expect(monitorWarnings(website(days(-1)), now)).toEqual(["Certificate expired"])
     expect(monitorWarnings(website(null), now)).toEqual([])
   })
 

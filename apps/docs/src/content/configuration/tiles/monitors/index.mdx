@@ -44,11 +44,11 @@ Each monitor tile shows its current value under its name: latency for hosts and 
 
 When something is wrong, the whole tile changes and says what the problem is in place of the value, so it reads at a distance and without relying on colour:
 
-| Tile    | Looks like                         | Says, for example                                |
-| ------- | ---------------------------------- | ------------------------------------------------ |
-| Down    | Red, thick border, crossed circle  | `Down · HTTP 503`, `No report for 25 min`        |
-| Warning | Amber, thick border, warning sign  | `Cert expires in 5 days`, `Disk / 93% full (+1)` |
-| No data | Grey, dashed border, question mark | `No data yet`, `No check for 2 h`                |
+| Tile    | Looks like                         | Says, for example                                       |
+| ------- | ---------------------------------- | ------------------------------------------------------- |
+| Down    | Red, thick border, crossed circle  | `Down · HTTP 503`, `No report for 25 min`               |
+| Warning | Amber, thick border, warning sign  | `Certificate expires in 5 days`, `Disk / 93% full (+1)` |
+| No data | Grey, dashed border, question mark | `No data yet`, `No check for 2 h`                       |
 
 A warning appears when a website's certificate expires within 14 days (or has expired), a container's health check fails, it is restarting, or it restarted in the last 24 hours, or one of a GitHub repo's checks failed; agents add their own (see [Agent](/docs/configuration/tiles/monitors/agent)). When there are several, the tile shows the first and how many more (`(+1)`); hover it, or open the dialog, for the full list. Tiles refresh every minute.
 
