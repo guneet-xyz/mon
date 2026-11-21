@@ -11,6 +11,7 @@ The **single source of truth** for tile shape. `getConfig(path)` loads the TOML 
 - **Defaults belong in the schema** (`.default(...)`), not in callers. `OptionsSchema` wraps an inner `_OptionsSchema.default(_OptionsSchema.parse({}))` so the whole `options` block is optional in TOML.
 - **`getConfig()` auto-creates** the config dir + empty file if missing. This is intentional — first-run UX. Don't add a "file not found" error path.
 - **`findMonitor<T>(config, type, key)`** (used by `getMonitorConfig`) uses an `as Extract<...>` cast on the `.find()` return — this is the **only** sanctioned cast in the package because TS can't narrow `.find` against discriminated unions. Don't replicate the pattern elsewhere.
+- **`describeConfigError(error)`** turns a `getConfig()` failure into a public-safe `summary` and log `details`. smol-toml messages quote the offending lines (which may hold a `github_token`), so never log or show a raw parse error.
 - **Source is at the package root** (`./index.ts`, `"main": "index.ts"`); don't add a `src/` folder.
 - **Uses `zod/v4` import path** — schema.ts pins the v4 subpath explicitly. Other workspaces import from `"zod"` (also v4). Both work; don't mix in one file.
 

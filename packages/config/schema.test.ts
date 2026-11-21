@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test"
 
 import {
   ConfigSchema,
+  findMonitor,
   getAgentAssignments,
   getGroupMembers,
   isTileOnGrid,
@@ -190,6 +191,30 @@ describe("getAgentAssignments", () => {
     for (const t of tiles) {
       expect(["host", "website", "container", "github"]).toContain(t.type)
     }
+  })
+})
+
+describe("findMonitor", () => {
+  const config = baseConfig({
+    tiles: [
+      { type: "host", key: "shared", address: "192.0.2.1", agent: "default" },
+      {
+        type: "website",
+        key: "shared",
+        url: "https://example.com",
+        method: "GET",
+        agent: "default",
+      },
+    ],
+  })
+
+  test("matches on both type and key", () => {
+    expect(findMonitor(config, "website", "shared")?.type).toBe("website")
+    expect(findMonitor(config, "host", "shared")?.address).toBe("192.0.2.1")
+  })
+
+  test("returns undefined for an unknown monitor", () => {
+    expect(findMonitor(config, "github", "shared")).toBeUndefined()
   })
 })
 

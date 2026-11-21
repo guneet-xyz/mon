@@ -31,6 +31,7 @@ export type {
   PublicMonitorTile,
   PublicGroupTile,
 } from "./schema"
+export { describeConfigError, type ConfigErrorDescription } from "./errors"
 export {
   findMonitor,
   getAgentAssignments,

@@ -333,7 +333,7 @@ docker run --rm \
 
 ### Editing the board in place
 
-Edit the mounted `config.toml`; nothing needs restarting. The website picks up the change within a few seconds, open boards show a changed layout once reloaded, and each agent gets its new job list on its next poll (`AGENT_POLL_INTERVAL_SECONDS`). Adding an agent means adding its `[agents.<id>]` block and starting the agent with the matching `AGENT_ID` and token.
+Edit the mounted `config.toml`; nothing needs restarting. The website picks up the change within a few seconds, open boards show a changed layout once reloaded, and each agent gets its new job list on its next poll (`AGENT_POLL_INTERVAL_SECONDS`). If an edit leaves the file invalid, the website logs the problems and keeps serving the last good config, and the board shows a "Config error" banner until the file is fixed. Adding an agent means adding its `[agents.<id>]` block and starting the agent with the matching `AGENT_ID` and token.
 
 ### Health
 

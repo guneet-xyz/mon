@@ -7,9 +7,9 @@ Next.js 16 App Router status board and the agents' HTTP API. It is the only comp
 ```
 src/
 ├── env.ts                      # DATABASE_URL, CONFIG_PATH, NODE_ENV, notification channels (@t3-oss/env-nextjs)
-├── instrumentation.ts          # server start hook: starts the notification loop (Node runtime only)
+├── instrumentation.ts          # server start hook: loads the config (logs an invalid file at once), starts the notification loop (Node runtime only)
 ├── app/
-│   ├── page.tsx                # entry: getConfig() → <ClientOnly><TileGrid/></ClientOnly>
+│   ├── page.tsx                # entry: getConfigState() → <ClientOnly><TileGrid/></ClientOnly>, empty state, config error banner
 │   ├── tile-grid.tsx           # client component; runs generateTiles() against window dims
 │   ├── api/agent/              # agent API: jobs/route.ts (GET job list), pings/<kind>/route.ts (POST results)
 │   └── _components/providers/  # ThemeProvider + react-query QueryClientProvider
@@ -26,7 +26,7 @@ src/
         ├── monitors/           # status per type; history.ts (series, uptime, incidents per range), details.ts (latest details, warnings)
         ├── notifications/      # alert loop started from src/instrumentation.ts: rules.ts (pure decisions), evaluate.ts (DB state), channels.ts (ntfy, webhook)
         ├── agent-auth.ts       # bearer token + X-Agent-Id check against [agents.<id>].token_hash
-        ├── config-cache.ts     # config cache used by the agent API (rereads the file when it changes)
+        ├── config-cache.ts     # the only config loader: page, actions, agent API (rereads on change, keeps the last good config)
         └── db.ts               # lazy, globalThis-cached Drizzle client from env.DATABASE_URL
 ```
 
@@ -45,7 +45,7 @@ src/
 
 - **Path alias `@/*` → `src/*`** (defined in this app's [tsconfig.json](tsconfig.json) and the repo-root one). Never use `../../`.
 - **`force-dynamic` on `app/page.tsx`** — config + DB are read every request, which is what makes config edits apply without a restart; do not add ISR/static caching at the page level.
-- **Read the config through `@mon/config`** (`getConfig`, or `getCachedConfig` in the agent API). Never send a raw config or tile to the browser; use `toPublicConfig()` / `toPublicTile()`.
+- **Read the config through [lib/server/config-cache.ts](src/lib/server/config-cache.ts)** everywhere (page, server actions, agent API routes), never `getConfig` directly: `getCachedConfig()` returns the last config that loaded successfully (it throws only if none has), and `getConfigState()` returns `{ config, error }` for callers that report a broken file. It re-reads at most every 5 s and only when the mtime changes; `instrumentation.ts` loads it at startup so an invalid file is logged straight away. Never send a raw config or tile to the browser; use `toPublicConfig()` / `toPublicTile()`.
 - **Server actions** are co-located in `lib/server/actions/`, named `get-*.ts` / `<verb>-*.ts`, one exported function per file. They're imported directly by client components, which triggers Next's RSC action plumbing.
 - **Type-dispatch facades** in `lib/server/monitors/index.ts` and `components/tiles/index.tsx` use `if (type === "x")` chains over the Zod discriminated union — exhaustiveness is enforced by the trailing `throw new Error(...)`. **Always add a new branch** when extending the tile union.
 - **shadcn `ui/` is generated code** — match existing variants (cva, `className` last in props) and rerun `npx shadcn` rather than hand-editing.
