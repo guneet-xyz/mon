@@ -120,6 +120,7 @@ describe("GET /api/agent/jobs", () => {
       kind: "host",
       id: "h1",
       cron: "*/30 * * * * *",
+      interval_seconds: 30,
       address: "1.2.3.4",
     })
 
@@ -128,6 +129,7 @@ describe("GET /api/agent/jobs", () => {
       kind: "website",
       id: "w1",
       cron: "0 */1 * * * *",
+      interval_seconds: 60,
       url: "https://example.com",
       method: "GET",
     })
@@ -137,6 +139,7 @@ describe("GET /api/agent/jobs", () => {
       kind: "container",
       id: "c1",
       cron: "0 */2 * * * *",
+      interval_seconds: 120,
       container_name: "app",
       docker_socket: "unix:///var/run/docker.sock",
     })
@@ -146,9 +149,28 @@ describe("GET /api/agent/jobs", () => {
       kind: "github",
       id: "g1",
       cron: "0 */1 * * * *",
+      interval_seconds: 60,
       repo: "owner/repo",
       github_token: "ghp_secret",
     })
+  })
+
+  it("falls back to options.ping_interval_ms for tiles without interval_seconds", async () => {
+    currentConfig = {
+      ...makeConfig(),
+      options: { ...makeConfig().options, ping_interval_ms: 10_000 },
+    }
+    const res = await GET(
+      makeRequest({
+        Authorization: `Bearer ${TOKEN}`,
+        "X-Agent-Id": "worker1",
+      }),
+    )
+    const body = (await res.json()) as JobsResponse
+    const intervals = Object.fromEntries(
+      body.tiles.map((t) => [t.id, t.interval_seconds]),
+    )
+    expect(intervals).toEqual({ h1: 30, w1: 10, c1: 120, g1: 10 })
   })
 
   it("never leaks tiles belonging to other agents", async () => {

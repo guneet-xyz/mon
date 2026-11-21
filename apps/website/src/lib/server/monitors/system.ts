@@ -3,9 +3,9 @@ import { systemPings } from "@mon/db/schema"
 
 import { db } from "@/lib/server/db"
 
-import { agentStatusFromLatestReport } from "./status"
+import { agentStatusFromLatestReport, staleAfterMs } from "./status"
 
-export async function getAgentStatus(dbKey: string) {
+export async function getAgentStatus(dbKey: string, intervalSeconds?: number) {
   const reports = await db
     .select({ timestamp: systemPings.timestamp, error: systemPings.error })
     .from(systemPings)
@@ -13,5 +13,9 @@ export async function getAgentStatus(dbKey: string) {
     .orderBy(desc(systemPings.timestamp))
     .limit(1)
 
-  return agentStatusFromLatestReport(reports[0])
+  return agentStatusFromLatestReport(
+    reports[0],
+    new Date(),
+    staleAfterMs(intervalSeconds),
+  )
 }

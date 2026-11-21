@@ -1,6 +1,6 @@
 "use server"
 
-import { getMonitorConfig } from "@mon/config"
+import { findMonitor, getConfig, monitorIntervalSeconds } from "@mon/config"
 import type { MonitorTile } from "@mon/config/schema"
 
 import { env } from "@/env"
@@ -20,13 +20,15 @@ export async function getMonitorHistory(
   range: HistoryRange,
 ) {
   if (!isHistoryRange(range)) return null
-  const config = await getMonitorConfig(env.CONFIG_PATH, type, dbKey)
+  const board = await getConfig(env.CONFIG_PATH)
+  const config = findMonitor(board, type, dbKey)
   if (!config) return null
+  const intervalSeconds = monitorIntervalSeconds(board, config)
 
   const [series, uptime, incidents] = await Promise.all([
     getSeries(type, dbKey, range),
-    getUptime(type, dbKey),
-    getIncidents(type, dbKey, range),
+    getUptime(type, dbKey, new Date(), intervalSeconds),
+    getIncidents(type, dbKey, range, intervalSeconds),
   ])
   return { series, uptime, incidents }
 }
