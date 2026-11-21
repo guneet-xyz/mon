@@ -685,6 +685,8 @@ describe("ConfigSchema — notifications", () => {
       notifications: { board_url: "https://mon.example.com" },
     })
     expect(toPublicConfig(config)).not.toHaveProperty("notifications")
+  })
+})
 
 describe("monitorIntervalSeconds", () => {
   const host = { type: "host", key: "h", address: "10.0.0.1" }
