@@ -748,7 +748,7 @@ export function trimFillers(
     tile.location.row_start * 1000 + tile.location.col_start
   const isFiller = (tile: GeneratedTile) => "filler" in tile && !!tile.filler
   const real = tiles.filter((tile) => !isFiller(tile))
-  if (real.length === 0) return { tiles, rows }
+  if (real.length === 0) return { tiles: [], rows: 0 }
   const last = Math.max(...real.map(order))
   const kept = tiles.filter((tile) => !isFiller(tile) || order(tile) < last)
   const usedRows = Math.max(

@@ -28,19 +28,7 @@ export function TileGrid({ config }: { config: PublicConfig }) {
 
   const { tiles, rows } = trimFillers(data.tiles, data.layout.rows)
 
-  if (config.tiles.every((tile) => NON_MONITORS.includes(tile.type))) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center p-4">
-        <div className="max-w-sm rounded-xl border-2 border-emerald-700 bg-emerald-100 p-6 text-center text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
-          <h1 className="font-display text-2xl">Nothing to show yet</h1>
-          <p className="mt-2 text-sm">
-            This board has no monitors yet. Add tiles to its config file, then
-            reload this page.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const empty = config.tiles.every((tile) => NON_MONITORS.includes(tile.type))
 
   return (
     <div className="flex h-screen w-full flex-col items-center p-4">
@@ -48,8 +36,9 @@ export function TileGrid({ config }: { config: PublicConfig }) {
         ref={gridRef}
         className="grid w-full"
         style={{
-          // Trimmed rows keep the size they had on the full board.
-          height: `${(rows / data.layout.rows) * 100}%`,
+          // Trimmed rows keep the size they had on the full board. Without
+          // monitors, the logo and theme toggle get one short row.
+          height: empty ? "6rem" : `${(rows / data.layout.rows) * 100}%`,
           gridTemplateColumns: `repeat(${data.layout.cols}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
         }}
@@ -63,6 +52,17 @@ export function TileGrid({ config }: { config: PublicConfig }) {
           />
         ))}
       </div>
+      {empty ? (
+        <div className="flex grow items-center justify-center">
+          <div className="max-w-sm rounded-xl border-2 border-emerald-700 bg-emerald-100 p-6 text-center text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
+            <h1 className="font-display text-2xl">Nothing to show yet</h1>
+            <p className="mt-2 text-sm">
+              This board has no monitors yet. Add tiles to its config file, then
+              reload this page.
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

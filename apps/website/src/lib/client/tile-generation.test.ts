@@ -279,6 +279,13 @@ describe("trimFillers", () => {
     expect(trimmed.tiles).toEqual([host(1, 1), filler(1, 2), host(2, 1)])
   })
 
+  it("leaves nothing of a board with only fillers", () => {
+    expect(trimFillers([filler(1, 1), filler(1, 2)], 1)).toEqual({
+      tiles: [],
+      rows: 0,
+    })
+  })
+
   it("keeps empty tiles from the config", () => {
     const empty = { type: "empty", location: at(2, 1) } as const
     expect(trimFillers([host(1, 1), empty], 2)).toEqual({
