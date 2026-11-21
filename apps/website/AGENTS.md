@@ -6,7 +6,8 @@ Next.js 16 App Router status board and the agents' HTTP API. It is the only comp
 
 ```
 src/
-├── env.ts                      # DATABASE_URL, CONFIG_PATH, NODE_ENV (@t3-oss/env-nextjs)
+├── env.ts                      # DATABASE_URL, CONFIG_PATH, NODE_ENV, notification channels (@t3-oss/env-nextjs)
+├── instrumentation.ts          # server start hook: starts the notification loop (Node runtime only)
 ├── app/
 │   ├── page.tsx                # entry: getConfig() → <ClientOnly><TileGrid/></ClientOnly>
 │   ├── tile-grid.tsx           # client component; runs generateTiles() against window dims
@@ -23,6 +24,7 @@ src/
         ├── actions/            # "use server" RPC entry points
         ├── ingest/             # insert pushed pings (deduplicated on ping_id)
         ├── monitors/           # status per type; history.ts (series, uptime, incidents per range), details.ts (latest details, warnings)
+        ├── notifications/      # alert loop started from src/instrumentation.ts: rules.ts (pure decisions), evaluate.ts (DB state), channels.ts (ntfy, webhook)
         ├── agent-auth.ts       # bearer token + X-Agent-Id check against [agents.<id>].token_hash
         ├── config-cache.ts     # config cache used by the agent API (rereads the file when it changes)
         └── db.ts               # lazy, globalThis-cached Drizzle client from env.DATABASE_URL
@@ -49,6 +51,7 @@ src/
 - **shadcn `ui/` is generated code** — match existing variants (cva, `className` last in props) and rerun `npx shadcn` rather than hand-editing.
 - **Icons**: `lucide-react` for fixed UI chrome, `@iconify/react` (via `DynamicIcon`) for user-configurable tile icons.
 - **Data fetching in client components: TanStack Query** with `queryKey: ["monitor-config", type, dbKey]` (shared by a tile and its dialog). Server actions are the `queryFn`. Every query refetches every 60 s (`QueryProvider` default), so a board left open stays current.
+- **Notifications run in the website server**, not on ingest: `src/instrumentation.ts` starts a 30 s loop only when a channel env var (`NTFY_URL`, `WEBHOOK_URL`, or their `_FILE` forms) is set. State lives in `mon_notification_state`; every write is a conditional update on `revision`, and only the instance whose update succeeds sends.
 - **Raw SQL in `lib/server/monitors/history.ts`**: postgres-js cannot take `Date` parameters inside `sql` templates; pass ISO strings cast to `timestamptz`.
 
 ## ANTI-PATTERNS

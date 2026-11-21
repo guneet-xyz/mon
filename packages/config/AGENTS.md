@@ -19,4 +19,4 @@ The **single source of truth** for tile shape. `getConfig(path)` loads the TOML 
 - **Do not read the file and `parse()` it directly** in app code — call `getConfig()` (or the website's `getCachedConfig()`) so defaults, auto-create, and validation all run.
 - **Do not put runtime logic, fetchers, or side effects here.** This package is pure schema + a thin file loader.
 - **Do not depend on `@mon/db`** — the website wires config↔DB itself; keeping config DB-free keeps it cheap to import from tests and scripts.
-- **Never pass a raw `Config` or tile to the browser.** Use `toPublicConfig()` / `toPublicTile()`, which drop `agents` (token hashes) and the server-only tile fields (`github_token`, `agent`, `interval_seconds`, `docker_socket`). New secret or internal fields must be added to `SERVER_ONLY_TILE_FIELDS`.
+- **Never pass a raw `Config` or tile to the browser.** Use `toPublicConfig()` / `toPublicTile()`, which drop `agents` (token hashes), `notifications` and the server-only tile fields (`github_token`, `agent`, `interval_seconds`, `docker_socket`). New secret or internal fields must be added to `SERVER_ONLY_TILE_FIELDS`.

@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTableCreator,
+  primaryKey,
   real,
   serial,
   smallint,
@@ -182,3 +183,30 @@ export const githubPings = createTable(
 
 export type DbInsertGithubPing = typeof githubPings.$inferInsert
 export type DbSelectGithubPing = typeof githubPings.$inferSelect
+
+// What the website last told people about each monitor, so a restart (or a
+// second website instance) doesn't alert again. `revision` is bumped on
+// every write; writers only update the revision they read.
+export const notificationState = createTable(
+  "notification_state",
+  {
+    type: varchar("type", { length: 16 }).notNull(),
+    key: varchar("key", { length: 64 }).notNull(),
+    // "online" or "offline"; null until the monitor has had a known status.
+    notifiedStatus: varchar("notified_status", { length: 16 }),
+    observedStatus: varchar("observed_status", { length: 16 }).notNull(),
+    observedSince: timestamp("observed_since", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+    warnings: jsonb("warnings").$type<string[]>().notNull().default([]),
+    revision: integer("revision").notNull().default(0),
+    updatedAt: timestamp("updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.type, t.key] })],
+)
+
+export type DbSelectNotificationState = typeof notificationState.$inferSelect
