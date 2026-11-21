@@ -155,8 +155,13 @@ test("github success — check runs and per-run pings stored, UI shows them, no 
   expect(runs.map((r) => r.name)).toEqual(["build", "lint"])
 
   const responseBodies: Promise<string>[] = []
+  // The page and server action responses: data reaches the browser only
+  // through these. Static chunks are skipped; they are large enough to push
+  // earlier bodies out of the browser's buffer.
   page.on("response", (res) => {
-    responseBodies.push(res.text().catch(() => ""))
+    const request = res.request()
+    if (request.resourceType() === "document" || request.method() === "POST")
+      responseBodies.push(res.text().catch(() => ""))
   })
 
   await page.goto("/")
