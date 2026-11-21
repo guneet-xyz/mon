@@ -75,8 +75,7 @@ export function groupFailures(
   for (const ping of pings) {
     const end = new Date(ping.timestamp.getTime() + stepMs)
     if (
-      current &&
-      ping.error === current.error &&
+      current?.error === ping.error &&
       ping.timestamp.getTime() - current.end.getTime() < 2 * stepMs
     ) {
       current.end = end
