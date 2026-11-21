@@ -1,7 +1,12 @@
+import { mkdtempSync, rmSync, writeFileSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test"
 
 import type { GithubCheckRunDTO, GithubPingDTO } from "@mon/contracts"
 import { createTestDb, type TestDb } from "@mon/test-utils"
+
+import { env } from "@/env"
 
 import { insertGithubCheckRun, insertGithubPing } from "./github"
 
@@ -9,13 +14,38 @@ import { insertGithubCheckRun, insertGithubPing } from "./github"
 // github_check_run.id, unique ids) with the order the agent pushes in.
 
 let testDb: TestDb
+let configDir: string
+let originalConfigPath: string
 
 beforeAll(async () => {
   testDb = await createTestDb()
   await mock.module("@/lib/server/db", () => ({ db: testDb.db }))
+
+  configDir = mkdtempSync(join(tmpdir(), "mon-github-db-test-"))
+  const configPath = join(configDir, "config.toml")
+  writeFileSync(
+    configPath,
+    [
+      "[[tiles]]",
+      'type = "github"',
+      'key = "repo"',
+      'repo = "owner/repo"',
+      'github_token = "ghp_test"',
+      "",
+      "[[tiles]]",
+      'type = "host"',
+      'key = "host-only"',
+      'address = "127.0.0.1"',
+    ].join("\n"),
+  )
+  // With SKIP_ENV_VALIDATION (test-setup.ts) env is a plain object.
+  originalConfigPath = env.CONFIG_PATH
+  env.CONFIG_PATH = configPath
 }, 120_000)
 
 afterAll(() => {
+  env.CONFIG_PATH = originalConfigPath
+  if (configDir) rmSync(configDir, { recursive: true, force: true })
   testDb?.stop()
 })
 
@@ -23,17 +53,19 @@ function poll(
   status: GithubCheckRunDTO["status"],
   conclusion: GithubCheckRunDTO["conclusion"],
   recordedAt: string,
+  key = "repo",
+  firstId = 9001,
 ) {
   const runs = [
-    { id: 9001, name: "build" },
-    { id: 9002, name: "test" },
+    { id: firstId, name: "build" },
+    { id: firstId + 1, name: "test" },
   ]
   const checkRuns: GithubCheckRunDTO[] = runs.map((run) => ({
     kind: "github_check_run",
     ping_id: crypto.randomUUID(),
     agent_id: "agent-1",
     recorded_at: recordedAt,
-    key: "repo",
+    key,
     id: run.id,
     name: run.name,
     status,
@@ -47,7 +79,7 @@ function poll(
     ping_id: crypto.randomUUID(),
     agent_id: "agent-1",
     recorded_at: recordedAt,
-    key: "repo",
+    key,
     commit_hash: "abc123",
     check_run_id: run.id,
     error: null,
@@ -69,8 +101,8 @@ describe("github ingest against Postgres", () => {
     const { getLatestRuns } = await import("../actions/github/latest-runs")
     const runs = await getLatestRuns("repo")
 
-    expect(runs.map((r) => r.name)).toEqual(["build", "test"])
-    for (const run of runs) {
+    expect(runs?.map((r) => r.name)).toEqual(["build", "test"])
+    for (const run of runs ?? []) {
       expect(run.status).toBe("completed")
       expect(run.conclusion).toBe("failure")
     }
@@ -78,6 +110,32 @@ describe("github ingest against Postgres", () => {
     const { getGithubStatus } = await import("../monitors/github")
     expect(typeof (await getGithubStatus("repo"))).toBe("string")
   }, 60_000)
+
+  it("returns no runs for keys without a GitHub tile in the config", async () => {
+    await ingest(
+      poll(
+        "completed",
+        "success",
+        "2026-11-10T12:03:00.000Z",
+        "unlisted",
+        9101,
+      ),
+    )
+    await ingest(
+      poll(
+        "completed",
+        "success",
+        "2026-11-10T12:03:00.000Z",
+        "host-only",
+        9201,
+      ),
+    )
+
+    const { getLatestRuns } = await import("../actions/github/latest-runs")
+    expect(await getLatestRuns("unlisted")).toBeNull()
+    expect(await getLatestRuns("host-only")).toBeNull()
+    expect(await getLatestRuns("repo")).not.toBeNull()
+  })
 
   it("reports an already-stored check run as deduplicated", async () => {
     const { checkRuns } = poll(
