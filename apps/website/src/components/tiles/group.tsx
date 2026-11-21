@@ -115,7 +115,11 @@ export function ExpandedGroupTile({
         {/* On narrow groups the counts wrap under the name. */}
         <span className="flex min-w-0 items-center gap-2">
           {data ? (
-            <StatusDot status={data.status} className="shrink-0" />
+            <StatusDot
+              status={data.status}
+              warning={data.tone === "warning"}
+              className="shrink-0"
+            />
           ) : null}
           <span className="truncate">{name}</span>
         </span>

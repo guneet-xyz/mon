@@ -291,14 +291,18 @@ export function BaseTile({
       ) : null}
 
       {status ? (
-        <StatusDot status={status} className="absolute top-2 right-2" />
+        <StatusDot
+          status={status}
+          warning={tone === "warning"}
+          className="absolute top-2 right-2"
+        />
       ) : null}
 
       {/* Always takes its line, so the title stays centred. */}
       <div
         ref={topRef}
         className={cn(
-          "h-4 w-full shrink-0 overflow-hidden px-3.5 text-center font-display text-xs leading-4 font-semibold whitespace-nowrap md:h-5 md:text-sm md:leading-5 @min-[9rem]:px-5",
+          "h-4 w-full shrink-0 overflow-hidden px-3.5 text-center font-display text-xs leading-4 font-semibold whitespace-nowrap md:h-5 md:text-sm md:leading-5 @min-[9rem]:px-4",
           TEXT_TONE[tone],
           // Left out, not cut off.
           (!topFits || height === "short") && "invisible h-0 md:h-0",

@@ -146,7 +146,9 @@ export function MonitorDialog({
       <DialogContent className="max-h-[90vh] w-full !max-w-none overflow-y-auto p-4 sm:w-auto sm:max-w-3xl sm:min-w-[36rem] sm:p-8">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {info ? <StatusDot status={info.status} /> : null}
+            {info ? (
+              <StatusDot status={info.status} warning={warnings.length > 0} />
+            ) : null}
             {config?.name ?? dbKey}
           </DialogTitle>
           <DialogDescription asChild>
