@@ -58,7 +58,7 @@ mon/
 - **Do not parse the TOML yourself** — load it through `@mon/config` (`getConfig()`, or the website's config cache in `lib/server/config-cache.ts`), which creates a missing file and Zod-validates. Reading the TOML directly skips defaults and validation.
 - **Do not introduce `@/`-style aliases in `apps/docs` or `apps/agent`** — only `apps/website` defines that path mapping.
 - **Do not break older agents or websites.** Agents and websites upgrade independently: new job kinds and DTO fields must be optional or skippable (the agent's `parseJobs` skips job kinds it does not know), and migrations must be additive.
-- **`as Type` casts on Zod parses** are unnecessary — schemas return inferred types; cast only on the `getMonitorConfig` discriminated-extract pattern.
+- **`as Type` casts on Zod parses** are unnecessary — schemas return inferred types; cast only on the `findMonitor` discriminated-extract pattern.
 
 ## UNIQUE STYLES
 

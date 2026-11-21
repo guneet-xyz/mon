@@ -165,7 +165,7 @@ export async function getMonitorDetails(
   const runs = await getLatestRuns(key)
   return {
     type,
-    checks: runs.map((run) => ({
+    checks: (runs ?? []).map((run) => ({
       name: run.name,
       status: run.status,
       conclusion: run.conclusion,

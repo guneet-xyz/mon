@@ -27,6 +27,7 @@ describe("monitorState", () => {
           details: host,
           warnings: [],
           lastCheck: { timestamp: ago(20_000), error: null },
+          stale: false,
         },
         "host",
         now,
@@ -42,6 +43,7 @@ describe("monitorState", () => {
           details: { ...host, latency: null },
           warnings: [],
           lastCheck: { timestamp: ago(20_000), error: "HTTP 503" },
+          stale: false,
         },
         "website",
         now,
@@ -57,6 +59,7 @@ describe("monitorState", () => {
           details: agent,
           warnings: [],
           lastCheck: { timestamp: ago(25 * 60_000), error: null },
+          stale: true,
         },
         "agent",
         now,
@@ -72,6 +75,7 @@ describe("monitorState", () => {
           details: agent,
           warnings: ["Disk (/) 93% full", "Memory 91% used"],
           lastCheck: { timestamp: ago(20_000), error: null },
+          stale: false,
         },
         "agent",
         now,
@@ -80,7 +84,12 @@ describe("monitorState", () => {
   })
 
   it("tells apart no data from stale data", () => {
-    const unknown = { status: "unknown" as const, details: host, warnings: [] }
+    const unknown = {
+      status: "unknown" as const,
+      details: host,
+      warnings: [],
+      stale: true,
+    }
     expect(monitorState({ ...unknown, lastCheck: null }, "host", now)).toEqual({
       tone: "unknown",
       message: "No data yet",

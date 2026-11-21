@@ -3,6 +3,7 @@
 import {
   getConfig,
   getGroupMembers,
+  monitorIntervalSeconds,
   toPublicTile,
   type GroupTile,
   type MonitorTile,
@@ -36,10 +37,12 @@ export async function getGroupTileInfo(dbKey: string) {
     const id = `${tile.type}:${tile.key}`
     let result = monitors.get(id)
     if (!result) {
-      result = getMonitorState(tile).then(({ status, warnings }) => ({
-        status,
-        warnings: warnings.length,
-      }))
+      result = getMonitorState(tile, monitorIntervalSeconds(config, tile)).then(
+        ({ status, warnings }) => ({
+          status,
+          warnings: warnings.length,
+        }),
+      )
       monitors.set(id, result)
     }
     return result

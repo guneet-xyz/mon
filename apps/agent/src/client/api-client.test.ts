@@ -160,6 +160,25 @@ describe("parseJobs", () => {
     expect(jobs.tiles.map((t) => t.id)).toEqual(["h"])
   })
 
+  it("reads interval_seconds, which older websites don't send", () => {
+    const jobs = parseJobs({
+      tiles: [
+        {
+          kind: "host",
+          id: "new",
+          cron: "*/30 * * * * *",
+          interval_seconds: 30,
+          address: "1.1.1.1",
+        },
+        { kind: "host", id: "old", cron: "*/6 * * * * *", address: "1.1.1.1" },
+      ],
+    })
+    expect(jobs.tiles.map((t) => [t.id, t.interval_seconds])).toEqual([
+      ["new", 30],
+      ["old", undefined],
+    ])
+  })
+
   it("rejects a response without a tiles array", () => {
     expect(() => parseJobs({})).toThrow()
     expect(() => parseJobs(null)).toThrow()

@@ -65,6 +65,9 @@ test("monitors record and show details", async ({ page }, testInfo) => {
   await writeRuntimeConfig(
     runtime.configPath,
     `
+[options]
+ping_interval_ms = 5000
+
 [agents.${AGENT_ID}]
 token_hash = "${hashToken(E2E_TOKEN)}"
 

@@ -2,10 +2,7 @@ import type { MonitorTile } from "@mon/config/schema"
 
 import type { LatestCheck } from "@/lib/server/monitors"
 import type { MonitorDetails } from "@/lib/server/monitors/details"
-import {
-  STALE_AFTER_MS,
-  type MonitorStatus,
-} from "@/lib/server/monitors/status"
+import type { MonitorStatus } from "@/lib/server/monitors/status"
 import { toneOf, type Tone } from "@/lib/tile-state"
 
 import { formatSeconds } from "./format"
@@ -28,20 +25,17 @@ export function monitorState(
     details: MonitorDetails
     warnings: string[]
     lastCheck: LatestCheck | null
+    stale: boolean
   },
   type: MonitorTile["type"],
   now: Date = new Date(),
 ): MonitorState {
-  const { status, details, warnings, lastCheck } = info
+  const { status, details, warnings, lastCheck, stale } = info
   const tone = toneOf(status, warnings.length)
 
   if (tone === "down") {
     // An agent that stopped reporting: its last numbers are not current.
-    if (
-      type === "agent" &&
-      lastCheck &&
-      now.getTime() - lastCheck.timestamp.getTime() > STALE_AFTER_MS
-    ) {
+    if (type === "agent" && lastCheck && stale) {
       return {
         tone,
         message: `No report for ${timeSince(lastCheck.timestamp, now)}`,
