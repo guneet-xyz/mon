@@ -7,6 +7,7 @@ Next.js 16 App Router status board and the agents' HTTP API. It is the only comp
 ```
 src/
 ├── env.ts                      # DATABASE_URL, CONFIG_PATH, NODE_ENV (@t3-oss/env-nextjs)
+├── instrumentation.ts          # loads the config at startup so an invalid file is logged at once
 ├── app/
 │   ├── page.tsx                # entry: getConfigState() → <ClientOnly><TileGrid/></ClientOnly>, empty state, config error banner
 │   ├── tile-grid.tsx           # client component; runs generateTiles() against window dims
@@ -24,7 +25,7 @@ src/
         ├── ingest/             # insert pushed pings (deduplicated on ping_id)
         ├── monitors/           # status per type; history.ts (series, uptime, incidents per range), details.ts (latest details, warnings)
         ├── agent-auth.ts       # bearer token + X-Agent-Id check against [agents.<id>].token_hash
-        ├── config-cache.ts     # config cache used by the agent API (rereads the file when it changes)
+        ├── config-cache.ts     # the only config loader: page, actions, agent API (rereads on change, keeps the last good config)
         └── db.ts               # lazy, globalThis-cached Drizzle client from env.DATABASE_URL
 ```
 
